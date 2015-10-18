@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\Data\Mesh.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Data\Scene.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Data\Texture.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\F001CustomNoArtefact.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\F002Bilinear.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\F003FakeBump.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\F004Antialiasing.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\Filler.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\R000Virtual.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\R008NoTexelArtefact.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\Renderer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\ViewPort.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Render\ZInterpolator.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Projection\Camera.cpp">
+      <Filter>projection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Projection\Matrix4x4.cpp">
+      <Filter>projection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Projection\MatrixStack.cpp">
+      <Filter>projection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Projection\Vec2f.cpp">
+      <Filter>projection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Projection\Vec3f.cpp">
+      <Filter>projection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Data\Cube.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Data\Tore.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="data">
+      <UniqueIdentifier>{1253b696-c8ea-49f6-ad8e-7d9a5c907167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="projection">
+      <UniqueIdentifier>{45b4163e-babd-41fb-84a2-ea8e44108ebf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{0ba9a45b-db38-4797-b8ab-ac55c55d0c99}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="swegl\Data\Mesh.h">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Data\Scene.h">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Data\Texture.h">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\F001CustomNoArtefact.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\F002Bilinear.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\F003FakeBump.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\F004Antialiasing.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\Filler.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\R000Virtual.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\R008NoTexelArtefact.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\Renderer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\ViewPort.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\ZInterpolator.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Projection\Camera.h">
+      <Filter>projection</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Projection\Matrix4x4.h">
+      <Filter>projection</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Projection\MatrixStack.h">
+      <Filter>projection</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Projection\Vec2f.h">
+      <Filter>projection</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Projection\Vec3f.h">
+      <Filter>projection</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\swegl.hpp" />
+    <ClInclude Include="swegl\Data\Cube.h">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Data\Tore.h">
+      <Filter>data</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

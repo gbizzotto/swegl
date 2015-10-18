@@ -1,0 +1,29 @@
++ Projection Matrix
++ Bresenham wireframe
++ Flat Face filler
++ Texture filler
++ Quake optimization
++ Mipmapping
++ Multiple viewports
++ Bilinear Filtering
++ Projection matrix with fov
++ Camera light
++ Bilinear filtering optimization
++ Fix Edge interpolation and texel artefacts
++ Fixed edge interpolation: Recode Quake optimization
++ Fixed edge interpolation: Recode Mipmapping
++ Quake input
++ Fixed edge interpolation: Recode Bilinear Filtering
++ Ambient light
++ Camera light
++ Z-Buffering
+- Edge only antialiasing (Not SSE)
+- Multithreading
+- Directional lights flat shading
+- Pixel lighting
+- Bump mapping
+- ns frame timing
+- Automatic quaternion camera movements
+- Envmap
+- Phong
+- Fog

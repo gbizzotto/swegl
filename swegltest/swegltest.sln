@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "swegltest", "swegltest.vcxproj", "{27BD8BCA-BE24-4940-89CF-72718CD643B5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F5108742-3540-4B2E-946E-CC0F159310C2} = {F5108742-3540-4B2E-946E-CC0F159310C2}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "swegl", "..\swegl.vcxproj", "{F5108742-3540-4B2E-946E-CC0F159310C2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{27BD8BCA-BE24-4940-89CF-72718CD643B5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{27BD8BCA-BE24-4940-89CF-72718CD643B5}.Debug|Win32.Build.0 = Debug|Win32
+		{27BD8BCA-BE24-4940-89CF-72718CD643B5}.Release|Win32.ActiveCfg = Release|Win32
+		{27BD8BCA-BE24-4940-89CF-72718CD643B5}.Release|Win32.Build.0 = Release|Win32
+		{F5108742-3540-4B2E-946E-CC0F159310C2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F5108742-3540-4B2E-946E-CC0F159310C2}.Debug|Win32.Build.0 = Debug|Win32
+		{F5108742-3540-4B2E-946E-CC0F159310C2}.Release|Win32.ActiveCfg = Release|Win32
+		{F5108742-3540-4B2E-946E-CC0F159310C2}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

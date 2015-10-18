@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_StaticRT|Win32">
+      <Configuration>Debug_StaticRT</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_StaticRT|Win32">
+      <Configuration>Release_StaticRT</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F5108742-3540-4B2E-946E-CC0F159310C2}</ProjectGuid>
+    <RootNamespace>swegl</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)\lib\</OutDir>
+    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mtdll\</IntDir>
+    <TargetName>swegl_32_d_vc100_mtdll</TargetName>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'">
+    <OutDir>$(ProjectDir)\lib\</OutDir>
+    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mt\</IntDir>
+    <TargetName>swegl_32_d_vc100_mt</TargetName>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)\lib\</OutDir>
+    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mtdll\</IntDir>
+    <TargetName>swegl_32_r_vc100_mtdll</TargetName>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'">
+    <OutDir>$(ProjectDir)\lib\</OutDir>
+    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mt\</IntDir>
+    <TargetName>swegl_32_r_vc100_mt</TargetName>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>BUILDING_SWEGL_LIB</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>BUILDING_SWEGL_LIB</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>BUILDING_SWEGL_LIB</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>BUILDING_SWEGL_LIB</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Data\Cube.cpp" />
+    <ClCompile Include="src\Data\Mesh.cpp" />
+    <ClCompile Include="src\Data\Scene.cpp" />
+    <ClCompile Include="src\Data\Texture.cpp" />
+    <ClCompile Include="src\Data\Tore.cpp" />
+    <ClCompile Include="src\Projection\Camera.cpp" />
+    <ClCompile Include="src\Projection\Matrix4x4.cpp" />
+    <ClCompile Include="src\Projection\MatrixStack.cpp" />
+    <ClCompile Include="src\Projection\Vec2f.cpp" />
+    <ClCompile Include="src\Projection\Vec3f.cpp" />
+    <ClCompile Include="src\Render\F001CustomNoArtefact.cpp" />
+    <ClCompile Include="src\Render\F002Bilinear.cpp" />
+    <ClCompile Include="src\Render\F003FakeBump.cpp" />
+    <ClCompile Include="src\Render\F004Antialiasing.cpp" />
+    <ClCompile Include="src\Render\Filler.cpp" />
+    <ClCompile Include="src\Render\R000Virtual.cpp" />
+    <ClCompile Include="src\Render\R008NoTexelArtefact.cpp" />
+    <ClCompile Include="src\Render\Renderer.cpp" />
+    <ClCompile Include="src\Render\ViewPort.cpp" />
+    <ClCompile Include="src\Render\ZInterpolator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="swegl\Data\Cube.h" />
+    <ClInclude Include="swegl\Data\Mesh.h" />
+    <ClInclude Include="swegl\Data\Scene.h" />
+    <ClInclude Include="swegl\Data\Texture.h" />
+    <ClInclude Include="swegl\Data\Tore.h" />
+    <ClInclude Include="swegl\Projection\Camera.h" />
+    <ClInclude Include="swegl\Projection\Matrix4x4.h" />
+    <ClInclude Include="swegl\Projection\MatrixStack.h" />
+    <ClInclude Include="swegl\Projection\Vec2f.h" />
+    <ClInclude Include="swegl\Projection\Vec3f.h" />
+    <ClInclude Include="swegl\Render\F001CustomNoArtefact.h" />
+    <ClInclude Include="swegl\Render\F002Bilinear.h" />
+    <ClInclude Include="swegl\Render\F003FakeBump.h" />
+    <ClInclude Include="swegl\Render\F004Antialiasing.h" />
+    <ClInclude Include="swegl\Render\Filler.h" />
+    <ClInclude Include="swegl\Render\R000Virtual.h" />
+    <ClInclude Include="swegl\Render\R008NoTexelArtefact.h" />
+    <ClInclude Include="swegl\Render\Renderer.h" />
+    <ClInclude Include="swegl\Render\ViewPort.h" />
+    <ClInclude Include="swegl\Render\ZInterpolator.h" />
+    <ClInclude Include="swegl\swegl.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
