@@ -2,7 +2,7 @@
 #ifndef SWE_VIEWPORT
 #define SWE_VIEWPORT
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <swegl/Projection/Vec3f.h>
 #include <swegl/Projection/Matrix4x4.h>

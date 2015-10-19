@@ -11,14 +11,14 @@ namespace swegl
 		:Mesh(t, nullptr)
 	{
 		this->m_vertexbuffer.reserve(8);
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f, -size/2.0f, -size/2.0f), Vec2f(0                      , t->m_mipmaps[0].m_height)));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f, -size/2.0f, -size/2.0f), Vec2f(t->m_mipmaps[0].m_width, t->m_mipmaps[0].m_height)));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f,  size/2.0f, -size/2.0f), Vec2f(0                      , 0                       )));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f,  size/2.0f, -size/2.0f), Vec2f(t->m_mipmaps[0].m_width, 0                       )));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f, -size/2.0f,  size/2.0f), Vec2f(t->m_mipmaps[0].m_width, t->m_mipmaps[0].m_height)));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f, -size/2.0f,  size/2.0f), Vec2f(0                      , t->m_mipmaps[0].m_height)));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f,  size/2.0f,  size/2.0f), Vec2f(t->m_mipmaps[0].m_width, 0                       )));
-		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f,  size/2.0f,  size/2.0f), Vec2f(0                      , 0                       )));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f, -size/2.0f, -size/2.0f), Vec2f((float)0                      , (float)t->m_mipmaps[0].m_height)));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f, -size/2.0f, -size/2.0f), Vec2f((float)t->m_mipmaps[0].m_width, (float)t->m_mipmaps[0].m_height)));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f,  size/2.0f, -size/2.0f), Vec2f((float)0                      , (float)0                       )));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f,  size/2.0f, -size/2.0f), Vec2f((float)t->m_mipmaps[0].m_width, (float)0                       )));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f, -size/2.0f,  size/2.0f), Vec2f((float)t->m_mipmaps[0].m_width, (float)t->m_mipmaps[0].m_height)));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f, -size/2.0f,  size/2.0f), Vec2f((float)0                      , (float)t->m_mipmaps[0].m_height)));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f(-size/2.0f,  size/2.0f,  size/2.0f), Vec2f((float)t->m_mipmaps[0].m_width, (float)0                       )));
+		m_vertexbuffer.emplace_back(std::make_pair<>(Vec3f( size/2.0f,  size/2.0f,  size/2.0f), Vec2f((float)0                      , (float)0                       )));
 	
 		std::vector<unsigned int> ib1;
 		ib1.reserve(8);

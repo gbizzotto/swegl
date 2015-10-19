@@ -152,7 +152,7 @@ namespace swegl
 		{
 			int x1, x2;
 
-			int ualphastep_x;
+			//int ualphastep_x;
 
 			if (line2_on_right) {
 				if (ratio2>0) {

@@ -31,7 +31,7 @@ namespace swegl
 		Vec3f operator/(const Vec3f & other) const;
 		Vec3f Mul3x3(const Matrix4x4 & m) const;
 
-		inline Vec3f & DivXY(float z) { x/z; y/z; return *this; }
+		inline Vec3f & DivXY(float z) { x/=z; y/=z; return *this; }
 	};
 
 }

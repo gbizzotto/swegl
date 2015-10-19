@@ -96,7 +96,7 @@ namespace swegl
 				};
 			std::vector<std::thread> vertex_transformer_aux_threads;
 			vertex_transformer_aux_threads.reserve(concurrency - 1);
-			for (int i=0 ; i<concurrency-1 ; ++i)
+			for (size_t i=0 ; i<concurrency-1 ; ++i)
 			{
 				vertex_transformer_aux_threads.emplace_back([concurrency, i, &vertices, &vertex_transformer, mesh]()
 					{
@@ -166,7 +166,7 @@ namespace swegl
 				std::vector<std::thread> aux_threads;
 				aux_threads.reserve(concurrency-1);
 
-				for (int i=0 ; i<concurrency-1 ; ++i)
+				for (size_t i=0 ; i<concurrency-1 ; ++i)
 				{
 					aux_threads.emplace_back([i, concurrency, &strip_renderer, &mesh, &polys_to_fill]()
 						{
@@ -232,7 +232,7 @@ namespace swegl
 				std::vector<std::thread> aux_threads;
 				aux_threads.reserve(concurrency-1);
 
-				for (int i=0 ; i<concurrency-1 ; ++i)
+				for (size_t i=0 ; i<concurrency-1 ; ++i)
 				{
 					aux_threads.emplace_back([i, concurrency, &fan_renderer, &mesh, &polys_to_fill]()
 						{

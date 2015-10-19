@@ -54,8 +54,8 @@ namespace swegl
 	void Matrix4x4::RotateX(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
-		float cosa = cos(a);
-		float sina = sin(a);
+		float cosa = (float)cos(a);
+		float sina = (float)sin(a);
 		float d4 = m_data[4];
 		float d5 = m_data[5];
 		float d6 = m_data[6];
@@ -73,8 +73,8 @@ namespace swegl
 	void Matrix4x4::RotateY(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
-		float cosa = cos(a);
-		float sina = sin(a);
+		float cosa = (float)cos(a);
+		float sina = (float)sin(a);
 		float d0 = m_data[0];
 		float d1 = m_data[1];
 		float d2 = m_data[2];
@@ -92,8 +92,8 @@ namespace swegl
 	void Matrix4x4::RotateZ(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
-		float cosa = cos(a);
-		float sina = sin(a);
+		float cosa = (float)cos(a);
+		float sina = (float)sin(a);
 		float d0 = m_data[0];
 		float d1 = m_data[1];
 		float d2 = m_data[2];
@@ -110,10 +110,10 @@ namespace swegl
 
 	void Matrix4x4::SetRotateXY(float x, float y)
 	{
-		float cosx = cos(x);
-		float sinx = sin(x);
-		float cosy = cos(y);
-		float siny = sin(y);
+		float cosx = (float)cos(x);
+		float sinx = (float)sin(x);
+		float cosy = (float)cos(y);
+		float siny = (float)sin(y);
 		m_data[15] = 1;
 		m_data[3] = m_data[4] = m_data[7] = m_data[11] = m_data[12] = m_data[13] = m_data[14] = 0;
 		m_data[0] = cosy;

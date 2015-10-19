@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_StaticRT|Win32">
       <Configuration>Debug_StaticRT</Configuration>
@@ -27,23 +27,27 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -66,28 +70,28 @@
     <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mtdll\</IntDir>
     <TargetName>swegl_32_d_vc100_mtdll</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
     <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mt\</IntDir>
     <TargetName>swegl_32_d_vc100_mt</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
     <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mtdll\</IntDir>
     <TargetName>swegl_32_r_vc100_mtdll</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
     <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mt\</IntDir>
     <TargetName>swegl_32_r_vc100_mt</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir);$(SDL_ROOT);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -153,9 +157,6 @@
     <ClCompile Include="src\Projection\Vec2f.cpp" />
     <ClCompile Include="src\Projection\Vec3f.cpp" />
     <ClCompile Include="src\Render\F001CustomNoArtefact.cpp" />
-    <ClCompile Include="src\Render\F002Bilinear.cpp" />
-    <ClCompile Include="src\Render\F003FakeBump.cpp" />
-    <ClCompile Include="src\Render\F004Antialiasing.cpp" />
     <ClCompile Include="src\Render\Filler.cpp" />
     <ClCompile Include="src\Render\R000Virtual.cpp" />
     <ClCompile Include="src\Render\R008NoTexelArtefact.cpp" />
@@ -175,9 +176,6 @@
     <ClInclude Include="swegl\Projection\Vec2f.h" />
     <ClInclude Include="swegl\Projection\Vec3f.h" />
     <ClInclude Include="swegl\Render\F001CustomNoArtefact.h" />
-    <ClInclude Include="swegl\Render\F002Bilinear.h" />
-    <ClInclude Include="swegl\Render\F003FakeBump.h" />
-    <ClInclude Include="swegl\Render\F004Antialiasing.h" />
     <ClInclude Include="swegl\Render\Filler.h" />
     <ClInclude Include="swegl\Render\R000Virtual.h" />
     <ClInclude Include="swegl\Render\R008NoTexelArtefact.h" />

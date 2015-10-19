@@ -10,18 +10,6 @@
     <ClCompile Include="src\Data\Texture.cpp">
       <Filter>data</Filter>
     </ClCompile>
-    <ClCompile Include="src\Render\F001CustomNoArtefact.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Render\F002Bilinear.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Render\F003FakeBump.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Render\F004Antialiasing.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
     <ClCompile Include="src\Render\Filler.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -61,6 +49,9 @@
     <ClCompile Include="src\Data\Tore.cpp">
       <Filter>data</Filter>
     </ClCompile>
+    <ClCompile Include="src\Render\F001CustomNoArtefact.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="data">
@@ -82,18 +73,6 @@
     </ClInclude>
     <ClInclude Include="swegl\Data\Texture.h">
       <Filter>data</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Render\F001CustomNoArtefact.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Render\F002Bilinear.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Render\F003FakeBump.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Render\F004Antialiasing.h">
-      <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="swegl\Render\Filler.h">
       <Filter>render</Filter>
@@ -134,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="swegl\Data\Tore.h">
       <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="swegl\Render\F001CustomNoArtefact.h">
+      <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -28,7 +28,7 @@ namespace swegl
 				Vec3f v;
 				v = small * v;
 				v = big * v;
-				m_vertexbuffer.emplace_back(std::make_pair<>(v, Vec2f(t->m_mipmaps[0].m_width*bg/precision, t->m_mipmaps[0].m_height*sm/precision)));
+				m_vertexbuffer.emplace_back(std::make_pair<>(v, Vec2f(t->m_mipmaps[0].m_width*(float)bg/precision, t->m_mipmaps[0].m_height*(float)sm/precision)));
 				small.RotateZ(angle);
 			}
 
