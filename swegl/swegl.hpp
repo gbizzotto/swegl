@@ -41,10 +41,12 @@
 			#define SWEGL_DEBUG_SUFFIX "_r"
 		#endif
 
-		#if _MSC_VER >= 1800
+		#if _MSC_VER >= 2000
 			#error "Invalid compiler!"
-		#elif _MSC_VER >= 1700
-			#define SWEGL_COMPILER_VERSION "_VC110"
+		#elif _MSC_VER >= 1900
+			#define SWEGL_COMPILER_VERSION "_VC140"
+		#elif _MSC_VER >= 1800
+			#define SWEGL_COMPILER_VERSION "_VC120"
 		#elif _MSC_VER >= 1600
 			#define SWEGL_COMPILER_VERSION "_VC100"
 		#elif _MSC_VER >= 1500

@@ -1,4 +1,5 @@
 
+#include <memory.h>
 #include <swegl/Render/ViewPort.h>
 
 namespace swegl
@@ -23,7 +24,7 @@ namespace swegl
 
 	Vec3f ViewPort::ToPixel(Vec3f &v)
 	{
-		return v * m_viewportmatrix;;
+		return v * m_viewportmatrix;
 	}
 	/*
 	inline void ViewPort::ShowPoint(int x, int y, unsigned char shade)

@@ -1,16 +1,15 @@
+
 #include <stdlib.h>
-#include <SDL/SDL.h>
 
-//#include <windows.h>
+#include <SDL.h>
 
+#include <swegl/swegl.hpp>
+#include <freon/freon.hpp>
 #include "main.h"
 #include "font.h"
-#include <swegl/swegl.hpp>
-#include "freon/OnScopeExit.hpp"
 
 swegl::Scene* BuildScene();
-SDL_Surface *InitSDL();
-void VideoWorks(SDL_Surface *screen);
+void VideoWorks(SDL_Window *screen, SDL_Renderer *renderer, SDL_Texture *sdlTexture, SDL_Surface *surface);
 int KeyboardWorks();
 
 swegl::Scene *scene;
@@ -39,10 +38,41 @@ void AssertFailed(char * cond, char * filename, int line)
 
 int main(int argc, char *argv[])
 {
+	// Initialize SDL's subsystems - in this case, only video.
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	{
+		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+		return -1;
+	}
+
 	ON_SCOPE_EXIT(SDL_Quit);
 
-	SDL_Surface *screen = InitSDL(); // freed by SDL_Quit
-	if (screen == nullptr)
+	SDL_SetRelativeMouseMode(SDL_FALSE);
+	SDL_ShowCursor(0);
+	
+	SDL_Window *window = SDL_CreateWindow("swegl test",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		SCR_WIDTH,
+		SCR_HEIGHT,
+		0);
+	if (window == nullptr)
+		return -1;
+
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+	if (renderer == nullptr)
+		return -1;
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	
+	SDL_Texture *texture = SDL_CreateTexture(renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		SCR_WIDTH, SCR_HEIGHT);
+	if (texture == nullptr)
+		return -1;
+
+	SDL_Surface *surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
+	if (surface == nullptr)
 		return -1;
 
 	memset(keys, 0, 256);
@@ -51,7 +81,7 @@ int main(int argc, char *argv[])
 
 	//*
 	camera = new swegl::Camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
-	viewport1 = new swegl::ViewPort(0,0,           SCR_WIDTH,SCR_HEIGHT,screen);
+	viewport1 = new swegl::ViewPort(0, 0, SCR_WIDTH,SCR_HEIGHT, surface);
 	renderer1 = new swegl::R008NoTexelArtefact(scene, camera, viewport1);
 	/**/
 	/*
@@ -70,33 +100,13 @@ int main(int argc, char *argv[])
 	/**/
 	while (1)
 	{
-		VideoWorks(screen);
+		VideoWorks(window, renderer, texture, surface);
 		if (int a=KeyboardWorks() < 0)
 			return -a;
 	}
 	return 0;
 }
 
-
-SDL_Surface *InitSDL()
-{
-	// Initialize SDL's subsystems - in this case, only video.
-	if ( SDL_Init(SDL_INIT_VIDEO) < 0 )
-	{
-		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
-		return nullptr;
-	}
-
-	SDL_WM_GrabInput(SDL_GRAB_OFF);
-	SDL_ShowCursor(0);
-
-	// Register SDL_Quit to be called at exit; makes sure things are
-	// cleaned up when we quit.
-	atexit(SDL_Quit);
-
-	// Attempt to create a SCR_WIDTHxSCR_HEIGHT window with 32bit pixels.
-	return SDL_SetVideoMode(SCR_WIDTH, SCR_HEIGHT, 32, SDL_SWSURFACE);
-}
 
 swegl::Scene* BuildScene()
 {
@@ -128,7 +138,7 @@ swegl::Scene* BuildScene()
 	return s;
 }
 
-void VideoWorks(SDL_Surface *screen)
+void VideoWorks(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *sdlTexture, SDL_Surface *surface)
 {
 	static int totalTicks = 0;
 	static int tickCount  = 0;
@@ -137,9 +147,9 @@ void VideoWorks(SDL_Surface *screen)
 	int fpsticks = SDL_GetTicks();
 
 	// Lock surface if needed
-	if (SDL_MUSTLOCK(screen))
-		if (SDL_LockSurface(screen) < 0)
-			return;
+	//if (SDL_MUSTLOCK(screen))
+	//	if (SDL_LockSurface(screen) < 0)
+	//		return;
 
 	renderer1->Render();
 	if (renderer2 != NULL)
@@ -155,19 +165,23 @@ void VideoWorks(SDL_Surface *screen)
 		totalTicks = 0;
 		tickCount  = 0;
 	}
-	font.Print(fps, 10, 10, screen);
+	font.Print(fps, 10, 10, surface);
 	#if defined(_DEBUG) || defined(DEBUG)
 		sprintf_s(fps, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
-		font.Print(fps, 10, 26, screen);
+		font.Print(fps, 10, 26, surface);
 		g_trianglesdrawn = g_pixelsdrawn = 0;
 	#endif
 
 	// Unlock if needed
-	if (SDL_MUSTLOCK(screen))
-		SDL_UnlockSurface(screen);
+	//if (SDL_MUSTLOCK(screen))
+	//	SDL_UnlockSurface(screen);
 
 	// Tell SDL to update the whole screen
-	SDL_UpdateRect(screen, 0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+	SDL_UpdateTexture(sdlTexture, NULL, surface->pixels, SCR_WIDTH * sizeof(Uint32));
+	SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+	//SDL_UpdateRect(screen, 0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
 int KeyboardWorks()

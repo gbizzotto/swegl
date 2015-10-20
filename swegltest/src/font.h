@@ -2,7 +2,7 @@
 #ifndef SWE_FONT
 #define SWE_FONT
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 class Font
 {

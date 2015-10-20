@@ -21,6 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F5108742-3540-4B2E-946E-CC0F159310C2}</ProjectGuid>
     <RootNamespace>swegl</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -67,29 +68,29 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
-    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mtdll\</IntDir>
-    <TargetName>swegl_32_d_vc100_mtdll</TargetName>
+    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc140_mtdll\</IntDir>
+    <TargetName>swegl_32_d_vc140_mtdll</TargetName>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_StaticRT|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
-    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc100_mt\</IntDir>
-    <TargetName>swegl_32_d_vc100_mt</TargetName>
+    <IntDir>$(ProjectDir)\lib\swegl_32_d_vc140_mt\</IntDir>
+    <TargetName>swegl_32_d_vc140_mt</TargetName>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
-    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mtdll\</IntDir>
-    <TargetName>swegl_32_r_vc100_mtdll</TargetName>
+    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc140_mtdll\</IntDir>
+    <TargetName>swegl_32_r_VC140_mtdll</TargetName>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_StaticRT|Win32'">
     <OutDir>$(ProjectDir)\lib\</OutDir>
-    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc100_mt\</IntDir>
-    <TargetName>swegl_32_r_vc100_mt</TargetName>
+    <IntDir>$(ProjectDir)\lib\swegl_32_r_vc140_mt\</IntDir>
+    <TargetName>swegl_32_r_vc140_mt</TargetName>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir);$(SDL_ROOT)\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
