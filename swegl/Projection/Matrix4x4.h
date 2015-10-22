@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <memory.h>
+#include <initializer_list>
+
 namespace swegl
 {
 
@@ -8,22 +11,31 @@ namespace swegl
 
 	class Matrix4x4
 	{
-	public:
+	private:
 		float m_data[16];
 
-		Matrix4x4();
-		~Matrix4x4();
+	public:
+		Matrix4x4()
+			:m_data{ 0 }
+		{}
 
-		void Set(float *data);
-		const Matrix4x4 operator*(const Matrix4x4 & other) const;
+		template <typename... T>
+		Matrix4x4(T... ts)
+			:m_data{ ts... }
+		{}
+
+		Matrix4x4 operator*(const Matrix4x4 & other) const;
 		Vec3f operator*(const Vec3f & v) const;
-		void Set(const Matrix4x4 & other);
+		const Matrix4x4 & operator=(const Matrix4x4 & other);
+		float   operator[](const int idx) const;
+		float & operator[](const int idx);
 		void RotateX(float a);
 		void RotateY(float a);
 		void RotateZ(float a);
 		void SetRotateXY(float x, float y);
 		void Translate(float x, float y, float z);
-		void SetIdentity();
-	};
 
+		static const Matrix4x4 Identity;
+	};
+	
 }

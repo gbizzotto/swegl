@@ -151,7 +151,6 @@
     <ClCompile Include="src\Data\Texture.cpp" />
     <ClCompile Include="src\Projection\Camera.cpp" />
     <ClCompile Include="src\Projection\Matrix4x4.cpp" />
-    <ClCompile Include="src\Projection\MatrixStack.cpp" />
     <ClCompile Include="src\Projection\Vec2f.cpp" />
     <ClCompile Include="src\Projection\Vec3f.cpp" />
     <ClCompile Include="src\Render\Filler.cpp" />
@@ -164,7 +163,6 @@
     <ClInclude Include="swegl\Data\Texture.h" />
     <ClInclude Include="swegl\Projection\Camera.h" />
     <ClInclude Include="swegl\Projection\Matrix4x4.h" />
-    <ClInclude Include="swegl\Projection\MatrixStack.h" />
     <ClInclude Include="swegl\Projection\Vec2f.h" />
     <ClInclude Include="swegl\Projection\Vec3f.h" />
     <ClInclude Include="swegl\Render\Filler.h" />

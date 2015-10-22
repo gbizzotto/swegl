@@ -13,12 +13,12 @@ namespace swegl
 		this->m_h = h;
 		this->m_screen = screen;
 
-		this->m_viewportmatrix.m_data[0] = w/2.0f;
-		this->m_viewportmatrix.m_data[3] = x+w/2.0f;
-		this->m_viewportmatrix.m_data[5] = -h/2.0f;
-		this->m_viewportmatrix.m_data[7] = y+h/2.0f;
-		this->m_viewportmatrix.m_data[10] = 1.0f;
-		this->m_viewportmatrix.m_data[15] = 1.0f;
+		this->m_viewportmatrix[0] = w/2.0f;
+		this->m_viewportmatrix[3] = x+w/2.0f;
+		this->m_viewportmatrix[5] = -h/2.0f;
+		this->m_viewportmatrix[7] = y+h/2.0f;
+		this->m_viewportmatrix[10] = 1.0f;
+		this->m_viewportmatrix[15] = 1.0f;
 	}
 
 

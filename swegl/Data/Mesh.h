@@ -40,7 +40,7 @@ namespace swegl
 		Mesh(VertexBuffer && vb)
 			:m_vertexbuffer(std::forward<VertexBuffer>(vb))
 		{
-			this->m_worldmatrix.SetIdentity();
+			m_worldmatrix = Matrix4x4::Identity;
 		}
 		void SetVertexBuffer(VertexBuffer && v) { m_vertexbuffer = v; }
 		void SetTexture(std::shared_ptr<Texture> & texture) { m_texture = texture; }

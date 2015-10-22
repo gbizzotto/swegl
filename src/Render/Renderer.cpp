@@ -4,29 +4,10 @@
 #include <cmath>
 #include <swegl/Render/Renderer.h>
 #include <swegl/Render/Filler.h>
-#include <swegl/Projection/MatrixStack.h>
 #include <swegl/Projection/Vec2f.h>
 
 namespace swegl
 {
-
-	typedef struct
-	{
-		bool horizontal;
-		bool highest; // for horizontal lines whether it should return the highest or the lowest x
-		float error, deltaerr;
-		int x, pmax, inc;
-		bool firstline;
-
-		float alpha, alphastep;
-		Vec3f u0z0, u1z1;
-		float invz0, invz1;
-		Vec3f ualpha;
-	
-		Vec3f topalpha, topstep;
-		float bottomalpha, bottomstep;
-
-	} R008TexCustomLineData;
 
 	struct PolyToFill
 	{
@@ -45,12 +26,7 @@ namespace swegl
 			{}
 
 	};
-
-	int R008TexCustomLineGetCurrentXThenStep(R008TexCustomLineData & data);
-	void R008TexInitCustomLine(R008TexCustomLineData & data, const Vec3f & v0, const Vec3f & v1,
-				   const Vec3f & t0, const Vec3f & t1, bool highest);
-	void R008TexCustomLineJumpSteps(R008TexCustomLineData & data, int steps);
-
+	
 
 	Renderer::Renderer(Scene & scene, Camera *camera, ViewPort *viewport)
 		: m_scene(scene)
@@ -65,23 +41,23 @@ namespace swegl
 		auto concurrency = std::thread::hardware_concurrency();
 
 		m_viewport->Clear();
-		MatrixStack mstackvertices;
-		MatrixStack mstacknormals;
+		std::vector<Matrix4x4> mstackvertices(1, Matrix4x4::Identity);
+		std::vector<Matrix4x4> mstacknormals(1, Matrix4x4::Identity);
 
 		// TODO: sort meshes
 
-		mstackvertices.PushMatrix(m_camera->m_projectionmatrix);
-		mstackvertices.PushMatrix(m_camera->m_viewmatrix);
-		mstacknormals.PushMatrix(m_camera->m_viewmatrix);
+		mstackvertices.push_back(mstackvertices.back() * m_camera->m_projectionmatrix);
+		mstackvertices.push_back(mstackvertices.back() * m_camera->m_viewmatrix);
+		mstacknormals.push_back(mstacknormals.back() * m_camera->m_viewmatrix);
 
 		for (int i=m_viewport->m_w*m_viewport->m_h-1 ; i>=0 ; i--)
-			m_zbuffer[i] = 99999999999.0f;
+			m_zbuffer[i] = std::numeric_limits<float>::max();
 
 		for (size_t i=0 ; i<m_scene.size() ; i++)
 		{
 			const Mesh & mesh = m_scene[i];
-			mstackvertices.PushMatrix(mesh.GetWorldMatrix());
-			mstacknormals.PushMatrix(mesh.GetWorldMatrix());
+			mstackvertices.push_back(mstackvertices.back() * mesh.GetWorldMatrix());
+			mstacknormals.push_back(mstacknormals.back() * mesh.GetWorldMatrix());
 
 			// Transforming vertices into screen coords
 			std::vector<std::pair<Vec3f,Vec2f>> vertices = mesh.GetVertexBuffer();
@@ -90,7 +66,7 @@ namespace swegl
 				{
 					for ( ; it!=end ; ++it)
 					{
-						Vec3f vec = mstackvertices.GetTopMatrix() * it->first;
+						Vec3f vec = (mstackvertices.empty()?Matrix4x4::Identity:mstackvertices.back()) * it->first;
 						vec.x /= fabs(vec.z);
 						vec.y /= fabs(vec.z);
 						it->first = m_viewport->m_viewportmatrix * vec;
@@ -259,8 +235,8 @@ namespace swegl
 					                 it2->texture, m_viewport, it2->shade, m_zbuffer);
 
 
-			mstackvertices.PopMatrix(); // Remove world matrix (the mesh one)
-			mstacknormals.PopMatrix();
+			mstackvertices.pop_back(); // Remove world matrix (the mesh one)
+			mstacknormals.pop_back();
 		}
 	}
 

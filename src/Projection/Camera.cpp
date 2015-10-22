@@ -18,13 +18,13 @@ namespace swegl
 		float w = 1.0f;
 		float h = 1.0f;
 
-		this->m_projectionmatrix.m_data[0] = 2*n / w;
-		this->m_projectionmatrix.m_data[5] = 2*n / h;
-		this->m_projectionmatrix.m_data[10] = f / (f-n);
-		this->m_projectionmatrix.m_data[11] = -f*n / (f-n);
-		this->m_projectionmatrix.m_data[14] = 1;
+		this->m_projectionmatrix[0] = 2*n / w;
+		this->m_projectionmatrix[5] = 2*n / h;
+		this->m_projectionmatrix[10] = f / (f-n);
+		this->m_projectionmatrix[11] = -f*n / (f-n);
+		this->m_projectionmatrix[14] = 1;
 
-		this->m_viewmatrix.SetIdentity();
+		this->m_viewmatrix = Matrix4x4::Identity;
 	}
 
 	Camera::Camera(float aspectratio)
@@ -42,19 +42,19 @@ namespace swegl
 
 		if (aspectratio > 1)
 		{
-			this->m_projectionmatrix.m_data[0] = 2*n / w;
-			this->m_projectionmatrix.m_data[5] = aspectratio * 2*n / h;
+			this->m_projectionmatrix[0] = 2*n / w;
+			this->m_projectionmatrix[5] = aspectratio * 2*n / h;
 		}
 		else
 		{
-			this->m_projectionmatrix.m_data[0] = (1.0f/aspectratio) * 2*n / w;
-			this->m_projectionmatrix.m_data[5] = 2*n / h;
+			this->m_projectionmatrix[0] = (1.0f/aspectratio) * 2*n / w;
+			this->m_projectionmatrix[5] = 2*n / h;
 		}
-		this->m_projectionmatrix.m_data[10] = f / (f-n);
-	//	this->m_projectionmatrix.m_data[11] = -f*n / (f-n);
-		this->m_projectionmatrix.m_data[14] = 1;
+		this->m_projectionmatrix[10] = f / (f-n);
+	//	this->m_projectionmatrix[11] = -f*n / (f-n);
+		this->m_projectionmatrix[14] = 1;
 
-		this->m_viewmatrix.SetIdentity();
+		this->m_viewmatrix = Matrix4x4::Identity;
 	}
 
 	void Camera::RotateX(float a)

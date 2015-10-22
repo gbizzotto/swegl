@@ -6,7 +6,6 @@
 
 #include <swegl/Projection/Camera.h>
 #include <swegl/Projection/Matrix4x4.h>
-#include <swegl/Projection/MatrixStack.h>
 #include <swegl/Projection/Vec2f.h>
 #include <swegl/Projection/Vec3f.h>
 

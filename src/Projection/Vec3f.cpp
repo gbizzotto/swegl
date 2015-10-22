@@ -62,18 +62,18 @@ namespace swegl
 	Vec3f Vec3f::operator * (const Matrix4x4 & m) const
 	{
 		Vec3f result;
-		result.x = m.m_data[0]*x + m.m_data[1]*y + m.m_data[2]*z + m.m_data[3];
-		result.y = m.m_data[4]*x + m.m_data[5]*y + m.m_data[6]*z + m.m_data[7];
-		result.z = m.m_data[8]*x + m.m_data[9]*y + m.m_data[10]*z + m.m_data[11];
+		result.x = m[0]*x + m[1]*y + m[2]*z + m[3];
+		result.y = m[4]*x + m[5]*y + m[6]*z + m[7];
+		result.z = m[8]*x + m[9]*y + m[10]*z + m[11];
 		return result;
 	}
 
 	Vec3f Vec3f::Mul3x3(const Matrix4x4 & m) const
 	{
 		Vec3f result;
-		result.x = m.m_data[0]*x + m.m_data[1]*y + m.m_data[2]*z;
-		result.y = m.m_data[4]*x + m.m_data[5]*y + m.m_data[6]*z;
-		result.z = m.m_data[8]*x + m.m_data[9]*y + m.m_data[10]*z;
+		result.x = m[0]*x + m[1]*y + m[2]*z;
+		result.y = m[4]*x + m[5]*y + m[6]*z;
+		result.z = m[8]*x + m[9]*y + m[10]*z;
 		return result;
 	}
 

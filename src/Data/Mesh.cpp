@@ -94,14 +94,12 @@ namespace swegl
 		vb.reserve((precision + 1)*(precision + 1));
 
 		float angle = (2 * 3.141592653589f) / precision;
-		Matrix4x4 big;
-		big.SetIdentity();
+		Matrix4x4 big = Matrix4x4::Identity;
 		big.Translate(2.0f, 0.0f, 0.0f);
 
 		for (unsigned int bg = 0; bg <= precision; bg++)
 		{
-			Matrix4x4 small;
-			small.SetIdentity();
+			Matrix4x4 small = Matrix4x4::Identity;
 			small.Translate(0.8f, 0.0f, 0.0f);
 
 			for (unsigned int sm = 0; sm <= precision; sm++)

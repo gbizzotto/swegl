@@ -19,9 +19,6 @@
     <ClCompile Include="src\Projection\Matrix4x4.cpp">
       <Filter>projection</Filter>
     </ClCompile>
-    <ClCompile Include="src\Projection\MatrixStack.cpp">
-      <Filter>projection</Filter>
-    </ClCompile>
     <ClCompile Include="src\Projection\Vec2f.cpp">
       <Filter>projection</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
       <Filter>projection</Filter>
     </ClInclude>
     <ClInclude Include="swegl\Projection\Matrix4x4.h">
-      <Filter>projection</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Projection\MatrixStack.h">
       <Filter>projection</Filter>
     </ClInclude>
     <ClInclude Include="swegl\Projection\Vec2f.h">

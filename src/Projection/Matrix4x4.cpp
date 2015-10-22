@@ -7,24 +7,9 @@
 namespace swegl
 {
 
-	Matrix4x4::Matrix4x4()
-	{
-		memset(this->m_data, 0, sizeof(float)*16);
-	}
-
-	Matrix4x4::~Matrix4x4()
-	{
-	}
-
-	void Matrix4x4::Set(float *data)
-	{
-		memcpy(m_data, data, sizeof(float)*16);
-	}
-
-	const Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &other) const
+	Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &other) const
 	{
 		Matrix4x4 result;
-		// TODO optimize
 
 		for (unsigned int j=0 ; j<4 ; j++) {
 			for (unsigned int i=0 ; i<4 ; i++) {
@@ -37,11 +22,6 @@ namespace swegl
 		return result;
 	}
 
-	void Matrix4x4::Set(const Matrix4x4 &other)
-	{
-		memcpy(this->m_data, other.m_data, sizeof(float)*16);
-	}
-
 	Vec3f Matrix4x4::operator*(const Vec3f & v) const
 	{
 		Vec3f result;
@@ -49,6 +29,21 @@ namespace swegl
 		result.y = v.x*m_data[4] + v.y*m_data[5] + v.z*m_data[6] + m_data[7];
 		result.z = v.x*m_data[8] + v.y*m_data[9] + v.z*m_data[10] + m_data[11];
 		return result;
+	}
+
+	float Matrix4x4::operator[](const int idx) const
+	{
+		return m_data[idx];
+	}
+	float & Matrix4x4::operator[](const int idx)
+	{
+		return m_data[idx];
+	}
+
+	const Matrix4x4 & Matrix4x4::operator=(const Matrix4x4 & other)
+	{
+		memcpy(m_data, other.m_data, sizeof(m_data));
+		return *this;
 	}
 
 	void Matrix4x4::RotateX(float a)
@@ -128,15 +123,13 @@ namespace swegl
 
 	void Matrix4x4::Translate(float x, float y, float z)
 	{
-		this->m_data[3] += x;
-		this->m_data[7] += y;
-		this->m_data[11] += z;
+		m_data[3] += x;
+		m_data[7] += y;
+		m_data[11] += z;
 	}
 
-	void Matrix4x4::SetIdentity()
-	{
-		memset(this->m_data, 0, sizeof(float)*16);
-		this->m_data[0] = this->m_data[5] = this->m_data[10] = this->m_data[15] = 1;
-	}
-
+	const Matrix4x4 Matrix4x4::Identity({ 1.0f, 0.0f, 0.0f, 0.0f,
+	                                      0.0f, 1.0f, 0.0f, 0.0f,
+	                                      0.0f, 0.0f, 1.0f, 0.0f,
+	                                      0.0f, 0.0f, 0.0f, 1.0f });
 }
