@@ -12,14 +12,14 @@ namespace swegl
 	/**
 	 * Texturing Renderer with Bilinear Filtering, without texture mapping artefacts
 	 */
-	class R008NoTexelArtefact
+	class Renderer
 	{
 	public:
 		Scene & m_scene;
 		Camera *m_camera;
 		ViewPort *m_viewport;
 		float *m_zbuffer;
-		R008NoTexelArtefact(Scene & scene, Camera *camera, ViewPort *viewport);
+		Renderer(Scene & scene, Camera *camera, ViewPort *viewport);
 
 		void Render();
 		void FillPoly(const Vec3f & v0, const Vec3f & v1, const Vec3f & v2,

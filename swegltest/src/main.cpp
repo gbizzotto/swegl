@@ -15,8 +15,8 @@ int KeyboardWorks();
 swegl::Camera *camera;
 swegl::ViewPort *viewport1;
 swegl::ViewPort *viewport2;
-swegl::R008NoTexelArtefact *renderer1 = NULL;
-swegl::R008NoTexelArtefact *renderer2 = NULL;
+swegl::Renderer *renderer1 = NULL;
+swegl::Renderer *renderer2 = NULL;
 Font font("ascii.bmp");
 char keys[256];
 int zoom = 0;
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	//*
 	camera = new swegl::Camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
 	viewport1 = new swegl::ViewPort(0, 0, SCR_WIDTH,SCR_HEIGHT, surface);
-	renderer1 = new swegl::R008NoTexelArtefact(scene, camera, viewport1);
+	renderer1 = new swegl::Renderer(scene, camera, viewport1);
 	/**/
 	/*
 	camera = new Camera((SCR_WIDTH/2.0f)/SCR_HEIGHT);

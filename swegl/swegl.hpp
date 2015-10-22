@@ -3,9 +3,7 @@
 #define SWEGL_LIB
 
 #include <swegl/Data/Mesh.h>
-#include <swegl/Data/RectangleTriangle.h>
 #include <swegl/Data/Texture.h>
-#include <swegl/Data/Tore.h>
 
 #include <swegl/Projection/Camera.h>
 #include <swegl/Projection/Matrix4x4.h>
@@ -14,7 +12,7 @@
 #include <swegl/Projection/Vec3f.h>
 
 #include <swegl/Render/ViewPort.h>
-#include <swegl/Render/R008NoTexelArtefact.h>
+#include <swegl/Render/Renderer.h>
 
 #if defined(_MSC_VER)
 	#if !defined(BUILDING_SWEGL_LIB)

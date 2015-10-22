@@ -2,8 +2,8 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
-#include <swegl/Render/R008NoTexelArtefact.h>
-#include <swegl/Render/F001CustomNoArtefact.h>
+#include <swegl/Render/Renderer.h>
+#include <swegl/Render/Filler.h>
 #include <swegl/Projection/MatrixStack.h>
 #include <swegl/Projection/Vec2f.h>
 
@@ -52,7 +52,7 @@ namespace swegl
 	void R008TexCustomLineJumpSteps(R008TexCustomLineData & data, int steps);
 
 
-	R008NoTexelArtefact::R008NoTexelArtefact(Scene & scene, Camera *camera, ViewPort *viewport)
+	Renderer::Renderer(Scene & scene, Camera *camera, ViewPort *viewport)
 		: m_scene(scene)
 		, m_camera(camera)
 		, m_viewport(viewport)
@@ -60,7 +60,7 @@ namespace swegl
 		m_zbuffer = new float[m_viewport->m_w*m_viewport->m_h];
 	}
 
-	void R008NoTexelArtefact::Render()
+	void Renderer::Render()
 	{
 		auto concurrency = std::thread::hardware_concurrency();
 
@@ -254,9 +254,9 @@ namespace swegl
 			// actually processing the polys
 			for (auto it=polys_to_fill.begin(), end=polys_to_fill.end() ; it!=end ; ++it)
 				for (auto it2=it->begin(), end2=it->end() ; it2!=end2 ; ++it2)
-					F001CustomNoArtefact::FillPoly(it2->v0, it2->v1, it2->v2,
-					                               it2->t0, it2->t1, it2->t2,
-					                               it2->texture, m_viewport, it2->shade, m_zbuffer);
+					Filler::FillPoly(it2->v0, it2->v1, it2->v2,
+					                 it2->t0, it2->t1, it2->t2,
+					                 it2->texture, m_viewport, it2->shade, m_zbuffer);
 
 
 			mstackvertices.PopMatrix(); // Remove world matrix (the mesh one)

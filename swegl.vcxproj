@@ -154,9 +154,8 @@
     <ClCompile Include="src\Projection\MatrixStack.cpp" />
     <ClCompile Include="src\Projection\Vec2f.cpp" />
     <ClCompile Include="src\Projection\Vec3f.cpp" />
-    <ClCompile Include="src\Render\F001CustomNoArtefact.cpp" />
     <ClCompile Include="src\Render\Filler.cpp" />
-    <ClCompile Include="src\Render\R008NoTexelArtefact.cpp" />
+    <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Render\ViewPort.cpp" />
     <ClCompile Include="src\Render\ZInterpolator.cpp" />
   </ItemGroup>
@@ -168,9 +167,8 @@
     <ClInclude Include="swegl\Projection\MatrixStack.h" />
     <ClInclude Include="swegl\Projection\Vec2f.h" />
     <ClInclude Include="swegl\Projection\Vec3f.h" />
-    <ClInclude Include="swegl\Render\F001CustomNoArtefact.h" />
     <ClInclude Include="swegl\Render\Filler.h" />
-    <ClInclude Include="swegl\Render\R008NoTexelArtefact.h" />
+    <ClInclude Include="swegl\Render\Renderer.h" />
     <ClInclude Include="swegl\Render\ViewPort.h" />
     <ClInclude Include="swegl\Render\ZInterpolator.h" />
     <ClInclude Include="swegl\swegl.hpp" />
