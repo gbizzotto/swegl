@@ -55,18 +55,12 @@ Font::Font(const char *filename)
 
 void Font::Print(char * str, unsigned x, unsigned y, SDL_Surface *surface)
 {
-	char * ptr = str;
-	while (*ptr != 0)
+	for (size_t c = 0; str[c] != 0; ++c)
 	{
-		unsigned char *bitmap = &data[16*16* (*ptr)];
+		unsigned char *bitmap = &data[16*16* (str[c])];
 		for (unsigned int j=0 ; j<16 ; j++)
-		{
 			for (unsigned int i=0 ; i<16 ; i++)
-			{
 				if (bitmap[j*16+i])
-					((unsigned int*)surface->pixels)[(int)((y+j)*surface->pitch/4 + x+i + 16*(ptr-str))] = bitmap[j*16+i]<<16 | bitmap[j*16+i]<<8 | bitmap[j*16+i];
-			}
-		}
-		ptr++;
+					((unsigned int*)surface->pixels)[(int)((y+j)*surface->pitch/4 + x+i + 16*c)] = bitmap[j*16+i]<<16 | bitmap[j*16+i]<<8 | bitmap[j*16+i];
 	}
 }

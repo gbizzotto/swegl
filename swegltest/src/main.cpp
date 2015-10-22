@@ -11,15 +11,7 @@
 	unsigned int g_trianglesdrawn;
 	unsigned int g_pixelsdrawn;
 #endif
-
-#if defined(_DEBUG) || defined(DEBUG)
-void AssertFailed(char * cond, char * filename, int line)
-{
-//	char tmp[1024];
-//	sprintf(tmp, "[%s] is FALSE at l.%d of %s\n", cond, line, filename);
-//	OutputDebugString(tmp);
-}
-#endif
+	
 
 class SDLWrapper
 {
@@ -43,7 +35,7 @@ public:
 		SDL_SetRelativeMouseMode(SDL_FALSE);
 		SDL_ShowCursor(0);
 
-		SDL_Window *window = SDL_CreateWindow("swegl test",
+		window = SDL_CreateWindow("swegl test",
 			SDL_WINDOWPOS_UNDEFINED,
 			SDL_WINDOWPOS_UNDEFINED,
 			SCR_WIDTH,
@@ -52,19 +44,19 @@ public:
 		if (window == nullptr)
 			throw;
 
-		SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+		renderer = SDL_CreateRenderer(window, -1, 0);
 		if (renderer == nullptr)
 			throw;
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-		SDL_Texture *texture = SDL_CreateTexture(renderer,
+		texture = SDL_CreateTexture(renderer,
 			SDL_PIXELFORMAT_ARGB8888,
 			SDL_TEXTUREACCESS_STREAMING,
 			SCR_WIDTH, SCR_HEIGHT);
 		if (texture == nullptr)
 			throw;
 
-		SDL_Surface *surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
+		surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
 		if (surface == nullptr)
 			throw;
 	}
@@ -148,15 +140,11 @@ void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 {
 	static int totalTicks = 0;
 	static int tickCount  = 0;
-	static char fps[32] = {0};
+	static char fps[32] = { 0 };
+	static char tris[64] = { 0 };
 
 	int fpsticks = SDL_GetTicks();
-
-	// Lock surface if needed
-	//if (SDL_MUSTLOCK(screen))
-	//	if (SDL_LockSurface(screen) < 0)
-	//		return;
-
+	
 	renderer1.Render();
 
 	totalTicks += SDL_GetTicks() - fpsticks;
@@ -171,21 +159,15 @@ void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 	}
 	font.Print(fps, 10, 10, sdl.surface);
 	#if defined(_DEBUG) || defined(DEBUG)
-		sprintf_s(fps, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
-		font.Print(fps, 10, 26, sdl.surface);
+		sprintf_s(tris, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
+		font.Print(tris, 10, 26, sdl.surface);
 		g_trianglesdrawn = g_pixelsdrawn = 0;
 	#endif
-
-	// Unlock if needed
-	//if (SDL_MUSTLOCK(screen))
-	//	SDL_UnlockSurface(screen);
-
+		
 	// Tell SDL to update the whole screen
-
 	SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
 	SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);
 	SDL_RenderPresent(sdl.renderer);
-	//SDL_UpdateRect(screen, 0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
 int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)

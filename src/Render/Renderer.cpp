@@ -2,6 +2,7 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
+#include <algorithm>
 #include <swegl/Render/Renderer.h>
 #include <swegl/Render/Filler.h>
 #include <swegl/Projection/Vec2f.h>
@@ -38,7 +39,7 @@ namespace swegl
 
 	void Renderer::Render()
 	{
-		auto concurrency = std::thread::hardware_concurrency();
+		size_t max_concurrency = 1;//TODO std::thread::hardware_concurrency();
 
 		m_viewport.Clear();
 		std::vector<Matrix4x4> mstackvertices(1, Matrix4x4::Identity);
@@ -72,14 +73,15 @@ namespace swegl
 						it->first = m_viewport.m_viewportmatrix * vec;
 					}
 				};
+			auto concurrency = std::min(max_concurrency, vertices.size());
 			std::vector<std::thread> vertex_transformer_aux_threads;
 			vertex_transformer_aux_threads.reserve(concurrency - 1);
-			for (size_t i=0 ; i<concurrency-1 ; ++i)
+			for (size_t k=0 ; k<concurrency-1 ; ++k)
 			{
-				vertex_transformer_aux_threads.emplace_back([concurrency, i, &vertices, &vertex_transformer, mesh]()
+				vertex_transformer_aux_threads.emplace_back([concurrency, k, &vertices, &vertex_transformer]()
 					{
-						vertex_transformer(vertices.begin() + (vertices.size() / concurrency) * i,
-							               vertices.begin() + (vertices.size() / concurrency) * (i+1));
+						vertex_transformer(vertices.begin() + (vertices.size() / concurrency) * k,
+							               vertices.begin() + (vertices.size() / concurrency) * (k+1));
 					});
 			}
 			vertex_transformer(vertices.end() - vertices.size() / concurrency,
