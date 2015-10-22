@@ -25,7 +25,7 @@ namespace swegl
 
 	void Filler::FillPoly(const Vec3f & _v0, const Vec3f & _v1, const Vec3f & _v2,
 	                      const Vec2f & _t0, const Vec2f & _t1, const Vec2f & _t2,
-	                      const std::shared_ptr<Texture> & t, ViewPort * vp, unsigned char shade, float * zbuffer)
+	                      const std::shared_ptr<Texture> & t, ViewPort & vp, unsigned char shade, float * zbuffer)
 	{
 		Vec3f v0, v1, v2;
 		Vec2f t0, t1, t2;
@@ -102,9 +102,9 @@ namespace swegl
 		zi2.DisplaceStartingPoint(displacement);
 		x2f = v0.x + ratio2*displacement;
 
-		if (y1 <= vp->m_y || y0 == y1) {
+		if (y1 <= vp.m_y || y0 == y1) {
 			// Start drawing at y1
-			if (y1 <= vp->m_y) {
+			if (y1 <= vp.m_y) {
 				// Skip first half of triangle
 				zi2.DisplaceStartingPoint((float)(y1-y0));
 				x2f = v0.x + ratio2*(y1-y0);
@@ -133,12 +133,12 @@ namespace swegl
 		//	return;
 		//}
 
-		if (y < vp->m_y) {
-			zi1.DisplaceStartingPoint((float)(vp->m_y-y));
-			zi2.DisplaceStartingPoint((float)(vp->m_y-y));
-			x1f += ratio1 * (vp->m_y-y);
-			x2f += ratio2 * (vp->m_y-y);
-			y = vp->m_y;
+		if (y < vp.m_y) {
+			zi1.DisplaceStartingPoint((float)(vp.m_y-y));
+			zi2.DisplaceStartingPoint((float)(vp.m_y-y));
+			x1f += ratio1 * (vp.m_y-y);
+			x2f += ratio2 * (vp.m_y-y);
+			y = vp.m_y;
 		}
 
 		tbitmap = t->m_mipmaps[0].m_bitmap;
@@ -148,7 +148,7 @@ namespace swegl
 		std::vector<Scanline> scanlines;
 		scanlines.reserve(ymax - y + 1);
 
-		while (y <= ymax  &&  y < vp->m_y + vp->m_h)
+		while (y <= ymax  &&  y < vp.m_y + vp.m_h)
 		{
 			int x1, x2;
 
@@ -227,18 +227,18 @@ namespace swegl
 				qpixel.Init(ZInterpolator::HORIZONTAL, linev1, linev0, zi2.ualpha, zi1.ualpha);
 				displacement = x1+0.5f - linev1.x;
 			}
-			if (x1 < vp->m_x) {
-				displacement += (float)(vp->m_x - x1);
-				x1 = vp->m_x;
+			if (x1 < vp.m_x) {
+				displacement += (float)(vp.m_x - x1);
+				x1 = vp.m_x;
 			}
 			qpixel.DisplaceStartingPoint(displacement);
 
-			if (x2 >= vp->m_x + vp->m_w) {
-				x2 = vp->m_x + vp->m_w - 1;
+			if (x2 >= vp.m_x + vp.m_w) {
+				x2 = vp.m_x + vp.m_w - 1;
 			}
 
-			//ASSERT(x1 <= x2 || x1 >= vp->m_x + vp->m_w);
-			//ASSERT(x1 >= vp->m_x);
+			//ASSERT(x1 <= x2 || x1 >= vp.m_x + vp.m_w);
+			//ASSERT(x1 >= vp.m_x);
 
 			scanlines.emplace_back(y, x1, x2, qpixel);
 	
@@ -265,8 +265,8 @@ namespace swegl
 					int y = it->y;
 					int x1 = it->x1;
 					int x2 = it->x2;
-					unsigned int *video = &((unsigned int*)vp->m_screen->pixels)[(int) ( y*vp->m_screen->pitch/4 + x1)];
-					float * zb = &zbuffer[(int) ( y*vp->m_w + x1)];
+					unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
+					float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
 	
 					for ( ; x1 <= x2 ; x1++ )
 					{

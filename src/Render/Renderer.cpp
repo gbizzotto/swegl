@@ -28,29 +28,29 @@ namespace swegl
 	};
 	
 
-	Renderer::Renderer(Scene & scene, Camera *camera, ViewPort *viewport)
+	Renderer::Renderer(Scene & scene, Camera & camera, ViewPort & viewport)
 		: m_scene(scene)
 		, m_camera(camera)
 		, m_viewport(viewport)
 	{
-		m_zbuffer = new float[m_viewport->m_w*m_viewport->m_h];
+		m_zbuffer = new float[m_viewport.m_w*m_viewport.m_h];
 	}
 
 	void Renderer::Render()
 	{
 		auto concurrency = std::thread::hardware_concurrency();
 
-		m_viewport->Clear();
+		m_viewport.Clear();
 		std::vector<Matrix4x4> mstackvertices(1, Matrix4x4::Identity);
 		std::vector<Matrix4x4> mstacknormals(1, Matrix4x4::Identity);
 
 		// TODO: sort meshes
 
-		mstackvertices.push_back(mstackvertices.back() * m_camera->m_projectionmatrix);
-		mstackvertices.push_back(mstackvertices.back() * m_camera->m_viewmatrix);
-		mstacknormals.push_back(mstacknormals.back() * m_camera->m_viewmatrix);
+		mstackvertices.push_back(mstackvertices.back() * m_camera.m_projectionmatrix);
+		mstackvertices.push_back(mstackvertices.back() * m_camera.m_viewmatrix);
+		mstacknormals.push_back(mstacknormals.back() * m_camera.m_viewmatrix);
 
-		for (int i=m_viewport->m_w*m_viewport->m_h-1 ; i>=0 ; i--)
+		for (int i=m_viewport.m_w*m_viewport.m_h-1 ; i>=0 ; i--)
 			m_zbuffer[i] = std::numeric_limits<float>::max();
 
 		for (size_t i=0 ; i<m_scene.size() ; i++)
@@ -69,7 +69,7 @@ namespace swegl
 						Vec3f vec = (mstackvertices.empty()?Matrix4x4::Identity:mstackvertices.back()) * it->first;
 						vec.x /= fabs(vec.z);
 						vec.y /= fabs(vec.z);
-						it->first = m_viewport->m_viewportmatrix * vec;
+						it->first = m_viewport.m_viewportmatrix * vec;
 					}
 				};
 			std::vector<std::thread> vertex_transformer_aux_threads;
@@ -113,10 +113,10 @@ namespace swegl
 								t2 = &vertices[strip.GetIndexBuffer()[i].first].second;
 
 								// frustum culling
-								if (      (v0->x < m_viewport->m_x && v1->x <m_viewport->m_x && v2->x < m_viewport->m_x)
-										||(v0->y < m_viewport->m_y && v1->y <m_viewport->m_y && v2->y < m_viewport->m_y)
-										||(v0->x >= m_viewport->m_x+m_viewport->m_w && v1->x >= m_viewport->m_x+m_viewport->m_w && v2->x >= m_viewport->m_x+m_viewport->m_w)
-										||(v0->y >= m_viewport->m_y+m_viewport->m_h && v1->y >= m_viewport->m_y+m_viewport->m_h && v2->y >= m_viewport->m_y+m_viewport->m_h)
+								if (      (v0->x < m_viewport.m_x && v1->x <m_viewport.m_x && v2->x < m_viewport.m_x)
+										||(v0->y < m_viewport.m_y && v1->y <m_viewport.m_y && v2->y < m_viewport.m_y)
+										||(v0->x >= m_viewport.m_x+m_viewport.m_w && v1->x >= m_viewport.m_x+m_viewport.m_w && v2->x >= m_viewport.m_x+m_viewport.m_w)
+										||(v0->y >= m_viewport.m_y+m_viewport.m_h && v1->y >= m_viewport.m_y+m_viewport.m_h && v2->y >= m_viewport.m_y+m_viewport.m_h)
 								   )
 								{
 									continue;
@@ -183,10 +183,10 @@ namespace swegl
 								t2 = &vertices[fan.GetIndexBuffer()[i].first].second;
 
 								// frustum culling
-								if (  (v0->x <  m_viewport->m_x                 && v1->x <  m_viewport->m_x                 && v2->x <  m_viewport->m_x)
-									||(v0->y <  m_viewport->m_y                 && v1->y <  m_viewport->m_y                 && v2->y <  m_viewport->m_y)
-									||(v0->x >= m_viewport->m_x+m_viewport->m_w && v1->x >= m_viewport->m_x+m_viewport->m_w && v2->x >= m_viewport->m_x+m_viewport->m_w)
-									||(v0->y >= m_viewport->m_y+m_viewport->m_h && v1->y >= m_viewport->m_y+m_viewport->m_h && v2->y >= m_viewport->m_y+m_viewport->m_h)
+								if (  (v0->x <  m_viewport.m_x                 && v1->x <  m_viewport.m_x                 && v2->x <  m_viewport.m_x)
+									||(v0->y <  m_viewport.m_y                 && v1->y <  m_viewport.m_y                 && v2->y <  m_viewport.m_y)
+									||(v0->x >= m_viewport.m_x+m_viewport.m_w && v1->x >= m_viewport.m_x+m_viewport.m_w && v2->x >= m_viewport.m_x+m_viewport.m_w)
+									||(v0->y >= m_viewport.m_y+m_viewport.m_h && v1->y >= m_viewport.m_y+m_viewport.m_h && v2->y >= m_viewport.m_y+m_viewport.m_h)
 								   )
 								{
 									continue;

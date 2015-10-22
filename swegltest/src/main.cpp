@@ -4,22 +4,8 @@
 #include <SDL.h>
 
 #include <swegl/swegl.hpp>
-#include <freon/freon.hpp>
 #include "main.h"
 #include "font.h"
-
-swegl::Scene BuildScene();
-void VideoWorks(SDL_Window *screen, SDL_Renderer *renderer, SDL_Texture *sdlTexture, SDL_Surface *surface);
-int KeyboardWorks();
-
-swegl::Camera *camera;
-swegl::ViewPort *viewport1;
-swegl::ViewPort *viewport2;
-swegl::Renderer *renderer1 = NULL;
-swegl::Renderer *renderer2 = NULL;
-Font font("ascii.bmp");
-char keys[256];
-int zoom = 0;
 
 #if defined(_DEBUG) || defined(DEBUG)
 	unsigned int g_trianglesdrawn;
@@ -35,53 +21,74 @@ void AssertFailed(char * cond, char * filename, int line)
 }
 #endif
 
+class SDLWrapper
+{
+public:
+	char keys[256];
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture;
+	SDL_Surface *surface;
+
+	SDLWrapper()
+		:keys{0}
+	{
+		// Initialize SDL's subsystems - in this case, only video.
+		if (SDL_Init(SDL_INIT_VIDEO) < 0)
+		{
+			fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+			throw;
+		}
+
+		SDL_SetRelativeMouseMode(SDL_FALSE);
+		SDL_ShowCursor(0);
+
+		SDL_Window *window = SDL_CreateWindow("swegl test",
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			SCR_WIDTH,
+			SCR_HEIGHT,
+			0);
+		if (window == nullptr)
+			throw;
+
+		SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+		if (renderer == nullptr)
+			throw;
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+		SDL_Texture *texture = SDL_CreateTexture(renderer,
+			SDL_PIXELFORMAT_ARGB8888,
+			SDL_TEXTUREACCESS_STREAMING,
+			SCR_WIDTH, SCR_HEIGHT);
+		if (texture == nullptr)
+			throw;
+
+		SDL_Surface *surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
+		if (surface == nullptr)
+			throw;
+	}
+	~SDLWrapper()
+	{
+		SDL_Quit();
+	}
+};
+
+swegl::Scene BuildScene();
+void VideoWorks(SDLWrapper &, swegl::Renderer &, Font &);
+int KeyboardWorks(SDLWrapper &, swegl::Camera &);
+
 int main(int argc, char *argv[])
 {
-	// Initialize SDL's subsystems - in this case, only video.
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-	{
-		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
-		return -1;
-	}
-
-	ON_SCOPE_EXIT(SDL_Quit);
-
-	SDL_SetRelativeMouseMode(SDL_FALSE);
-	SDL_ShowCursor(0);
-	
-	SDL_Window *window = SDL_CreateWindow("swegl test",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		SCR_WIDTH,
-		SCR_HEIGHT,
-		0);
-	if (window == nullptr)
-		return -1;
-
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
-	if (renderer == nullptr)
-		return -1;
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	
-	SDL_Texture *texture = SDL_CreateTexture(renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		SCR_WIDTH, SCR_HEIGHT);
-	if (texture == nullptr)
-		return -1;
-
-	SDL_Surface *surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
-	if (surface == nullptr)
-		return -1;
-
-	memset(keys, 0, 256);
+	SDLWrapper sdl;
 
 	swegl::Scene scene = BuildScene();
+	Font font("ascii.bmp");
 
 	//*
-	camera = new swegl::Camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
-	viewport1 = new swegl::ViewPort(0, 0, SCR_WIDTH,SCR_HEIGHT, surface);
-	renderer1 = new swegl::Renderer(scene, camera, viewport1);
+	swegl::Camera camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
+	swegl::ViewPort viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
+	swegl::Renderer renderer1(scene, camera, viewport1);
 	/**/
 	/*
 	camera = new Camera((SCR_WIDTH/2.0f)/SCR_HEIGHT);
@@ -99,8 +106,8 @@ int main(int argc, char *argv[])
 	/**/
 	while (1)
 	{
-		VideoWorks(window, renderer, texture, surface);
-		if (int a=KeyboardWorks() < 0)
+		VideoWorks(sdl, renderer1, font);
+		if (int a=KeyboardWorks(sdl, camera) < 0)
 			return -a;
 	}
 	return 0;
@@ -137,7 +144,7 @@ swegl::Scene BuildScene()
 	return s;
 }
 
-void VideoWorks(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *sdlTexture, SDL_Surface *surface)
+void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 {
 	static int totalTicks = 0;
 	static int tickCount  = 0;
@@ -150,9 +157,7 @@ void VideoWorks(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *sdlText
 	//	if (SDL_LockSurface(screen) < 0)
 	//		return;
 
-	renderer1->Render();
-	if (renderer2 != NULL)
-		renderer2->Render();
+	renderer1.Render();
 
 	totalTicks += SDL_GetTicks() - fpsticks;
 	tickCount++;
@@ -164,10 +169,10 @@ void VideoWorks(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *sdlText
 		totalTicks = 0;
 		tickCount  = 0;
 	}
-	font.Print(fps, 10, 10, surface);
+	font.Print(fps, 10, 10, sdl.surface);
 	#if defined(_DEBUG) || defined(DEBUG)
 		sprintf_s(fps, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
-		font.Print(fps, 10, 26, surface);
+		font.Print(fps, 10, 26, sdl.surface);
 		g_trianglesdrawn = g_pixelsdrawn = 0;
 	#endif
 
@@ -177,13 +182,13 @@ void VideoWorks(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *sdlText
 
 	// Tell SDL to update the whole screen
 
-	SDL_UpdateTexture(sdlTexture, NULL, surface->pixels, SCR_WIDTH * sizeof(Uint32));
-	SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
-	SDL_RenderPresent(renderer);
+	SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
+	SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);
+	SDL_RenderPresent(sdl.renderer);
 	//SDL_UpdateRect(screen, 0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
-int KeyboardWorks()
+int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;
@@ -195,45 +200,39 @@ int KeyboardWorks()
 		switch (event.type)
 		{
 			case SDL_MOUSEMOTION:
-				camera->RotateX(-cameraxrotation);
-				camera->RotateY(event.motion.xrel / 2000.0f);
+				camera.RotateX(-cameraxrotation);
+				camera.RotateY(event.motion.xrel / 2000.0f);
 				cameraxrotation += event.motion.yrel / 2000.0f;
-				camera->RotateX(cameraxrotation);
+				camera.RotateX(cameraxrotation);
 				break;
 
 			case SDL_KEYDOWN:
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					return -10;
 				else if (event.key.keysym.sym == SDLK_d)
-					keys['d'] = 1;
+					sdl.keys['d'] = 1;
 				else if (event.key.keysym.sym == SDLK_a)
-					keys['a'] = 1;
+					sdl.keys['a'] = 1;
 				else if (event.key.keysym.sym == SDLK_w)
-					keys['w'] = 1;
+					sdl.keys['w'] = 1;
 				else if (event.key.keysym.sym == SDLK_s)
-					keys['s'] = 1;
+					sdl.keys['s'] = 1;
 				else if (event.key.keysym.sym == SDLK_e)
-					keys['e'] = 1;
+					sdl.keys['e'] = 1;
 				else if (event.key.keysym.sym == SDLK_q)
-					keys['q'] = 1;
+					sdl.keys['q'] = 1;
 				else if (event.key.keysym.sym == SDLK_i)
-					keys['i'] = 1;
+					sdl.keys['i'] = 1;
 				else if (event.key.keysym.sym == SDLK_k)
-					keys['k'] = 1;
+					sdl.keys['k'] = 1;
 				else if (event.key.keysym.sym == SDLK_l)
-					keys['l'] = 1;
+					sdl.keys['l'] = 1;
 				else if (event.key.keysym.sym == SDLK_j)
-					keys['j'] = 1;
+					sdl.keys['j'] = 1;
 				else if (event.key.keysym.sym == SDLK_o)
-					keys['o'] = 1;
+					sdl.keys['o'] = 1;
 				else if (event.key.keysym.sym == SDLK_u)
-					keys['u'] = 1;
-				else if (event.key.keysym.sym == SDLK_PLUS) {
-					if (zoom < 3) zoom ++;
-				}
-				else if (event.key.keysym.sym == SDLK_MINUS) {
-					if (zoom > 0) zoom --;
-				}
+					sdl.keys['u'] = 1;
 				break;
 
 			case SDL_KEYUP:
@@ -257,29 +256,29 @@ int KeyboardWorks()
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					return -2;
 				else if (event.key.keysym.sym == SDLK_d)
-					keys['d'] = 0;
+					sdl.keys['d'] = 0;
 				else if (event.key.keysym.sym == SDLK_a)
-					keys['a'] = 0;
+					sdl.keys['a'] = 0;
 				else if (event.key.keysym.sym == SDLK_w)
-					keys['w'] = 0;
+					sdl.keys['w'] = 0;
 				else if (event.key.keysym.sym == SDLK_s)
-					keys['s'] = 0;
+					sdl.keys['s'] = 0;
 				else if (event.key.keysym.sym == SDLK_e)
-					keys['e'] = 0;
+					sdl.keys['e'] = 0;
 				else if (event.key.keysym.sym == SDLK_q)
-					keys['q'] = 0;
+					sdl.keys['q'] = 0;
 				else if (event.key.keysym.sym == SDLK_i)
-					keys['i'] = 0;
+					sdl.keys['i'] = 0;
 				else if (event.key.keysym.sym == SDLK_k)
-					keys['k'] = 0;
+					sdl. keys['k'] = 0;
 				else if (event.key.keysym.sym == SDLK_l)
-					keys['l'] = 0;
+					sdl.keys['l'] = 0;
 				else if (event.key.keysym.sym == SDLK_j)
-					keys['j'] = 0;
+					sdl.keys['j'] = 0;
 				else if (event.key.keysym.sym == SDLK_o)
-					keys['o'] = 0;
+					sdl.keys['o'] = 0;
 				else if (event.key.keysym.sym == SDLK_u)
-					keys['u'] = 0;
+					sdl.keys['u'] = 0;
 					break;
 			case SDL_QUIT:
 				return -3;
@@ -289,37 +288,37 @@ int KeyboardWorks()
 	float multiplier = (SDL_GetTicks()-keystick) / 1.0f;
 	//if ( (SDL_GetTicks())-keystick > 100 )
 	{
-		if (keys['d'])
-			camera->RotateY(multiplier * 3.14159f / 2000.0f);
-		if (keys['a'])
-			camera->RotateY(multiplier * 3.14159f / -2000.0f);
-		if (keys['w'])
-			camera->RotateX(multiplier * 3.14159f / 2000.0f);
-		if (keys['s'])
-			camera->RotateX(multiplier * 3.14159f / -2000.0f);
-		if (keys['e'])
-			camera->RotateZ(multiplier * 3.14159f / 2000.0f);
-		if (keys['q'])
-			camera->RotateZ(multiplier * 3.14159f / -2000.0f);
+		if (sdl.keys['d'])
+			camera.RotateY(multiplier * 3.14159f / 2000.0f);
+		if (sdl.keys['a'])
+			camera.RotateY(multiplier * 3.14159f / -2000.0f);
+		if (sdl.keys['w'])
+			camera.RotateX(multiplier * 3.14159f / 2000.0f);
+		if (sdl.keys['s'])
+			camera.RotateX(multiplier * 3.14159f / -2000.0f);
+		if (sdl.keys['e'])
+			camera.RotateZ(multiplier * 3.14159f / 2000.0f);
+		if (sdl.keys['q'])
+			camera.RotateZ(multiplier * 3.14159f / -2000.0f);
 
-		if (keys['i'] || keys['k'] || keys['j'] || keys['l'] || keys['o'] || keys['u'])
-				camera->RotateX(-cameraxrotation);
+		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
+				camera.RotateX(-cameraxrotation);
 
-		if (keys['i'])
-			camera->Translate(0.0f, 0.0f, multiplier * 0.004f);
-		if (keys['k'])
-			camera->Translate(0.0f, 0.0f, multiplier * -0.004f);
-		if (keys['l'])
-			camera->Translate(multiplier * 0.004f, 0.0f, 0.0f);
-		if (keys['j'])
-			camera->Translate(multiplier * -0.004f, 0.0f, 0.0f);
-		if (keys['o'])
-			camera->Translate(0.0f, multiplier * 0.004f, 0.0f);
-		if (keys['u'])
-			camera->Translate(0.0f, multiplier * -0.004f, 0.0f);
+		if (sdl.keys['i'])
+			camera.Translate(0.0f, 0.0f, multiplier * 0.004f);
+		if (sdl.keys['k'])
+			camera.Translate(0.0f, 0.0f, multiplier * -0.004f);
+		if (sdl.keys['l'])
+			camera.Translate(multiplier * 0.004f, 0.0f, 0.0f);
+		if (sdl.keys['j'])
+			camera.Translate(multiplier * -0.004f, 0.0f, 0.0f);
+		if (sdl.keys['o'])
+			camera.Translate(0.0f, multiplier * 0.004f, 0.0f);
+		if (sdl.keys['u'])
+			camera.Translate(0.0f, multiplier * -0.004f, 0.0f);
 
-		if (keys['i'] || keys['k'] || keys['j'] || keys['l'] || keys['o'] || keys['u'])
-				camera->RotateX(cameraxrotation);
+		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
+				camera.RotateX(cameraxrotation);
 
 		keystick = SDL_GetTicks();
 	}
