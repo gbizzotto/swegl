@@ -1,6 +1,5 @@
 
-#ifndef SWE_FONT
-#define SWE_FONT
+#pragma once
 
 #include <SDL.h>
 
@@ -19,5 +18,3 @@ public:
 	Font(const char * filename);
 	void Print(char * str, unsigned x, unsigned y, SDL_Surface *surface);
 };
-
-#endif // SWE_FONT

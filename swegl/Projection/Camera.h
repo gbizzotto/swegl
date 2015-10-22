@@ -1,6 +1,5 @@
 
-#ifndef SWE_CAMERA
-#define SWE_CAMERA
+#pragma once
 
 #include <swegl/Projection/Vec3f.h>
 #include <swegl/Projection/Matrix4x4.h>
@@ -27,5 +26,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_CAMERA

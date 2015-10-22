@@ -1,6 +1,5 @@
 
-#ifndef SWE_MAIN
-#define SWE_MAIN
+#pragma once
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
@@ -13,5 +12,3 @@
 #else
 	#define ASSERT(cond)
 #endif
-
-#endif // SWE_MAIN

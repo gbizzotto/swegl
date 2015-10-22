@@ -1,6 +1,5 @@
 
-#ifndef SWE_MESH
-#define SWE_MESH
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -70,5 +69,3 @@ namespace swegl
 
 	typedef std::vector<Mesh> Scene;
 }
-
-#endif // SWE_MESH

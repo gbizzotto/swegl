@@ -1,6 +1,5 @@
 
-#ifndef SWE_VEC2F
-#define SWE_VEC2F
+#pragma once
 
 namespace swegl
 {
@@ -26,5 +25,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_VEC2F

@@ -1,6 +1,5 @@
 
-#ifndef SWEGL_LIB
-#define SWEGL_LIB
+#pragma once
 
 #include <swegl/Data/Mesh.h>
 #include <swegl/Data/Texture.h>
@@ -58,5 +57,3 @@
 		#pragma comment(lib, SWEGL_LIB_NAME SWEGL_ARCH_SUFIX SWEGL_DEBUG_SUFFIX SWEGL_COMPILER_VERSION SWEGL_RT_SUFIX ".lib") 
 	#endif
 #endif
-
-#endif // SWEGL_LIB

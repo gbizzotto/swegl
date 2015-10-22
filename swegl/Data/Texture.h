@@ -1,6 +1,5 @@
 
-#ifndef SWE_TEXTURE
-#define SWE_TEXTURE
+#pragma once
 
 namespace swegl
 {
@@ -27,5 +26,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_TEXTURE

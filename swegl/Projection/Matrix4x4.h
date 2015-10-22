@@ -1,6 +1,5 @@
 
-#ifndef SWE_MATRIX
-#define SWE_MATRIX
+#pragma once
 
 namespace swegl
 {
@@ -28,5 +27,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_MATRIX

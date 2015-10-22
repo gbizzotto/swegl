@@ -1,6 +1,5 @@
 
-#ifndef SWE_R008NoTexelArtefact
-#define SWE_R008NoTexelArtefact
+#pragma once
 
 #include <swegl/Data/Mesh.h>
 #include <swegl/Projection/Camera.h>
@@ -28,5 +27,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_R008NoTexelArtefact

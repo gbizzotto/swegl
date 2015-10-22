@@ -1,6 +1,5 @@
 
-#ifndef SWE_VEC3F
-#define SWE_VEC3F
+#pragma once
 
 #include <swegl/Projection/Matrix4x4.h>
 
@@ -35,5 +34,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_VEC3f

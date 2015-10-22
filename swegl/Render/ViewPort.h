@@ -1,6 +1,5 @@
 
-#ifndef SWE_VIEWPORT
-#define SWE_VIEWPORT
+#pragma once
 
 #include <SDL.h>
 
@@ -35,5 +34,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_VIERPORT

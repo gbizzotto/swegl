@@ -1,6 +1,5 @@
 
-#ifndef SWE_ZINTERPOLATOR
-#define SWE_ZINTERPOLATOR
+#pragma once
 
 #include <swegl/Projection/Vec3f.h>
 
@@ -82,5 +81,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_ZINTERPOLATOR

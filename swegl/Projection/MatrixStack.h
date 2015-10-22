@@ -1,6 +1,5 @@
 
-#ifndef SWE_MATRIXSTACK
-#define SWE_MATRIXSTACK
+#pragma once
 
 #include <swegl/Projection/Matrix4x4.h>
 
@@ -20,5 +19,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_MATRIXSTACK

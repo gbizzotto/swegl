@@ -1,6 +1,5 @@
 
-#ifndef SWE_F001CUSTOMNOARTEFACT
-#define SWE_F001CUSTOMNOARTEFACT
+#pragma once
 
 #include <swegl/Projection/Vec3f.h>
 #include <swegl/Data/Texture.h>
@@ -22,5 +21,3 @@ namespace swegl
 	};
 
 }
-
-#endif // SWE_F001CUSTOMNOARTEFACT
