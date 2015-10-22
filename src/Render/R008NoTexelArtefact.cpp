@@ -32,14 +32,14 @@ namespace swegl
 	{
 		Vec3f v0, v1, v2;
 		Vec2f t0, t1, t2;
-		const Texture * texture;
+		const std::shared_ptr<Texture> texture;
 		ViewPort * viewport;
 		unsigned char shade;
 		float * zbuffer;
 
 		PolyToFill(Vec3f v0, Vec3f v1, Vec3f v2,
 		           Vec2f t0, Vec2f t1, Vec2f t2,
-		           const Texture * tex,
+		           const std::shared_ptr<swegl::Texture> & tex,
 		           unsigned char sh)
 			:v0(v0), v1(v1), v2(v2), t0(t0), t1(t1), t2(t2), texture(tex), shade(sh)
 			{}
@@ -52,8 +52,10 @@ namespace swegl
 	void R008TexCustomLineJumpSteps(R008TexCustomLineData & data, int steps);
 
 
-	R008NoTexelArtefact::R008NoTexelArtefact(Scene *scene, Camera *camera, ViewPort *viewport)
-		:R000Virtual(scene, camera, viewport)
+	R008NoTexelArtefact::R008NoTexelArtefact(Scene & scene, Camera *camera, ViewPort *viewport)
+		: m_scene(scene)
+		, m_camera(camera)
+		, m_viewport(viewport)
 	{
 		m_zbuffer = new float[m_viewport->m_w*m_viewport->m_h];
 	}
@@ -75,14 +77,14 @@ namespace swegl
 		for (int i=m_viewport->m_w*m_viewport->m_h-1 ; i>=0 ; i--)
 			m_zbuffer[i] = 99999999999.0f;
 
-		for (int i=0 ; i<m_scene->m_meshCount ; i++)
+		for (size_t i=0 ; i<m_scene.size() ; i++)
 		{
-			Mesh *mesh = m_scene->m_meshes[i];
-			mstackvertices.PushMatrix(mesh->GetWorldMatrix());
-			mstacknormals.PushMatrix(mesh->GetWorldMatrix());
+			const Mesh & mesh = m_scene[i];
+			mstackvertices.PushMatrix(mesh.GetWorldMatrix());
+			mstacknormals.PushMatrix(mesh.GetWorldMatrix());
 
 			// Transforming vertices into screen coords
-			std::vector<std::pair<Vec3f,Vec2f>> vertices = mesh->GetVertexBuffer();
+			std::vector<std::pair<Vec3f,Vec2f>> vertices = mesh.GetVertexBuffer();
 			auto vertex_transformer = [&](std::vector<std::pair<Vec3f,Vec2f>>::iterator it,
 			                              std::vector<std::pair<Vec3f,Vec2f>>::iterator end)
 				{
@@ -159,7 +161,7 @@ namespace swegl
 							
 								// Fill poly
 								//F001CustomNoArtefact::FillPoly(*v0, *v1, *v2, *t0, *t1, *t2, mesh->GetTexture(), m_viewport, 255, m_zbuffer);
-								polys.emplace_back(*v0, *v1, *v2, *t0, *t1, *t2, mesh->GetTexture(), 255);
+								polys.emplace_back(*v0, *v1, *v2, *t0, *t1, *t2, mesh.GetTexture(), 255);
 							}
 						}
 					};
@@ -170,13 +172,13 @@ namespace swegl
 				{
 					aux_threads.emplace_back([i, concurrency, &strip_renderer, &mesh, &polys_to_fill]()
 						{
-							strip_renderer(mesh->GetStrips().begin() + mesh->GetStrips().size() / concurrency * i,
-							               mesh->GetStrips().begin() + mesh->GetStrips().size() / concurrency * (i+1),
+							strip_renderer(mesh.GetStrips().begin() + mesh.GetStrips().size() / concurrency * i,
+							               mesh.GetStrips().begin() + mesh.GetStrips().size() / concurrency * (i+1),
 							               polys_to_fill[i]);
 						});
 				}
-				strip_renderer(mesh->GetStrips().end() - mesh->GetStrips().size() / concurrency,
-				               mesh->GetStrips().end(),
+				strip_renderer(mesh.GetStrips().end() - mesh.GetStrips().size() / concurrency,
+				               mesh.GetStrips().end(),
 				               polys_to_fill.back());
 
 				for (auto it=aux_threads.begin(),end=aux_threads.end() ; it!=end ; ++it)
@@ -225,7 +227,7 @@ namespace swegl
 
 								// Fill poly
 								//F001CustomNoArtefact::FillPoly(*v0, *v1, *v2, *t0, *t1, *t2, mesh->GetTexture(), m_viewport, 255, m_zbuffer);
-								polys.emplace_back(*v0, *v1, *v2, *t0, *t1, *t2, mesh->GetTexture(), 255);
+								polys.emplace_back(*v0, *v1, *v2, *t0, *t1, *t2, mesh.GetTexture(), 255);
 							}
 						}
 					};
@@ -236,13 +238,13 @@ namespace swegl
 				{
 					aux_threads.emplace_back([i, concurrency, &fan_renderer, &mesh, &polys_to_fill]()
 						{
-							fan_renderer(mesh->GetFans().begin() + mesh->GetFans().size() / concurrency * i,
-							             mesh->GetFans().begin() + mesh->GetFans().size() / concurrency * (i+1),
+							fan_renderer(mesh.GetFans().begin() + mesh.GetFans().size() / concurrency * i,
+							             mesh.GetFans().begin() + mesh.GetFans().size() / concurrency * (i+1),
 							             polys_to_fill[i]);
 						});
 				}
-				fan_renderer(mesh->GetFans().end() - mesh->GetFans().size() / concurrency,
-				             mesh->GetFans().end(),
+				fan_renderer(mesh.GetFans().end() - mesh.GetFans().size() / concurrency,
+				             mesh.GetFans().end(),
 				             polys_to_fill.back());
 
 				for (auto it=aux_threads.begin(),end=aux_threads.end() ; it!=end ; ++it)

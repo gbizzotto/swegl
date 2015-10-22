@@ -4,22 +4,13 @@
     <ClCompile Include="src\Data\Mesh.cpp">
       <Filter>data</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Scene.cpp">
-      <Filter>data</Filter>
-    </ClCompile>
     <ClCompile Include="src\Data\Texture.cpp">
       <Filter>data</Filter>
     </ClCompile>
     <ClCompile Include="src\Render\Filler.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\Render\R000Virtual.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
     <ClCompile Include="src\Render\R008NoTexelArtefact.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
     <ClCompile Include="src\Render\ViewPort.cpp">
@@ -43,12 +34,6 @@
     <ClCompile Include="src\Projection\Vec3f.cpp">
       <Filter>projection</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\Cube.cpp">
-      <Filter>data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Data\Tore.cpp">
-      <Filter>data</Filter>
-    </ClCompile>
     <ClCompile Include="src\Render\F001CustomNoArtefact.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -68,22 +53,13 @@
     <ClInclude Include="swegl\Data\Mesh.h">
       <Filter>data</Filter>
     </ClInclude>
-    <ClInclude Include="swegl\Data\Scene.h">
-      <Filter>data</Filter>
-    </ClInclude>
     <ClInclude Include="swegl\Data\Texture.h">
       <Filter>data</Filter>
     </ClInclude>
     <ClInclude Include="swegl\Render\Filler.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="swegl\Render\R000Virtual.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="swegl\Render\R008NoTexelArtefact.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Render\Renderer.h">
       <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="swegl\Render\ViewPort.h">
@@ -108,12 +84,6 @@
       <Filter>projection</Filter>
     </ClInclude>
     <ClInclude Include="swegl\swegl.hpp" />
-    <ClInclude Include="swegl\Data\Cube.h">
-      <Filter>data</Filter>
-    </ClInclude>
-    <ClInclude Include="swegl\Data\Tore.h">
-      <Filter>data</Filter>
-    </ClInclude>
     <ClInclude Include="swegl\Render\F001CustomNoArtefact.h">
       <Filter>render</Filter>
     </ClInclude>

@@ -147,11 +147,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Data\Cube.cpp" />
     <ClCompile Include="src\Data\Mesh.cpp" />
-    <ClCompile Include="src\Data\Scene.cpp" />
     <ClCompile Include="src\Data\Texture.cpp" />
-    <ClCompile Include="src\Data\Tore.cpp" />
     <ClCompile Include="src\Projection\Camera.cpp" />
     <ClCompile Include="src\Projection\Matrix4x4.cpp" />
     <ClCompile Include="src\Projection\MatrixStack.cpp" />
@@ -159,18 +156,13 @@
     <ClCompile Include="src\Projection\Vec3f.cpp" />
     <ClCompile Include="src\Render\F001CustomNoArtefact.cpp" />
     <ClCompile Include="src\Render\Filler.cpp" />
-    <ClCompile Include="src\Render\R000Virtual.cpp" />
     <ClCompile Include="src\Render\R008NoTexelArtefact.cpp" />
-    <ClCompile Include="src\Render\Renderer.cpp" />
     <ClCompile Include="src\Render\ViewPort.cpp" />
     <ClCompile Include="src\Render\ZInterpolator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="swegl\Data\Cube.h" />
     <ClInclude Include="swegl\Data\Mesh.h" />
-    <ClInclude Include="swegl\Data\Scene.h" />
     <ClInclude Include="swegl\Data\Texture.h" />
-    <ClInclude Include="swegl\Data\Tore.h" />
     <ClInclude Include="swegl\Projection\Camera.h" />
     <ClInclude Include="swegl\Projection\Matrix4x4.h" />
     <ClInclude Include="swegl\Projection\MatrixStack.h" />
@@ -178,9 +170,7 @@
     <ClInclude Include="swegl\Projection\Vec3f.h" />
     <ClInclude Include="swegl\Render\F001CustomNoArtefact.h" />
     <ClInclude Include="swegl\Render\Filler.h" />
-    <ClInclude Include="swegl\Render\R000Virtual.h" />
     <ClInclude Include="swegl\Render\R008NoTexelArtefact.h" />
-    <ClInclude Include="swegl\Render\Renderer.h" />
     <ClInclude Include="swegl\Render\ViewPort.h" />
     <ClInclude Include="swegl\Render\ZInterpolator.h" />
     <ClInclude Include="swegl\swegl.hpp" />

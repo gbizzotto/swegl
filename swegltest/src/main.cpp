@@ -8,16 +8,15 @@
 #include "main.h"
 #include "font.h"
 
-swegl::Scene* BuildScene();
+swegl::Scene BuildScene();
 void VideoWorks(SDL_Window *screen, SDL_Renderer *renderer, SDL_Texture *sdlTexture, SDL_Surface *surface);
 int KeyboardWorks();
 
-swegl::Scene *scene;
 swegl::Camera *camera;
 swegl::ViewPort *viewport1;
 swegl::ViewPort *viewport2;
-swegl::R000Virtual *renderer1 = NULL;
-swegl::R000Virtual *renderer2 = NULL;
+swegl::R008NoTexelArtefact *renderer1 = NULL;
+swegl::R008NoTexelArtefact *renderer2 = NULL;
 Font font("ascii.bmp");
 char keys[256];
 int zoom = 0;
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
 
 	memset(keys, 0, 256);
 
-	scene = BuildScene();
+	swegl::Scene scene = BuildScene();
 
 	//*
 	camera = new swegl::Camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
@@ -108,25 +107,25 @@ int main(int argc, char *argv[])
 }
 
 
-swegl::Scene* BuildScene()
+swegl::Scene BuildScene()
 {
-	swegl::Texture *t = new swegl::Texture("tex.bmp");
+	auto texture = std::make_shared<swegl::Texture>("tex.bmp");
 	swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
-	swegl::Scene *s = new swegl::Scene();
+	swegl::Scene s;
 	//*
-	swegl::Tore *tore = new swegl::Tore(20, t);
-	tore->GetWorldMatrix().Translate(0.0f, 0.0f, 8.0f);
+	swegl::Mesh tore = swegl::MakeTore(20, texture);
+	tore.GetWorldMatrix().Translate(0.0f, 0.0f, 8.0f);
 	//tore->SetBumpMap(bumpmap);
-	s->AddMesh(tore);
+	s.push_back(std::move(tore));
 	/**/
 
 	//*
-	swegl::Cube *c = new swegl::Cube(1.0f, t);
-	c->GetWorldMatrix().RotateX(0.5f);
-	c->GetWorldMatrix().RotateZ(1.5f);
-	c->GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
+	swegl::Mesh cube = swegl::MakeCube(1.0f, texture);
+	cube.GetWorldMatrix().RotateX(0.5f);
+	cube.GetWorldMatrix().RotateZ(1.5f);
+	cube.GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
 	//c->SetBumpMap(bumpmap);
-	s->AddMesh(c);
+	s.push_back(std::move(cube));
 	/**/
 
 	/*

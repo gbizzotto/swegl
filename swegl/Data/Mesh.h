@@ -3,6 +3,7 @@
 #define SWE_MESH
 
 #include <vector>
+#include <memory>
 
 #include <swegl/Projection/Vec3f.h>
 #include <swegl/Projection/Vec2f.h>
@@ -35,13 +36,15 @@ namespace swegl
 	class Mesh
 	{
 	public:	
-		inline Mesh(Texture * t, Texture * b)
-			:m_texture(t),
-			m_bumpmap(b)
+		typedef std::vector<std::pair<Vec3f, Vec2f>> VertexBuffer;
+
+		Mesh(VertexBuffer && vb)
+			:m_vertexbuffer(std::forward<VertexBuffer>(vb))
 		{
 			this->m_worldmatrix.SetIdentity();
 		}
-		inline void SetVertexBuffer(std::vector<std::pair<Vec3f,Vec2f>> && v) { m_vertexbuffer = v; }
+		void SetVertexBuffer(VertexBuffer && v) { m_vertexbuffer = v; }
+		void SetTexture(std::shared_ptr<Texture> & texture) { m_texture = texture; }
 		void AddStrip(std::vector<unsigned int> && indexbuffer);
 		void AddFan  (std::vector<unsigned int> && indexbuffer);
 
@@ -50,18 +53,22 @@ namespace swegl
 		inline const std::vector<std::pair<Vec3f,Vec2f>> & GetVertexBuffer() const { return m_vertexbuffer; }
 		inline const std::vector<Strip>                  & GetStrips()       const { return m_strips;       }
 		inline const std::vector<Strip>                  & GetFans()         const { return m_fans;         }
-		inline const Texture * const                       GetTexture()      const { return m_texture;      }
+		inline const std::shared_ptr<Texture>              GetTexture()      const { return m_texture;      }
 
 	protected:
 		std::vector<std::pair<Vec3f,Vec2f>> m_vertexbuffer;
 		Matrix4x4 m_worldmatrix;
-		Texture *m_texture;
-		Texture *m_bumpmap;
+		std::shared_ptr<Texture> m_texture;
+		std::shared_ptr<Texture> m_bumpmap;
 
 		std::vector<Strip> m_strips;          // array of index buffers (triangle strips)
 		std::vector<Strip> m_fans;            // array of index buffers (triangle strips)
 	};
 
+	Mesh MakeCube(float size, std::shared_ptr<Texture> & texture);
+	Mesh MakeTore(unsigned int precision, std::shared_ptr<Texture> & texture);
+
+	typedef std::vector<Mesh> Scene;
 }
 
 #endif // SWE_MESH

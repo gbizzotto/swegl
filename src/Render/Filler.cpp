@@ -1,4 +1,5 @@
 
+#include <memory>
 #include <cmath>
 #include <swegl/Render/Filler.h>
 #include <swegl/Render/ZInterpolator.h>
@@ -10,7 +11,7 @@ namespace swegl
 	void Filler::FillPoly(const Vec3f & v0, const Vec3f & v1, const Vec3f & v2,
 						  const Vec2f & t0, const Vec2f & t1, const Vec2f & t2,
 						  bool neighb0visible, bool neighb1visible, bool neighb2visible, 
-						  Texture *t, Texture *tb, ViewPort * vp,
+	                      const std::shared_ptr<swegl::Texture> & t, Texture *tb, ViewPort * vp,
 						  const Vec3f & facenormal, float *zbuffer)
 	{
 		Vec3f l_v0, l_v1, l_v2;

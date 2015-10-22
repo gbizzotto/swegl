@@ -2,10 +2,8 @@
 #ifndef SWEGL_LIB
 #define SWEGL_LIB
 
-#include <swegl/Data/Cube.h>
 #include <swegl/Data/Mesh.h>
 #include <swegl/Data/RectangleTriangle.h>
-#include <swegl/Data/Scene.h>
 #include <swegl/Data/Texture.h>
 #include <swegl/Data/Tore.h>
 
@@ -15,10 +13,8 @@
 #include <swegl/Projection/Vec2f.h>
 #include <swegl/Projection/Vec3f.h>
 
-#include <swegl/Render/Renderer.h>
 #include <swegl/Render/ViewPort.h>
 #include <swegl/Render/R008NoTexelArtefact.h>
-#include <swegl/Render/R000Virtual.h>
 
 #if defined(_MSC_VER)
 	#if !defined(BUILDING_SWEGL_LIB)

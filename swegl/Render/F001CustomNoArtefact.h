@@ -17,7 +17,7 @@ namespace swegl
 	public:
 		static void FillPoly(const Vec3f & v0, const Vec3f & v1, const Vec3f & v2,
 							 const Vec2f & t0, const Vec2f & t1, const Vec2f & t2,
-							 const Texture * t, ViewPort * vp, unsigned char shade, float * zbuffer);
+							 const std::shared_ptr<Texture> & t, ViewPort * vp, unsigned char shade, float * zbuffer);
 	};
 
 }

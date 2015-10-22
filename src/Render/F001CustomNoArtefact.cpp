@@ -25,7 +25,7 @@ namespace swegl
 
 	void F001CustomNoArtefact::FillPoly(const Vec3f & _v0, const Vec3f & _v1, const Vec3f & _v2,
 									    const Vec2f & _t0, const Vec2f & _t1, const Vec2f & _t2,
-									    const Texture *t, ViewPort * vp, unsigned char shade, float * zbuffer)
+									    const std::shared_ptr<Texture> & t, ViewPort * vp, unsigned char shade, float * zbuffer)
 	{
 		Vec3f v0, v1, v2;
 		Vec2f t0, t1, t2;
