@@ -1,15 +1,21 @@
-LIBOUT       = libswegl.a
+#Edit only these lines
+LIBNAME = swegl
+
+
+#All the stuff below is internals
+LIBOUT       = lib/lib$(LIBNAME).a
+TESTDIR      = $(LIBNAME)test
 TESTOUT      = test
 OBJDIR       = obj
-OBJDIRT      = obj/swegltest
+OBJDIRT      = obj/$(TESTDIR)
 
 SRCS         = $(shell find src -name '*.cpp')
 DIRS         = $(shell find src -type d | sed 's/src/./g' )
 OBJS         = $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 
-SRCST        = $(shell find swegltest -name '*.cpp')
-DIRST        = $(shell find swegltest -type d | sed 's/swegltest/./g' )
-OBJST        = $(patsubst swegltest/%.cpp,$(OBJDIRT)/%.o,$(SRCST))
+SRCST        = $(shell find $(TESTDIR) -name '*.cpp')
+DIRST        = $(shell find $(TESTDIR) -type d | sed 's/$(TESTDIR)/./g' )
+OBJST        = $(patsubst $(TESTDIR)/%.cpp,$(OBJDIRT)/%.o,$(SRCST))
 
 DEPDIR       = $(OBJDIR)
 DEPDIRT      = $(OBJDIRT)
@@ -24,8 +30,8 @@ POSTCOMPILET = mv -f $(DEPDIRT)/$*.Td $(DEPDIRT)/$*.d
 
 CC           = g++
 CONFIG       = -g
-CFLAGS       = $(DEPFLAGS) -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl-config --cflags --libs`
-CFLAGST      = $(DEPFLAGST) -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl-config --cflags --libs`
+CFLAGS       = $(DEPFLAGS) -Wall -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl2-config --cflags --libs`
+CFLAGST      = $(DEPFLAGST) -Wall -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl2-config --cflags --libs`
 
 
 
@@ -43,7 +49,7 @@ $(OBJDIR)/%.o: src/%.cpp $(DEPDIR)/%.d
 	@$(CC) $(CFLAGS) -c $< -o $@
 	@$(POSTCOMPILE)
 
-$(OBJDIRT)/%.o: swegltest/%.cpp $(DEPDIRT)/%.d
+$(OBJDIRT)/%.o: $(TESTDIR)/%.cpp $(DEPDIRT)/%.d
 	@echo $<
 	@$(CC) $(CFLAGST) -c $< -o $@
 	@$(POSTCOMPILET)
@@ -60,7 +66,7 @@ $(TESTOUT): $(LIBOUT) $(OBJDIRT) $(OBJST)
 clean:
 	@rm -Rf $(LIBOUT) $(TESTOUT) $(OBJDIR) $(OBJDIRT)
 
-swegl: $(LIBOUT)
+$(LIBNAME): $(LIBOUT)
 
 # prevent deletion of .d files
 .SECONDARY:
@@ -70,4 +76,4 @@ $(DEPDIR)/%.d: ;
 $(DEPDIRT)/%.d: ;
 
 -include $(patsubst src/%,$(DEPDIR)/%.d,$(basename $(SRCS)))
--include $(patsubst swegltest/%,$(DEPDIRT)/%.d,$(basename $(SRCST)))
+-include $(patsubst $(TESTDIR)/%,$(DEPDIRT)/%.d,$(basename $(SRCST)))

@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include <swegl/swegl.hpp>
 #include "main.h"
@@ -11,7 +11,7 @@
 	unsigned int g_trianglesdrawn;
 	unsigned int g_pixelsdrawn;
 #endif
-	
+
 
 class SDLWrapper
 {
@@ -88,14 +88,14 @@ int main(int argc, char *argv[])
 	viewport2 = new ViewPort(SCR_WIDTH/2,0, SCR_WIDTH/2,SCR_HEIGHT,screen);
 	renderer1 = new R007Bilinear(scene, camera, viewport1);
 	renderer2 = new R008NoTexelArtefact(scene, camera, viewport2);
-	/**/
+	//*/
 	/*
 	camera = new Camera((SCR_WIDTH)/(SCR_HEIGHT/2.0f));
 	viewport1 = new ViewPort(0,0,            SCR_WIDTH,SCR_HEIGHT/2,screen);
 	viewport2 = new ViewPort(0,SCR_HEIGHT/2, SCR_WIDTH,SCR_HEIGHT/2,screen);
 	renderer1 = new R008NoTexelArtefact(scene, camera, viewport1);
 	renderer2 = new R009Antialiasing(scene, camera, viewport2);
-	/**/
+	//*/
 	while (1)
 	{
 		VideoWorks(sdl, renderer1, font);
@@ -109,14 +109,14 @@ int main(int argc, char *argv[])
 swegl::Scene BuildScene()
 {
 	auto texture = std::make_shared<swegl::Texture>("tex.bmp");
-	swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
+	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::Scene s;
 	//*
 	swegl::Mesh tore = swegl::MakeTore(20, texture);
 	tore.GetWorldMatrix().Translate(0.0f, 0.0f, 8.0f);
 	//tore->SetBumpMap(bumpmap);
 	s.push_back(std::move(tore));
-	/**/
+	//*/
 
 	//*
 	swegl::Mesh cube = swegl::MakeCube(1.0f, texture);
@@ -132,7 +132,7 @@ swegl::Scene BuildScene()
 	RectangleTriangle *tri = new RectangleTriangle(0.5f, 0.5f, dummy_texture);
 	tri->m_worldmatrix.Translate(-0.2f, -0.2f, 0.8f);
 	s->AddMesh(tri);
-	/**/
+	//*/
 	return s;
 }
 
@@ -141,10 +141,10 @@ void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 	static int totalTicks = 0;
 	static int tickCount  = 0;
 	static char fps[32] = { 0 };
-	static char tris[64] = { 0 };
+
 
 	int fpsticks = SDL_GetTicks();
-	
+
 	renderer1.Render();
 
 	totalTicks += SDL_GetTicks() - fpsticks;
@@ -159,11 +159,12 @@ void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 	}
 	font.Print(fps, 10, 10, sdl.surface);
 	#if defined(_DEBUG) || defined(DEBUG)
+		static char tris[64] = { 0 };
 		sprintf_s(tris, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
 		font.Print(tris, 10, 26, sdl.surface);
 		g_trianglesdrawn = g_pixelsdrawn = 0;
 	#endif
-		
+
 	// Tell SDL to update the whole screen
 	SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
 	SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);

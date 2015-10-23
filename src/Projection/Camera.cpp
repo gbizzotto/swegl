@@ -6,10 +6,11 @@ namespace swegl
 {
 
 	Camera::Camera()
+		:m_center(0, 0, -1)
+		,m_direction(0, 0, 1)
+		,m_roll(0, 1, 0)
+		,m_viewmatrix(Matrix4x4::Identity)
 	{
-		this->m_center.x;      this->m_center.y=0;    this->m_center.z=-1;
-		this->m_direction.x=0; this->m_direction.y=0; this->m_direction.z=1;
-		this->m_roll.x=0;      this->m_roll.y=1;      this->m_roll.z=0;
 		//this->setXFov(90);
 		//this->setYFov(60);
 
@@ -23,15 +24,14 @@ namespace swegl
 		this->m_projectionmatrix[10] = f / (f-n);
 		this->m_projectionmatrix[11] = -f*n / (f-n);
 		this->m_projectionmatrix[14] = 1;
-
-		this->m_viewmatrix = Matrix4x4::Identity;
 	}
 
 	Camera::Camera(float aspectratio)
+		:m_center(0, 0, -1)
+		,m_direction(0, 0, 1)
+		,m_roll(0, 1, 0)
+		,m_viewmatrix(Matrix4x4::Identity)
 	{
-		this->m_center.x;      this->m_center.y=0;    this->m_center.z=-1;
-		this->m_direction.x=0; this->m_direction.y=0; this->m_direction.z=1;
-		this->m_roll.x=0;      this->m_roll.y=1;      this->m_roll.z=0;
 		//this->setXFov(90);
 		//this->setYFov(60);
 
@@ -53,8 +53,6 @@ namespace swegl
 		this->m_projectionmatrix[10] = f / (f-n);
 	//	this->m_projectionmatrix[11] = -f*n / (f-n);
 		this->m_projectionmatrix[14] = 1;
-
-		this->m_viewmatrix = Matrix4x4::Identity;
 	}
 
 	void Camera::RotateX(float a)

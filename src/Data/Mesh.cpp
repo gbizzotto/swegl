@@ -18,23 +18,18 @@ namespace swegl
 	void Strip::CalculateNormals(const std::vector<std::pair<Vec3f,Vec2f>> & vertex_buffer)
 	{
 		// Preca normals for strips
-		unsigned int vindex0, vindex1, vindex2;
 		const Vec3f * v0 = &vertex_buffer[m_indexbuffer[0].first].first;
 		const Vec3f * v1 = &vertex_buffer[m_indexbuffer[1].first].first;
-		vindex0 = m_indexbuffer[0].first;
-		vindex1 = m_indexbuffer[1].first;
 		const Vec3f * v2;
-		for (unsigned int i=2 ; i<m_indexbuffer.size() ; i++, v0=v1, v1=v2, vindex0=vindex1, vindex1=vindex2)
+		for (unsigned int i=2 ; i<m_indexbuffer.size() ; i++, v0=v1, v1=v2)
 		{
 			v2 = &vertex_buffer[m_indexbuffer[i].first].first;
-			vindex2 = m_indexbuffer[i].first;
-			
 			m_indexbuffer[i].second = ((i&0x1)==0) ? ((*v2-*v0).Cross(*v1-*v0)) : ((*v1-*v0).Cross(*v2-*v0));
 			m_indexbuffer[i].second.Normalize();
 		}
 	}
 
-	void Mesh::AddStrip(std::vector<unsigned int> && indexbuffer)	
+	void Mesh::AddStrip(std::vector<unsigned int> && indexbuffer)
 	{
 		m_strips.emplace_back(Strip(std::move<>(indexbuffer)));
 		m_strips.back().CalculateNormals(m_vertexbuffer);
