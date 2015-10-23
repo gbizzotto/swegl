@@ -27,23 +27,22 @@ namespace swegl
 			{}
 
 	};
-	
+
 
 	Renderer::Renderer(Scene & scene, Camera & camera, ViewPort & viewport)
-		: m_scene(scene)
-		, m_camera(camera)
-		, m_viewport(viewport)
-	{
-		m_zbuffer = new float[m_viewport.m_w*m_viewport.m_h];
-	}
+		:m_scene(scene)
+		,m_camera(camera)
+		,m_viewport(viewport)
+		,m_zbuffer(new float[m_viewport.m_w*m_viewport.m_h])
+	{}
 
 	void Renderer::Render()
 	{
 		size_t max_concurrency = 1;//TODO std::thread::hardware_concurrency();
 
 		m_viewport.Clear();
-		std::vector<Matrix4x4> mstackvertices(1, Matrix4x4::Identity);
-		std::vector<Matrix4x4> mstacknormals(1, Matrix4x4::Identity);
+		std::vector<Matrix4x4> mstackvertices({Matrix4x4::Identity});
+		std::vector<Matrix4x4> mstacknormals({Matrix4x4::Identity});
 
 		// TODO: sort meshes
 
@@ -123,7 +122,7 @@ namespace swegl
 								{
 									continue;
 								}
-	
+
 								// backface culling
 								Vec3f cullingnormal;
 								if ((i&0x1)==0)
@@ -136,7 +135,7 @@ namespace swegl
 								// Z-near culling
 								if (v0->z < 0.001 && v1->z < 0.001 && v2->z < 0.001)
 									continue;
-							
+
 								// Fill poly
 								//F001CustomNoArtefact::FillPoly(*v0, *v1, *v2, *t0, *t1, *t2, mesh->GetTexture(), m_viewport, 255, m_zbuffer);
 								polys.emplace_back(*v0, *v1, *v2, *t0, *t1, *t2, mesh.GetTexture(), 255);
@@ -193,7 +192,7 @@ namespace swegl
 								{
 									continue;
 								}
-	
+
 								// backface culling
 								Vec3f cullingnormal = ((*v1-*v0).Cross((*v2-*v0)));
 								if (cullingnormal.z >= 0) // TODO dotproduct with camera ?
