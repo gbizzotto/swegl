@@ -5,6 +5,8 @@
 #include <swegl/Projection/Vec3f.h>
 #include <swegl/Projection/Matrix4x4.h>
 
+#include <freon/Matrix.hpp>
+
 namespace swegl
 {
 
@@ -24,7 +26,7 @@ namespace swegl
 		for (unsigned int i=2 ; i<m_indexbuffer.size() ; i++, v0=v1, v1=v2)
 		{
 			v2 = &vertex_buffer[m_indexbuffer[i].first].first;
-			m_indexbuffer[i].second = ((i&0x1)==0) ? ((*v2-*v0).Cross(*v1-*v0)) : ((*v1-*v0).Cross(*v2-*v0));
+			m_indexbuffer[i].second = ((i&0x1)==0) ? Cross((*v2-*v0),(*v1-*v0)) : Cross((*v1-*v0),(*v2-*v0));
 			m_indexbuffer[i].second.Normalize();
 		}
 	}
@@ -74,10 +76,8 @@ namespace swegl
 
 			for (unsigned int sm = 0; sm <= precision; sm++)
 			{
-				Vec3f v;
-				v = small * v;
-				v = big * v;
-				vb.emplace_back(std::make_pair<>(v, Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
+				vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
+				                                 Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 				small.RotateZ(angle);
 			}
 

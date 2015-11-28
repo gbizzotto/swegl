@@ -34,7 +34,7 @@ namespace swegl
 
 	class Mesh
 	{
-	public:	
+	public:
 		typedef std::vector<std::pair<Vec3f, Vec2f>> VertexBuffer;
 
 		Mesh(VertexBuffer && vb)

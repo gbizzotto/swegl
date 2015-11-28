@@ -7,62 +7,25 @@
 namespace swegl
 {
 
-	Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &other) const
-	{
-		Matrix4x4 result;
-
-		for (unsigned int j=0 ; j<4 ; j++) {
-			for (unsigned int i=0 ; i<4 ; i++) {
-				for (unsigned int k=0 ; k<4 ; k++) {
-					result.m_data[j*4 + k] +=
-						  this->m_data[j*4 + i] * other.m_data[i*4 + k];
-				}
-			}
-		}
-		return result;
-	}
-
-	Vec3f Matrix4x4::operator*(const Vec3f & v) const
-	{
-		Vec3f result;
-		result.x = v.x*m_data[0] + v.y*m_data[1] + v.z*m_data[2] + m_data[3];
-		result.y = v.x*m_data[4] + v.y*m_data[5] + v.z*m_data[6] + m_data[7];
-		result.z = v.x*m_data[8] + v.y*m_data[9] + v.z*m_data[10] + m_data[11];
-		return result;
-	}
-
-	float Matrix4x4::operator[](const int idx) const
-	{
-		return m_data[idx];
-	}
-	float & Matrix4x4::operator[](const int idx)
-	{
-		return m_data[idx];
-	}
-
-	const Matrix4x4 & Matrix4x4::operator=(const Matrix4x4 & other)
-	{
-		memcpy(m_data, other.m_data, sizeof(m_data));
-		return *this;
-	}
+	const freon::Matrix<float,4,4> & Matrix4x4::Identity = freon::MatrixIdentity<float>::_4;
 
 	void Matrix4x4::RotateX(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
 		float sina = (float)sin(a);
-		float d4 = m_data[4];
-		float d5 = m_data[5];
-		float d6 = m_data[6];
-		float d7 = m_data[7];
-		m_data[4]  =  cosa*d4 + sina*m_data[8];
-		m_data[5]  =  cosa*d5 + sina*m_data[9];
-		m_data[6]  =  cosa*d6 + sina*m_data[10];
-		m_data[7]  =  cosa*d7 + sina*m_data[11];
-		m_data[8]  = -sina*d4 + cosa*m_data[8];
-		m_data[9]  = -sina*d5 + cosa*m_data[9];
-		m_data[10] = -sina*d6 + cosa*m_data[10];
-		m_data[11] = -sina*d7 + cosa*m_data[11];
+		float d4 = (*this)[1][0];
+		float d5 = (*this)[1][1];
+		float d6 = (*this)[1][2];
+		float d7 = (*this)[1][3];
+		(*this)[1][0] =  cosa*d4 + sina*(*this)[2][0];
+		(*this)[1][1] =  cosa*d5 + sina*(*this)[2][1];
+		(*this)[1][2] =  cosa*d6 + sina*(*this)[2][2];
+		(*this)[1][3] =  cosa*d7 + sina*(*this)[2][3];
+		(*this)[2][0] = -sina*d4 + cosa*(*this)[2][0];
+		(*this)[2][1] = -sina*d5 + cosa*(*this)[2][1];
+		(*this)[2][2] = -sina*d6 + cosa*(*this)[2][2];
+		(*this)[2][3] = -sina*d7 + cosa*(*this)[2][3];
 	}
 
 	void Matrix4x4::RotateY(float a)
@@ -70,18 +33,18 @@ namespace swegl
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
 		float sina = (float)sin(a);
-		float d0 = m_data[0];
-		float d1 = m_data[1];
-		float d2 = m_data[2];
-		float d3 = m_data[3];
-		m_data[0]  =  cosa*d0 + sina*m_data[8];
-		m_data[1]  =  cosa*d1 + sina*m_data[9];
-		m_data[2]  =  cosa*d2 + sina*m_data[10];
-		m_data[3]  =  cosa*d3 + sina*m_data[11];
-		m_data[8]  = -sina*d0 + cosa*m_data[8];
-		m_data[9]  = -sina*d1 + cosa*m_data[9];
-		m_data[10] = -sina*d2 + cosa*m_data[10];
-		m_data[11] = -sina*d3 + cosa*m_data[11];
+		float d0 = (*this)[0][0];
+		float d1 = (*this)[0][1];
+		float d2 = (*this)[0][2];
+		float d3 = (*this)[0][3];
+		(*this)[0][0] =  cosa*d0 + sina*(*this)[2][0];
+		(*this)[0][1] =  cosa*d1 + sina*(*this)[2][1];
+		(*this)[0][2] =  cosa*d2 + sina*(*this)[2][2];
+		(*this)[0][3] =  cosa*d3 + sina*(*this)[2][3];
+		(*this)[2][0] = -sina*d0 + cosa*(*this)[2][0];
+		(*this)[2][1] = -sina*d1 + cosa*(*this)[2][1];
+		(*this)[2][2] = -sina*d2 + cosa*(*this)[2][2];
+		(*this)[2][3] = -sina*d3 + cosa*(*this)[2][3];
 	}
 
 	void Matrix4x4::RotateZ(float a)
@@ -89,18 +52,18 @@ namespace swegl
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
 		float sina = (float)sin(a);
-		float d0 = m_data[0];
-		float d1 = m_data[1];
-		float d2 = m_data[2];
-		float d3 = m_data[3];
-		m_data[0] =  cosa*d0 + sina*m_data[4];
-		m_data[1] =  cosa*d1 + sina*m_data[5];
-		m_data[2] =  cosa*d2 + sina*m_data[6];
-		m_data[3] =  cosa*d3 + sina*m_data[7];
-		m_data[4] = -sina*d0 + cosa*m_data[4];
-		m_data[5] = -sina*d1 + cosa*m_data[5];
-		m_data[6] = -sina*d2 + cosa*m_data[6];
-		m_data[7] = -sina*d3 + cosa*m_data[7];
+		float d0 = (*this)[0][0];
+		float d1 = (*this)[0][1];
+		float d2 = (*this)[0][2];
+		float d3 = (*this)[0][3];
+		(*this)[0][0] =  cosa*d0 + sina*(*this)[1][0];
+		(*this)[0][1] =  cosa*d1 + sina*(*this)[1][1];
+		(*this)[0][2] =  cosa*d2 + sina*(*this)[1][2];
+		(*this)[0][3] =  cosa*d3 + sina*(*this)[1][3];
+		(*this)[1][0] = -sina*d0 + cosa*(*this)[1][0];
+		(*this)[1][1] = -sina*d1 + cosa*(*this)[1][1];
+		(*this)[1][2] = -sina*d2 + cosa*(*this)[1][2];
+		(*this)[1][3] = -sina*d3 + cosa*(*this)[1][3];
 	}
 
 	void Matrix4x4::SetRotateXY(float x, float y)
@@ -109,27 +72,86 @@ namespace swegl
 		float sinx = (float)sin(x);
 		float cosy = (float)cos(y);
 		float siny = (float)sin(y);
-		m_data[15] = 1;
-		m_data[3] = m_data[4] = m_data[7] = m_data[11] = m_data[12] = m_data[13] = m_data[14] = 0;
-		m_data[0] = cosy;
-		m_data[1] = -sinx*siny;
-		m_data[2] = siny*cosx;
-		m_data[5] = cosx;
-		m_data[6] = sinx;
-		m_data[8] = -siny;
-		m_data[9] = -sinx*cosy;
-		m_data[10] = cosx*cosy;
+		(*this)[3][3] = 1;
+		(*this)[0][3] = (*this)[1][0] = (*this)[1][3] = (*this)[2][3] = (*this)[3][0] = (*this)[3][1] = (*this)[3][2] = 0;
+		(*this)[0][0] =  cosy;
+		(*this)[0][1] = -sinx*siny;
+		(*this)[0][2] =  siny*cosx;
+		(*this)[1][1] =  cosx;
+		(*this)[1][2] =  sinx;
+		(*this)[2][0] = -siny;
+		(*this)[2][1] = -sinx*cosy;
+		(*this)[2][2] =  cosx*cosy;
 	}
 
 	void Matrix4x4::Translate(float x, float y, float z)
 	{
-		m_data[3] += x;
-		m_data[7] += y;
-		m_data[11] += z;
+		(*this)[0][3] += x;
+		(*this)[1][3] += y;
+		(*this)[2][3] += z;
 	}
 
-	const Matrix4x4 Matrix4x4::Identity({ 1.0f, 0.0f, 0.0f, 0.0f,
-	                                      0.0f, 1.0f, 0.0f, 0.0f,
-	                                      0.0f, 0.0f, 1.0f, 0.0f,
-	                                      0.0f, 0.0f, 0.0f, 1.0f });
+	/*Matrix4x4 operator*(const Matrix4x4 & left, const Matrix4x4 & up)
+	{
+		Matrix4x4 result;
+		__m128 u0 = _mm_load_ps(&up[0][0]);
+		__m128 u1 = _mm_load_ps(&up[1][0]);
+		__m128 u2 = _mm_load_ps(&up[2][0]);
+		__m128 u3 = _mm_load_ps(&up[3][0]);
+
+		__m128 _f = _mm_load1_ps(&left[0][0]);
+		__m128 r = _mm_mul_ps(_f, u0);
+		_f = _mm_load1_ps(&left[0][1]);
+		__m128 t = _mm_mul_ps(_f, u1);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[0][2]);
+		t = _mm_mul_ps(_f, u2);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[0][3]);
+		t = _mm_mul_ps(_f, u3);
+		r = _mm_add_ps(r, t);
+		_mm_store_ps(result[0], r);
+
+		_f = _mm_load1_ps(&left[1][0]);
+		r = _mm_mul_ps(_f, u0);
+		_f = _mm_load1_ps(&left[1][1]);
+		t = _mm_mul_ps(_f, u1);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[1][2]);
+		t = _mm_mul_ps(_f, u2);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[1][3]);
+		t = _mm_mul_ps(_f, u3);
+		r = _mm_add_ps(r, t);
+		_mm_store_ps(result[1], r);
+
+		_f = _mm_load1_ps(&left[2][0]);
+		r = _mm_mul_ps(_f, u0);
+		_f = _mm_load1_ps(&left[2][1]);
+		t = _mm_mul_ps(_f, u1);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[2][2]);
+		t = _mm_mul_ps(_f, u2);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[2][3]);
+		t = _mm_mul_ps(_f, u3);
+		r = _mm_add_ps(r, t);
+		_mm_store_ps(result[2], r);
+
+		_f = _mm_load1_ps(&left[3][0]);
+		r = _mm_mul_ps(_f, u0);
+		_f = _mm_load1_ps(&left[3][1]);
+		t = _mm_mul_ps(_f, u1);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[3][2]);
+		t = _mm_mul_ps(_f, u2);
+		r = _mm_add_ps(r, t);
+		_f = _mm_load1_ps(&left[3][3]);
+		t = _mm_mul_ps(_f, u3);
+		r = _mm_add_ps(r, t);
+		_mm_store_ps(result[3], r);
+
+		return result;
+	}*/
+
 }

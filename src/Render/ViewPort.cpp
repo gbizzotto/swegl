@@ -6,6 +6,7 @@ namespace swegl
 {
 
 	ViewPort::ViewPort(int x, int y, int w, int h, SDL_Surface *screen)
+		:m_viewportmatrix(Matrix4x4::Identity)
 	{
 		this->m_x = x;
 		this->m_y = y;
@@ -13,18 +14,18 @@ namespace swegl
 		this->m_h = h;
 		this->m_screen = screen;
 
-		this->m_viewportmatrix[0] = w/2.0f;
-		this->m_viewportmatrix[3] = x+w/2.0f;
-		this->m_viewportmatrix[5] = -h/2.0f;
-		this->m_viewportmatrix[7] = y+h/2.0f;
-		this->m_viewportmatrix[10] = 1.0f;
-		this->m_viewportmatrix[15] = 1.0f;
+		this->m_viewportmatrix[0][0] = w/2.0f;
+		this->m_viewportmatrix[0][3] = x+w/2.0f;
+		this->m_viewportmatrix[1][1] = -h/2.0f;
+		this->m_viewportmatrix[1][3] = y+h/2.0f;
+		this->m_viewportmatrix[2][2] = 1.0f;
+		this->m_viewportmatrix[3][3] = 1.0f;
 	}
 
 
 	Vec3f ViewPort::ToPixel(Vec3f &v)
 	{
-		return v * m_viewportmatrix;
+		return Transform(v, m_viewportmatrix);
 	}
 	/*
 	inline void ViewPort::ShowPoint(int x, int y, unsigned char shade)

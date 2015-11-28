@@ -25,7 +25,7 @@ public:
 	SDLWrapper()
 		:keys{0}
 	{
-		// Initialize SDL's subsystems - in this case, only video.
+		// Initialize SDL's subsystems
 		if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		{
 			fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
@@ -111,6 +111,7 @@ swegl::Scene BuildScene()
 	auto texture = std::make_shared<swegl::Texture>("tex.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::Scene s;
+
 	//*
 	swegl::Mesh tore = swegl::MakeTore(20, texture);
 	tore.GetWorldMatrix().Translate(0.0f, 0.0f, 8.0f);
@@ -125,8 +126,19 @@ swegl::Scene BuildScene()
 	cube.GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
 	//c->SetBumpMap(bumpmap);
 	s.push_back(std::move(cube));
-	/**/
+	//*/
 
+
+	/*swegl::Mesh face({
+			{ swegl::Vec3f(-1 / 2.0f, -1 / 2.0f, -1/ 2.0f), swegl::Vec2f((float)0, (float)texture->m_mipmaps[0].m_height) },
+			{ swegl::Vec3f(1 / 2.0f, -1 / 2.0f, -1/ 2.0f), swegl::Vec2f((float)texture->m_mipmaps[0].m_width, (float)texture->m_mipmaps[0].m_height) },
+			{ swegl::Vec3f(-1/ 2.0f, 1/ 2.0f, -1 / 2.0f), swegl::Vec2f((float)0, (float)0) },
+		});
+	face.AddFan({0,1,2});
+	face.SetTexture(texture);
+	face.GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
+	s.push_back(std::move(face));
+*/
 	/*
 	Texture *dummy_texture = new Texture(0x00FF00FF);
 	RectangleTriangle *tri = new RectangleTriangle(0.5f, 0.5f, dummy_texture);
@@ -151,7 +163,7 @@ void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
 	tickCount++;
 
 	// Print fps
-	if (tickCount == 50)
+	if (tickCount == 10)
 	{
 		sprintf(fps, "%f mspf", totalTicks/50.0);
 		totalTicks = 0;

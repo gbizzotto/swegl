@@ -2,16 +2,15 @@
 #pragma once
 
 #include <swegl/Projection/Vec3f.h>
+#include <swegl/Projection/Vec2f.h>
 
 namespace swegl
 {
 
-	class ZInterpolator
+	struct ZInterpolator
 	{
-	public:
-		Vec3f ualpha;	
 		Vec3f topalpha, topstep;
-		float alpha, alphastep;
+		Vec3f ualpha;
 		float bottomalpha, bottomstep;
 
 		enum MajorType
@@ -20,17 +19,18 @@ namespace swegl
 			HORIZONTAL
 		};
 
-		ZInterpolator();
-		virtual void Init(const MajorType & mt, const Vec3f & v0, const Vec3f & v1, const Vec2f & t0, const Vec2f & t1);
+		void Init(const MajorType & mt, const Vec3f & v0, const Vec3f & v1, const Vec2f & t0, const Vec2f & t1);
 		inline void DisplaceStartingPoint(const float & move) {
 			topalpha += topstep * move;
 			bottomalpha += bottomstep * move;
-			ualpha = topalpha / bottomalpha;
+			ualpha = topalpha;
+			ualpha /= bottomalpha;
 		}
 		inline void Step() {
 			topalpha += topstep;
 			bottomalpha += bottomstep;
-			ualpha = topalpha / bottomalpha;
+			ualpha = topalpha;
+			ualpha /= bottomalpha;
 		}
 	};
 
@@ -44,13 +44,17 @@ namespace swegl
 		inline void DisplaceStartingPoint(const float & move) {
 			topalpha += topstep * move;
 			bottomalpha += bottomstep * move;
-			ualpha = topalpha / bottomalpha;
-		
-			topstep = topstep * 16.0f;
+			ualpha = topalpha;
+			ualpha /= bottomalpha;
+
+			topstep *= 16.0f;
 			bottomstep = bottomstep * 16.0f;
 			topalpha += topstep;
 			bottomalpha += bottomstep;
-			ualphastep = ((topalpha/bottomalpha) - ualpha) / 16.0f;
+			ualphastep = topalpha;
+			ualphastep /= bottomalpha;
+			ualphastep -= ualpha;
+			ualphastep /= 16.0f;
 			quake = 15;
 		}
 		inline void DisplaceStartingPoint(const float & move, int stepcount) {
@@ -58,20 +62,28 @@ namespace swegl
 				stepcount = 16;
 			topalpha += topstep * move;
 			bottomalpha += bottomstep * move;
-			ualpha = topalpha / bottomalpha;
-			topstep = topstep * (float)stepcount;
+			ualpha = topalpha;
+			ualpha /= bottomalpha;
+			topstep *= (float)stepcount;
 			bottomstep = bottomstep * (float)stepcount;
 			topalpha += topstep;
 			bottomalpha += bottomstep;
-			ualphastep = ((topalpha/bottomalpha) - ualpha) / (float)stepcount;
+			ualphastep = topalpha;
+			ualphastep /= bottomalpha;
+			ualphastep -= ualpha;
+			ualphastep /= (float)stepcount;
 			quake = stepcount - 1;
 		}
 		inline void Step() {
 			if (quake == 0) {
-				ualpha = topalpha / bottomalpha;
+				ualpha = topalpha;
+				ualpha /= bottomalpha;
 				topalpha += topstep;
 				bottomalpha += bottomstep;
-				ualphastep = ((topalpha/bottomalpha) - ualpha) / 16.0f;
+				ualphastep = topalpha;
+				ualphastep /= bottomalpha;
+				ualphastep -= ualpha;
+				ualphastep /= 16.0f;
 				quake = 15;
 			} else {
 				ualpha += ualphastep;

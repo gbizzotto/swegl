@@ -41,38 +41,50 @@ namespace swegl
 		size_t max_concurrency = 1;//TODO std::thread::hardware_concurrency();
 
 		m_viewport.Clear();
-		std::vector<Matrix4x4> mstackvertices({Matrix4x4::Identity});
-		std::vector<Matrix4x4> mstacknormals({Matrix4x4::Identity});
+		//std::vector<Matrix4x4> mstackvertices({Matrix4x4::Identity});
+		//std::vector<Matrix4x4> mstacknormals({Matrix4x4::Identity});
 
 		// TODO: sort meshes
 
-		mstackvertices.push_back(mstackvertices.back() * m_camera.m_projectionmatrix);
-		mstackvertices.push_back(mstackvertices.back() * m_camera.m_viewmatrix);
-		mstacknormals.push_back(mstacknormals.back() * m_camera.m_viewmatrix);
+		auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
+		//mstackvertices.emplace_back(mstackvertices.back() * m_camera.m_projectionmatrix);
+		//mstackvertices.emplace_back(mstackvertices.back() * m_camera.m_viewmatrix);
+		//mstacknormals.emplace_back(mstacknormals.back() * m_camera.m_viewmatrix);
 
-		for (int i=m_viewport.m_w*m_viewport.m_h-1 ; i>=0 ; i--)
-			m_zbuffer[i] = std::numeric_limits<float>::max();
+		std::fill(m_zbuffer, m_zbuffer+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<decltype(m_zbuffer)>::type>::max());
 
-		for (size_t i=0 ; i<m_scene.size() ; i++)
+		for (const Mesh & mesh : m_scene)
 		{
-			const Mesh & mesh = m_scene[i];
-			mstackvertices.push_back(mstackvertices.back() * mesh.GetWorldMatrix());
-			mstacknormals.push_back(mstacknormals.back() * mesh.GetWorldMatrix());
+			//const Mesh & mesh = m_scene[i];
+			//mstackvertices.push_back(mstackvertices.back() * mesh.GetWorldMatrix());
+			auto vertice_transform_matrix = basic_vertice_transform_matrix * mesh.GetWorldMatrix();
+			//mstacknormals.push_back(mstacknormals.back() * mesh.GetWorldMatrix());
+
+			std::vector<std::pair<Vec3f,Vec2f>> vertices;
+			vertices.reserve(mesh.GetVertexBuffer().size());
+			for (const std::pair<Vec3f,Vec2f> & v : mesh.GetVertexBuffer())
+			{
+				Vec3f vec = Transform(v.first, vertice_transform_matrix);
+				vec[0][0] /= fabs(vec[0][2]);
+				vec[0][1] /= fabs(vec[0][2]);
+				vertices.emplace_back(std::make_pair(Transform(vec, m_viewport.m_viewportmatrix), v.second));
+			}
 
 			// Transforming vertices into screen coords
+			auto concurrency = std::min(max_concurrency, vertices.size());
+			/*
 			std::vector<std::pair<Vec3f,Vec2f>> vertices = mesh.GetVertexBuffer();
 			auto vertex_transformer = [&](std::vector<std::pair<Vec3f,Vec2f>>::iterator it,
 			                              std::vector<std::pair<Vec3f,Vec2f>>::iterator end)
 				{
 					for ( ; it!=end ; ++it)
 					{
-						Vec3f vec = (mstackvertices.empty()?Matrix4x4::Identity:mstackvertices.back()) * it->first;
-						vec.x /= fabs(vec.z);
-						vec.y /= fabs(vec.z);
-						it->first = m_viewport.m_viewportmatrix * vec;
+						Vec3f vec = Transform(it->first, vertice_transform_matrix);
+						vec[0][0] /= fabs(vec[0][2]);
+						vec[0][1] /= fabs(vec[0][2]);
+						it->first = Transform(vec, m_viewport.m_viewportmatrix);
 					}
 				};
-			auto concurrency = std::min(max_concurrency, vertices.size());
 			std::vector<std::thread> vertex_transformer_aux_threads;
 			vertex_transformer_aux_threads.reserve(concurrency - 1);
 			for (size_t k=0 ; k<concurrency-1 ; ++k)
@@ -87,6 +99,7 @@ namespace swegl
 			                   vertices.end());
 			for (auto it=vertex_transformer_aux_threads.begin(),end=vertex_transformer_aux_threads.end() ; it!=end ; ++it)
 				it->join();
+			*/
 
 
 			// Storing polys info to process later
@@ -114,26 +127,26 @@ namespace swegl
 								t2 = &vertices[strip.GetIndexBuffer()[i].first].second;
 
 								// frustum culling
-								if (      (v0->x < m_viewport.m_x && v1->x <m_viewport.m_x && v2->x < m_viewport.m_x)
-										||(v0->y < m_viewport.m_y && v1->y <m_viewport.m_y && v2->y < m_viewport.m_y)
-										||(v0->x >= m_viewport.m_x+m_viewport.m_w && v1->x >= m_viewport.m_x+m_viewport.m_w && v2->x >= m_viewport.m_x+m_viewport.m_w)
-										||(v0->y >= m_viewport.m_y+m_viewport.m_h && v1->y >= m_viewport.m_y+m_viewport.m_h && v2->y >= m_viewport.m_y+m_viewport.m_h)
+								if (    ((*v0)[0][0] < m_viewport.m_x && (*v1)[0][0] <m_viewport.m_x && (*v2)[0][0] < m_viewport.m_x)
+										||((*v0)[0][1] < m_viewport.m_y && (*v1)[0][1] <m_viewport.m_y && (*v2)[0][1] < m_viewport.m_y)
+										||((*v0)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v1)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v2)[0][0] >= m_viewport.m_x+m_viewport.m_w)
+										||((*v0)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v1)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v2)[0][1] >= m_viewport.m_y+m_viewport.m_h)
 								   )
 								{
 									continue;
 								}
 
 								// backface culling
-								Vec3f cullingnormal;
-								if ((i&0x1)==0)
-									cullingnormal = ((*v1-*v0).Cross((*v2-*v0)));
-								else
-									cullingnormal = ((*v2-*v0).Cross((*v1-*v0)));
-								if (cullingnormal.z >= 0) // TODO dotproduct with camera ?
-									continue;
+								if ((i&0x1)==0) {
+									if ( Cross((*v1-*v0),(*v2-*v0))[0][2] >= 0 )
+										continue;
+								} else {
+									if ( Cross((*v2-*v0),(*v1-*v0))[0][2] >= 0 )
+										continue;
+								}
 
 								// Z-near culling
-								if (v0->z < 0.001 && v1->z < 0.001 && v2->z < 0.001)
+								if ((*v0)[0][2] < 0.001 && (*v1)[0][2] < 0.001 && (*v2)[0][2] < 0.001)
 									continue;
 
 								// Fill poly
@@ -142,7 +155,11 @@ namespace swegl
 							}
 						}
 					};
-				std::vector<std::thread> aux_threads;
+
+				strip_renderer(mesh.GetStrips().begin(),
+				               mesh.GetStrips().end(),
+				               polys_to_fill.back());
+				/*std::vector<std::thread> aux_threads;
 				aux_threads.reserve(concurrency-1);
 
 				for (size_t i=0 ; i<concurrency-1 ; ++i)
@@ -160,6 +177,7 @@ namespace swegl
 
 				for (auto it=aux_threads.begin(),end=aux_threads.end() ; it!=end ; ++it)
 					it->join();
+				*/
 			}
 
 			// FANS
@@ -184,22 +202,21 @@ namespace swegl
 								t2 = &vertices[fan.GetIndexBuffer()[i].first].second;
 
 								// frustum culling
-								if (  (v0->x <  m_viewport.m_x                 && v1->x <  m_viewport.m_x                 && v2->x <  m_viewport.m_x)
-									||(v0->y <  m_viewport.m_y                 && v1->y <  m_viewport.m_y                 && v2->y <  m_viewport.m_y)
-									||(v0->x >= m_viewport.m_x+m_viewport.m_w && v1->x >= m_viewport.m_x+m_viewport.m_w && v2->x >= m_viewport.m_x+m_viewport.m_w)
-									||(v0->y >= m_viewport.m_y+m_viewport.m_h && v1->y >= m_viewport.m_y+m_viewport.m_h && v2->y >= m_viewport.m_y+m_viewport.m_h)
+								if ( ((*v0)[0][0] <  m_viewport.m_x                && (*v1)[0][0] <  m_viewport.m_x                && (*v2)[0][0] <  m_viewport.m_x)
+									||((*v0)[0][1] <  m_viewport.m_y                && (*v1)[0][1] <  m_viewport.m_y                && (*v2)[0][1] <  m_viewport.m_y)
+									||((*v0)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v1)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v2)[0][0] >= m_viewport.m_x+m_viewport.m_w)
+									||((*v0)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v1)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v2)[0][1] >= m_viewport.m_y+m_viewport.m_h)
 								   )
 								{
 									continue;
 								}
 
 								// backface culling
-								Vec3f cullingnormal = ((*v1-*v0).Cross((*v2-*v0)));
-								if (cullingnormal.z >= 0) // TODO dotproduct with camera ?
+								if ( Cross((*v1-*v0),(*v2-*v0))[0][2] >= 0 )
 									continue;
 
 								// Z-near culling
-								if (v0->z < 0.001 && v1->z < 0.001 && v2->z < 0.001)
+								if ((*v0)[0][2] < 0.001 && (*v1)[0][2] < 0.001 && (*v2)[0][2] < 0.001)
 									continue;
 
 								// Fill poly
@@ -208,6 +225,10 @@ namespace swegl
 							}
 						}
 					};
+				fan_renderer(mesh.GetFans().begin(),
+				             mesh.GetFans().end(),
+				             polys_to_fill.back());
+				/*
 				std::vector<std::thread> aux_threads;
 				aux_threads.reserve(concurrency-1);
 
@@ -226,6 +247,7 @@ namespace swegl
 
 				for (auto it=aux_threads.begin(),end=aux_threads.end() ; it!=end ; ++it)
 					it->join();
+				*/
 			}
 
 			// actually processing the polys
@@ -236,8 +258,8 @@ namespace swegl
 					                 it2->texture, m_viewport, it2->shade, m_zbuffer);
 
 
-			mstackvertices.pop_back(); // Remove world matrix (the mesh one)
-			mstacknormals.pop_back();
+			//mstackvertices.pop_back(); // Remove world matrix (the mesh one)
+			//mstacknormals.pop_back();
 		}
 	}
 

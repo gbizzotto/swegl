@@ -6,31 +6,23 @@
 namespace swegl
 {
 
-	class Vec2f;
-
-	class Vec3f
+	class Vec3f : public freon::Matrix<float,1,3>
 	{
 	public:
-		float x,y,z;
-
 		Vec3f();
-		Vec3f(const Vec2f & other);
 		Vec3f(float x, float y, float z);
 
 		float Len() const;
 		void Normalize();
-		float Dot(const Vec3f &other) const;
-		Vec3f Cross(const Vec3f &other) const;
-		Vec3f operator*(const Matrix4x4 & m) const;
-		Vec3f operator/(float f) const;
-		Vec3f operator*(float f) const;
-		Vec3f operator+(const Vec3f & other) const;
-		Vec3f operator+=(const Vec3f & other);
-		Vec3f operator-(const Vec3f & other) const;
-		Vec3f operator/(const Vec3f & other) const;
-		Vec3f Mul3x3(const Matrix4x4 & m) const;
+		float Dot(const Vec3f &) const;
 
-		inline Vec3f & DivXY(float z) { x/=z; y/=z; return *this; }
+		Vec3f operator/(const Vec3f &) const;
+
+		const Vec3f & operator=(const freon::Matrix<float,1,3> &);
+
+		inline Vec3f & DivXY(float z) { (*this)[0][0]/=z; (*this)[0][1]/=z; return *this; }
 	};
 
+	Vec3f Cross(const freon::Matrix<float,1,3> &, const freon::Matrix<float,1,3> &);
+	Vec3f Transform(const Vec3f &, const Matrix4x4 &);
 }

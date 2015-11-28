@@ -2,6 +2,7 @@
 #pragma once
 
 #include <swegl/Projection/Vec3f.h>
+#include <swegl/Projection/Vec2f.h>
 #include <swegl/Data/Texture.h>
 #include <swegl/Render/ViewPort.h>
 #include <swegl/Data/Texture.h>
