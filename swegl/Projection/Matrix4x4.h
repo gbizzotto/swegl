@@ -23,7 +23,7 @@ namespace swegl
 		void SetRotateXY(float x, float y);
 		void Translate(float x, float y, float z);
 
-		operator freon::Matrix<float,4,4>() { return *static_cast<freon::Matrix<float,4,4>*>(this); }
+		//operator freon::Matrix<float,4,4>() { return *static_cast<freon::Matrix<float,4,4>*>(this); }
 
 		static const freon::Matrix<float,4,4> & Identity;
 	};

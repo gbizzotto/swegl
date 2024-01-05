@@ -17,6 +17,14 @@ namespace swegl
 		int y;
 		int x1, x2;
 		ZInterpolator qpixel;
+
+		template <typename... P>
+		Scanline(int y, int x1, int x2, P... ts)
+			:y(y)
+			,x1(x1)
+			,x2(x2)
+			,qpixel(ts...)
+		{}
 	};
 
 	void Filler::FillPoly(const Vec3f & _v0, const Vec3f & _v1, const Vec3f & _v2,
@@ -90,6 +98,26 @@ namespace swegl
 		unsigned int *tbitmap;
 		unsigned int twidth;
 		unsigned int theight;
+
+		auto fill = [&twidth,&theight,&tbitmap,&qpixel](int y, int x1, int x2, unsigned int *video, float * zb)
+			{
+				for ( ; x1 <= x2 ; x1++ )
+				{
+					int u, v;
+
+					if (qpixel.ualpha[0][2] < *zb && qpixel.ualpha[0][2] > 0.001) // Ugly z-near culling
+					{
+						u = ((int)qpixel.ualpha[0][0]) % twidth;
+						v = ((int)qpixel.ualpha[0][1]) % theight;
+						*video = tbitmap[v*twidth + u];
+						*zb    = qpixel.ualpha[0][2];
+					}
+					video++;
+					zb++;
+
+					qpixel.Step();
+				}
+			};
 
 		// Init lines
 		displacement = y0+0.5f - (*v0)[0][1];
@@ -238,7 +266,11 @@ namespace swegl
 			//ASSERT(x1 <= x2 || x1 >= vp.m_x + vp.m_w);
 			//ASSERT(x1 >= vp.m_x);
 
-			scanlines.emplace_back(Scanline({y, x1, x2, qpixel}));
+			//scanlines.emplace_back(y, x1, x2, qpixel);
+			unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
+			float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
+			fill(y, x1, x2, video, zb);
+
 
 			x1f += ratio1;
 			x2f += ratio2;
@@ -256,52 +288,5 @@ namespace swegl
 					ymax = vp.m_y + vp.m_h;
 			}
 		}
-
-		// Process scanlines in a parallel fashion
-		auto scanline_filler = [vp,zbuffer,twidth,theight,tbitmap](std::vector<Scanline>::iterator it, std::vector<Scanline>::iterator end)
-			{
-				for ( ; it!=end ; ++it)
-				{
-					int y = it->y;
-					int x1 = it->x1;
-					int x2 = it->x2;
-					unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
-					float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
-
-					for ( ; x1 <= x2 ; x1++ )
-					{
-						int u, v;
-
-						if (it->qpixel.ualpha[0][2] < *zb && it->qpixel.ualpha[0][2] > 0.001) // Ugly z-near culling
-						{
-							u = ((int)it->qpixel.ualpha[0][0]) % twidth;
-							v = ((int)it->qpixel.ualpha[0][1]) % theight;
-							*video = tbitmap[v*twidth + u];
-							*zb    = it->qpixel.ualpha[0][2];
-						}
-						video++;
-						zb++;
-
-						it->qpixel.Step();
-					}
-				}
-			};
-
-		//auto concurrency = std::thread::hardware_concurrency();
-		//std::vector<std::thread> aux_threads;
-		//aux_threads.reserve(concurrency - 1);
-		/*for (int i=0 ; i<concurrency-1 ; ++i)
-			aux_threads.emplace_back([i, concurrency, &scanlines, &scanline_filler]()
-				{
-					scanline_filler(scanlines.begin() + scanlines.size() * i     / concurrency,
-					                scanlines.begin() + scanlines.size() * (i+1) / concurrency);
-				});
-		scanline_filler(scanlines.begin() + scanlines.size() * (concurrency-1) / concurrency,
-		                scanlines.end());*/
-		scanline_filler(scanlines.begin(),
-		                scanlines.end());
-		//for (auto it=aux_threads.begin(),end=aux_threads.end() ; it!=end ; ++it)
-		//	it->join();
 	}
-
 }

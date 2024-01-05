@@ -25,24 +25,20 @@ $(shell mkdir -p $(OBJDIRT))
 $(shell for dir in $(DIRST); do mkdir -p $(OBJDIRT)/$$dir; done)
 DEPFLAGS     = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 DEPFLAGST    = -MT $@ -MMD -MP -MF $(DEPDIRT)/$*.Td
-POSTCOMPILE  = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+POSTCOMPILE  = mv -f $(DEPDIR)/$*.Td  $(DEPDIR)/$*.d
 POSTCOMPILET = mv -f $(DEPDIRT)/$*.Td $(DEPDIRT)/$*.d
 
 CC           = g++
 CONFIG       = -g
-CFLAGS       = $(DEPFLAGS) -Wall -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl2-config --cflags --libs`
-CFLAGST      = $(DEPFLAGST) -Wall -std=c++11 $(CONFIG) -I. -I../freon/ -L. `sdl2-config --cflags --libs`
-
+CFLAGS       = $(DEPFLAGS)  -Wall -std=c++2a $(CONFIG) -I. -I../freon/ -I../utttil/ -L. `sdl2-config --cflags --libs`
+CFLAGST      = $(DEPFLAGST) -Wall -std=c++2a $(CONFIG) -I. -I../freon/ -I../utttil/ -L. `sdl2-config --cflags --libs`
 
 
 all: $(LIBOUT) $(TESTOUT)
 
-Debug: all
 debug: all
 release: CONFIG=-O3
 release: all
-Release: CONFIG=-O3
-Release: all
 
 $(OBJDIR)/%.o: src/%.cpp $(DEPDIR)/%.d
 	@echo $<

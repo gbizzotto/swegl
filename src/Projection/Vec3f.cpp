@@ -18,12 +18,13 @@ namespace swegl
 		return (float) sqrt((*this)[0][0]*(*this)[0][0]+(*this)[0][1]*(*this)[0][1]+(*this)[0][2]*(*this)[0][2]);
 	}
 
-	void Vec3f::Normalize()
+	Vec3f & Vec3f::Normalize()
 	{
 		float len = Len();
 		(*this)[0][0] /= len;
 		(*this)[0][1] /= len;
 		(*this)[0][2] /= len;
+		return *this;
 	}
 
 	float Vec3f::Dot(const Vec3f &other) const
@@ -48,8 +49,8 @@ namespace swegl
 	Vec3f Cross(const freon::Matrix<float,1,3> & left, const freon::Matrix<float,1,3> & right)
 	{
 		return Vec3f(left[0][1]*right[0][2] - left[0][2]*right[0][1],
-						 left[0][2]*right[0][0] - left[0][0]*right[0][2],
-						 left[0][0]*right[0][1] - left[0][1]*right[0][0]);
+		             left[0][2]*right[0][0] - left[0][0]*right[0][2],
+		             left[0][0]*right[0][1] - left[0][1]*right[0][0]);
 	}
 
 	Vec3f Transform(const Vec3f & v, const Matrix4x4 & m)

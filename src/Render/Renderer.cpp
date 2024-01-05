@@ -29,18 +29,17 @@ namespace swegl
 	};
 
 
-	Renderer::Renderer(Scene & scene, Camera & camera, ViewPort & viewport)
+	Renderer::Renderer(Scene & scene, Camera & camera, ViewPort & viewport, float * zb)
 		:m_scene(scene)
 		,m_camera(camera)
 		,m_viewport(viewport)
-		,m_zbuffer(new float[m_viewport.m_w*m_viewport.m_h])
+		,zbuffer(zb)
 	{}
 
 	void Renderer::Render()
 	{
 		size_t max_concurrency = 1;//TODO std::thread::hardware_concurrency();
 
-		m_viewport.Clear();
 		//std::vector<Matrix4x4> mstackvertices({Matrix4x4::Identity});
 		//std::vector<Matrix4x4> mstacknormals({Matrix4x4::Identity});
 
@@ -51,7 +50,6 @@ namespace swegl
 		//mstackvertices.emplace_back(mstackvertices.back() * m_camera.m_viewmatrix);
 		//mstacknormals.emplace_back(mstacknormals.back() * m_camera.m_viewmatrix);
 
-		std::fill(m_zbuffer, m_zbuffer+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<decltype(m_zbuffer)>::type>::max());
 
 		for (const Mesh & mesh : m_scene)
 		{
@@ -67,7 +65,7 @@ namespace swegl
 				Vec3f vec = Transform(v.first, vertice_transform_matrix);
 				vec[0][0] /= fabs(vec[0][2]);
 				vec[0][1] /= fabs(vec[0][2]);
-				vertices.emplace_back(std::make_pair(Transform(vec, m_viewport.m_viewportmatrix), v.second));
+				vertices.emplace_back(Transform(vec, m_viewport.m_viewportmatrix), v.second);
 			}
 
 			// Transforming vertices into screen coords
@@ -104,6 +102,8 @@ namespace swegl
 
 			// Storing polys info to process later
 			std::vector<std::vector<PolyToFill>> polys_to_fill(concurrency);
+			for (auto & v : polys_to_fill)
+				v.reserve(vertices.size());
 
 			// STRIPS
 			// Reading index buffer and drawing lines
@@ -255,7 +255,7 @@ namespace swegl
 				for (auto it2=it->begin(), end2=it->end() ; it2!=end2 ; ++it2)
 					Filler::FillPoly(it2->v0, it2->v1, it2->v2,
 					                 it2->t0, it2->t1, it2->t2,
-					                 it2->texture, m_viewport, it2->shade, m_zbuffer);
+					                 it2->texture, m_viewport, it2->shade, zbuffer);
 
 
 			//mstackvertices.pop_back(); // Remove world matrix (the mesh one)

@@ -16,5 +16,5 @@ class Font
 
 public:
 	Font(const char * filename);
-	void Print(char * str, unsigned x, unsigned y, SDL_Surface *surface);
+	void Print(const char * str, unsigned x, unsigned y, SDL_Surface *surface);
 };

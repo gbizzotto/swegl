@@ -17,8 +17,8 @@ namespace swegl
 		Scene & m_scene;
 		Camera & m_camera;
 		ViewPort & m_viewport;
-		float *m_zbuffer;
-		Renderer(Scene & scene, Camera & camera, ViewPort & viewport);
+		float *zbuffer;
+		Renderer(Scene & scene, Camera & camera, ViewPort & viewport, float * zb);
 
 		void Render();
 		void FillPoly(const Vec3f & v0, const Vec3f & v1, const Vec3f & v2,

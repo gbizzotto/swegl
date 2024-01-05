@@ -3,9 +3,14 @@
 
 #include <SDL2/SDL.h>
 
+#include <utttil/perf.hpp>
+
 #include <swegl/swegl.hpp>
 #include "main.h"
 #include "font.h"
+
+#include <swegl/Data/model.hpp>
+#include <swegl/Render/renderer.hpp>
 
 #if defined(_DEBUG) || defined(DEBUG)
 	unsigned int g_trianglesdrawn;
@@ -66,124 +71,93 @@ public:
 	}
 };
 
-swegl::Scene BuildScene();
-void VideoWorks(SDLWrapper &, swegl::Renderer &, Font &);
-int KeyboardWorks(SDLWrapper &, swegl::Camera &);
+swegl::scene build_scene();
+int KeyboardWorks(SDLWrapper &, swegl::Camera &, swegl::scene & scene);
 
 int main(int argc, char *argv[])
 {
 	SDLWrapper sdl;
 
-	swegl::Scene scene = BuildScene();
+	swegl::scene scene = build_scene();
 	Font font("ascii.bmp");
 
 	//*
 	swegl::Camera camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
 	swegl::ViewPort viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
-	swegl::Renderer renderer1(scene, camera, viewport1);
-	/**/
-	/*
-	camera = new Camera((SCR_WIDTH/2.0f)/SCR_HEIGHT);
-	viewport1 = new ViewPort(0,0,           SCR_WIDTH/2,SCR_HEIGHT,screen);
-	viewport2 = new ViewPort(SCR_WIDTH/2,0, SCR_WIDTH/2,SCR_HEIGHT,screen);
-	renderer1 = new R007Bilinear(scene, camera, viewport1);
-	renderer2 = new R008NoTexelArtefact(scene, camera, viewport2);
+	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
+	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
 	//*/
-	/*
-	camera = new Camera((SCR_WIDTH)/(SCR_HEIGHT/2.0f));
-	viewport1 = new ViewPort(0,0,            SCR_WIDTH,SCR_HEIGHT/2,screen);
-	viewport2 = new ViewPort(0,SCR_HEIGHT/2, SCR_WIDTH,SCR_HEIGHT/2,screen);
-	renderer1 = new R008NoTexelArtefact(scene, camera, viewport1);
-	renderer2 = new R009Antialiasing(scene, camera, viewport2);
-	//*/
+	
+	utttil::measurement_point mp("frame");
+
 	while (1)
 	{
-		VideoWorks(sdl, renderer1, font);
-		if (int a=KeyboardWorks(sdl, camera) < 0)
-			return -a;
+		{
+			utttil::measurement m(mp);
+
+			viewport1.Clear();
+			std::fill(zbuffer, zbuffer+viewport1.m_w*viewport1.m_h, std::numeric_limits<std::remove_pointer<decltype(zbuffer)>::type>::max());
+
+			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
+
+			//VideoWorks(sdl, renderer1, font);
+			renderer.render();
+
+			if (int a=KeyboardWorks(sdl, camera, scene) < 0)
+				return -a;
+
+			// Tell SDL to update the whole screen
+			SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
+			SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);
+			SDL_RenderPresent(sdl.renderer);
+		}
+
 	}
 	return 0;
 }
 
-
-swegl::Scene BuildScene()
+swegl::scene build_scene()
 {
-	auto texture = std::make_shared<swegl::Texture>("tex.bmp");
+	auto texture_dice = std::make_shared<swegl::Texture>("dice.bmp");
+	auto texture_grid = std::make_shared<swegl::Texture>("tex.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
-	swegl::Scene s;
+	swegl::scene s;
+
+	s.ambient_light_intensity = 0.2f;
+
+	s.sun_direction = swegl::Vec3f{1.0, -1.0, 1.0};
+	s.sun_direction.Normalize();
+	s.sun_intensity = 0.8;
+
+	s.point_source_lights.emplace_back(swegl::point_source_light{{10.0,10.0,10.0},0.2});
 
 	//*
-	swegl::Mesh tore = swegl::MakeTore(20, texture);
-	tore.GetWorldMatrix().Translate(0.0f, 0.0f, 8.0f);
-	//tore->SetBumpMap(bumpmap);
-	s.push_back(std::move(tore));
+	auto tore = swegl::make_tore(100, texture_grid);
+	tore.orientation = swegl::Matrix4x4::Identity;
+	tore.orientation.RotateZ(0.5);
+	tore.position = swegl::Vec3f(0.0f, 0.0f, 7.5f);
+	//tore.SetBumpMap(bumpmap);
+	s.models.push_back(std::move(tore));
 	//*/
 
 	//*
-	swegl::Mesh cube = swegl::MakeCube(1.0f, texture);
-	cube.GetWorldMatrix().RotateX(0.5f);
-	cube.GetWorldMatrix().RotateZ(1.5f);
-	cube.GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
+	auto cube = swegl::make_cube(1.0f, texture_dice);
+	cube.orientation = swegl::Matrix4x4::Identity;
+	cube.position = swegl::Vec3f(0.0f, 0.0f, 5.0f);
 	//c->SetBumpMap(bumpmap);
-	s.push_back(std::move(cube));
+	s.models.push_back(std::move(cube));
 	//*/
 
+	auto tri = swegl::make_tri(1, texture_dice);
+	tri.orientation = swegl::Matrix4x4::Identity;
+	tri.position = swegl::Vec3f(0.0f, 0.0f, 5.0f);
+	s.models.push_back(std::move(tri));
 
-	/*swegl::Mesh face({
-			{ swegl::Vec3f(-1 / 2.0f, -1 / 2.0f, -1/ 2.0f), swegl::Vec2f((float)0, (float)texture->m_mipmaps[0].m_height) },
-			{ swegl::Vec3f(1 / 2.0f, -1 / 2.0f, -1/ 2.0f), swegl::Vec2f((float)texture->m_mipmaps[0].m_width, (float)texture->m_mipmaps[0].m_height) },
-			{ swegl::Vec3f(-1/ 2.0f, 1/ 2.0f, -1 / 2.0f), swegl::Vec2f((float)0, (float)0) },
-		});
-	face.AddFan({0,1,2});
-	face.SetTexture(texture);
-	face.GetWorldMatrix().Translate(0.0f, 0.5f, 6.0f);
-	s.push_back(std::move(face));
-*/
-	/*
-	Texture *dummy_texture = new Texture(0x00FF00FF);
-	RectangleTriangle *tri = new RectangleTriangle(0.5f, 0.5f, dummy_texture);
-	tri->m_worldmatrix.Translate(-0.2f, -0.2f, 0.8f);
-	s->AddMesh(tri);
-	//*/
 	return s;
 }
 
-void VideoWorks(SDLWrapper & sdl, swegl::Renderer & renderer1, Font & font)
-{
-	static int totalTicks = 0;
-	static int tickCount  = 0;
-	static char fps[32] = { 0 };
 
-
-	int fpsticks = SDL_GetTicks();
-
-	renderer1.Render();
-
-	totalTicks += SDL_GetTicks() - fpsticks;
-	tickCount++;
-
-	// Print fps
-	if (tickCount == 10)
-	{
-		sprintf(fps, "%f mspf", totalTicks/50.0);
-		totalTicks = 0;
-		tickCount  = 0;
-	}
-	font.Print(fps, 10, 10, sdl.surface);
-	#if defined(_DEBUG) || defined(DEBUG)
-		static char tris[64] = { 0 };
-		sprintf_s(tris, "%d tris, %d pixels", g_trianglesdrawn, g_pixelsdrawn);
-		font.Print(tris, 10, 26, sdl.surface);
-		g_trianglesdrawn = g_pixelsdrawn = 0;
-	#endif
-
-	// Tell SDL to update the whole screen
-	SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
-	SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);
-	SDL_RenderPresent(sdl.renderer);
-}
-
-int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)
+int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;
@@ -228,6 +202,8 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)
 					sdl.keys['o'] = 1;
 				else if (event.key.keysym.sym == SDLK_u)
 					sdl.keys['u'] = 1;
+				else if (event.key.keysym.sym == SDLK_t)
+					sdl.keys['t'] = 1;
 				break;
 
 			case SDL_KEYUP:
@@ -274,7 +250,9 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)
 					sdl.keys['o'] = 0;
 				else if (event.key.keysym.sym == SDLK_u)
 					sdl.keys['u'] = 0;
-					break;
+				else if (event.key.keysym.sym == SDLK_t)
+					sdl.keys['t'] = 0;
+				break;
 			case SDL_QUIT:
 				return -3;
 		}
@@ -312,8 +290,15 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera)
 		if (sdl.keys['u'])
 			camera.Translate(0.0f, multiplier * -0.004f, 0.0f);
 
+		if (sdl.keys['t'])
+		{
+			scene.models[0].orientation.RotateY(0.02);
+			scene.models[1].orientation.RotateY(0.01);
+			scene.models[1].orientation.RotateX(0.001);
+		}
+
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
-				camera.RotateX(cameraxrotation);
+			camera.RotateX(cameraxrotation);
 
 		keystick = SDL_GetTicks();
 	}

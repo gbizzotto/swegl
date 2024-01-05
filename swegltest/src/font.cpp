@@ -53,7 +53,7 @@ Font::Font(const char *filename)
 	}
 }
 
-void Font::Print(char * str, unsigned x, unsigned y, SDL_Surface *surface)
+void Font::Print(const char * str, unsigned x, unsigned y, SDL_Surface *surface)
 {
 	for (size_t c = 0; str[c] != 0; ++c)
 	{

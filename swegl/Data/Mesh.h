@@ -22,7 +22,7 @@ namespace swegl
 		Strip(std::vector<unsigned int> && i);
 
 		inline const std::size_t GetTriangleCount() const { return m_indexbuffer.size()>2 ? m_indexbuffer.size()-2 : 0; }
-		inline const std::vector<std::pair<unsigned int,Vec3f>> GetIndexBuffer() const { return m_indexbuffer; }
+		inline const std::vector<std::pair<unsigned int,Vec3f>> & GetIndexBuffer() const { return m_indexbuffer; }
 
 	private:
 		void CalculateNormals(const std::vector<std::pair<Vec3f,Vec2f>> & vertex_buffer);

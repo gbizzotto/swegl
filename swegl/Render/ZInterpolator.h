@@ -23,14 +23,16 @@ namespace swegl
 		inline void DisplaceStartingPoint(const float & move) {
 			topalpha += topstep * move;
 			bottomalpha += bottomstep * move;
-			ualpha = topalpha;
-			ualpha /= bottomalpha;
+			ualpha.ok(topalpha, bottomalpha);
+			//ualpha = topalpha;
+			//ualpha /= bottomalpha;
 		}
 		inline void Step() {
 			topalpha += topstep;
 			bottomalpha += bottomstep;
-			ualpha = topalpha;
-			ualpha /= bottomalpha;
+			ualpha.ok(topalpha, bottomalpha);
+			//ualpha = topalpha;
+			//ualpha /= bottomalpha;
 		}
 	};
 
