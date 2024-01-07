@@ -16,16 +16,16 @@ namespace swegl
 		{
 			float alphastep = 1.0f / dist; // dist always != 0
 			bottomalpha = 1.0f / z1;
-			float invz1 = 1.0f / z2;
+			float invz2 = 1.0f / z2;
 			ualpha[0][0] = t0[0][0];
 			ualpha[0][1] = t0[0][1];
 			ualpha[0][2] = z1;
 			topalpha = ualpha;
 			topalpha *= bottomalpha;
-			topstep[0][0] = (t1[0][0] * invz1 - topalpha[0][0]) * alphastep;
-			topstep[0][1] = (t1[0][1] * invz1 - topalpha[0][1]) * alphastep;
-			topstep[0][2] = (z2       * invz1 - topalpha[0][2]) * alphastep;
-			bottomstep = (invz1-bottomalpha)*alphastep;
+			topstep[0][0] = (t1[0][0] * invz2 - topalpha[0][0]) * alphastep;
+			topstep[0][1] = (t1[0][1] * invz2 - topalpha[0][1]) * alphastep;
+			topstep[0][2] = (z2       * invz2 - topalpha[0][2]) * alphastep;
+			bottomstep = (invz2-bottomalpha)*alphastep;
 		}
 		inline void DisplaceStartingPoint(const float & move) {
 			topalpha += topstep * move;
