@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <swegl/Projection/Vec3f.h>
+#include <swegl/Projection/points.hpp>
 #include <swegl/Projection/Matrix4x4.h>
 
 namespace swegl
@@ -10,9 +10,9 @@ namespace swegl
 	class Camera
 	{
 	public:
-		Vec3f m_center;
-		Vec3f m_direction;
-		Vec3f m_roll;
+		vertex_t m_center;
+		vector_t m_direction;
+		vector_t m_roll;
 		float m_xfov, m_yfov;
 		Matrix4x4 m_viewmatrix;
 		Matrix4x4 m_projectionmatrix;

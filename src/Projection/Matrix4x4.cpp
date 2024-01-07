@@ -2,7 +2,6 @@
 #include <memory.h>
 #include <math.h>
 #include <swegl/Projection/Matrix4x4.h>
-#include <swegl/Projection/Vec3f.h>
 
 namespace swegl
 {

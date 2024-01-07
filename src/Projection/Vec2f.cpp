@@ -1,7 +1,6 @@
 
 #include <cmath>
 #include <swegl/Projection/Vec2f.h>
-#include <swegl/Projection/Vec3f.h>
 
 namespace swegl
 {
@@ -12,7 +11,7 @@ namespace swegl
 	Vec2f::Vec2f(float x, float y)
 		:freon::Matrix<float,1,2>({x,y})
 	{}
-	Vec2f::Vec2f(const Vec3f & other)
+	Vec2f::Vec2f(const Vec2f & other)
 		:freon::Matrix<float,1,2>({other[0][0], other[0][1]})
 	{}
 

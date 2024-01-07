@@ -3,7 +3,6 @@
 
 #include <SDL.h>
 
-#include <swegl/Projection/Vec3f.h>
 #include <swegl/Projection/Matrix4x4.h>
 
 namespace swegl
@@ -19,7 +18,6 @@ namespace swegl
 
 		ViewPort(int x, int y, int w, int h, SDL_Surface *screen);
 
-		Vec3f ToPixel(Vec3f &v);
 		inline void ShowPoint(int x, int y, unsigned char shade)
 		{
 			if (x<0 || x>=m_w || y<0 || y>=m_h) return;

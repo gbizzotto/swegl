@@ -132,7 +132,7 @@ public:
 					if ((*v0).z() < 0.001 && (*v1).z() < 0.001 && (*v2).z() < 0.001)
 						continue;
 
-					float face_sun_intensity = -normals[i-2].Dot(m_scene.sun_direction);
+					float face_sun_intensity = -normals[i-2].dot(m_scene.sun_direction);
 					if (face_sun_intensity < 0.0f)
 						face_sun_intensity = 0.0f;
 					float light = m_scene.ambient_light_intensity + face_sun_intensity*m_scene.sun_intensity;
@@ -191,7 +191,7 @@ public:
 					if ((*v0).z() < 0.001 && (*v1).z() < 0.001 && (*v2).z() < 0.001)
 						continue;
 
-					float face_sun_intensity = -normals[i-2].Dot(m_scene.sun_direction);
+					float face_sun_intensity = -normals[i-2].dot(m_scene.sun_direction);
 					if (face_sun_intensity < 0.0f)
 						face_sun_intensity = 0.0f;
 					float light = m_scene.ambient_light_intensity + face_sun_intensity*m_scene.sun_intensity;
@@ -225,7 +225,7 @@ public:
 				t2[0][1] *= model.mesh.textures[0]->m_mipmaps[0].m_height;
 
 				// backface culling
-				if ( Cross((v1-v0),(v2-v0))[0][2] >= 0 )
+				if ( Cross((v1-v0),(v2-v0)).z() >= 0 )
 					continue;
 
 				// frustum clipping
@@ -242,7 +242,7 @@ public:
 				if (v0.z() < 0.001 && v1.z() < 0.001 && v2.z() < 0.001)
 					continue;
 
-				float face_sun_intensity = -normal.Dot(m_scene.sun_direction);
+				float face_sun_intensity = -normal.dot(m_scene.sun_direction);
 				if (face_sun_intensity < 0.0f)
 					face_sun_intensity = 0.0f;
 				float light = m_scene.ambient_light_intensity + face_sun_intensity*m_scene.sun_intensity;
@@ -436,15 +436,15 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
                     const scene & scene)
 {
 	// Sort points
-	if ((*v1)[0][1] <= (*v0).y()) {
+	if (v1->y() <= v0->y()) {
 		std::swap(v0, v1);
 		std::swap(t0, t1);
 	}
-	if ((*v2)[0][1] <= (*v1).y()) {
+	if (v2->y() <= v1->y()) {
 		std::swap(v1, v2);
 		std::swap(t1, t2);
 	}
-	if ((*v1)[0][1] <= (*v0).y()) {
+	if (v1->y() <= v0->y()) {
 		std::swap(v0, v1);
 		std::swap(t0, t1);
 	}
@@ -461,7 +461,7 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 
 	// Init long line
 	side_long.ratio = ((*v2).x()-(*v0).x()) / ((*v2).y()-(*v0).y()); // never div#0 because y0!=y2
-	side_long.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v2, *t0, *t2);
+	side_long.interpolator.Init(v2->y() - v0->y(), v0->z(), v2->z(), *t0, *t2);
 	if (y0 < vp.m_y) {
 		// start at first scanline of viewport
 		side_long.interpolator.DisplaceStartingPoint(vp.m_y-(*v0).y());
@@ -477,7 +477,7 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
 	{
 		side_short.ratio = (v1->x()-v0->x()) / (v1->y()-v0->y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v1, *t0, *t1);
+		side_short.interpolator.Init(v1->y() - v0->y(), v0->z(), v1->z(), *t0, *t1);
 		y = std::max(y0, vp.m_y);
 		y_end = std::min(y1, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v0->y());
@@ -498,7 +498,9 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 	if (y1 < vp.m_y + vp.m_h) // dont skip: at least some part is in the viewport
 	{
 		side_short.ratio = ((*v2).x()-(*v1).x()) / ((*v2).y()-(*v1).y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v1, *v2, *t1, *t2);
+		side_short.interpolator.Init(v2->y() - v1->y(),
+		                             v1->z(), v2->z(),
+		                             *t1, *t2);
 		y = std::max(y1, vp.m_y);
 		y_end = std::min(y2, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v1->y());
@@ -533,10 +535,11 @@ void fill_half_tri(int y, int y_end,
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
 		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
 		ZInterpolator qpixel;
-		Vec3f linev0(side_left .x, 0, side_left .interpolator.ualpha[0][2]);
-		Vec3f linev1(side_right.x, 0, side_right.interpolator.ualpha[0][2]);
-		qpixel.Init(ZInterpolator::HORIZONTAL, linev0, linev1, Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
-		                                                       Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
+		qpixel.Init(side_right.x - side_left .x,
+		            side_left .interpolator.ualpha[0][2],
+		            side_right.interpolator.ualpha[0][2],
+			        Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
+		            Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
 		qpixel.DisplaceStartingPoint(x1 - side_left.x);
 
 		// fill_line

@@ -23,10 +23,6 @@ namespace swegl
 	}
 
 
-	Vec3f ViewPort::ToPixel(Vec3f &v)
-	{
-		return Transform(v, m_viewportmatrix);
-	}
 	/*
 	inline void ViewPort::ShowPoint(int x, int y, unsigned char shade)
 	{

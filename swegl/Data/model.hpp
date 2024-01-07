@@ -2,6 +2,7 @@
 #pragma once
 
 #include <swegl/Projection/Vec2f.h>
+#include <swegl/Projection/points.hpp>
 #include <swegl/Projection/Matrix4x4.h>
 #include <swegl/Data/Texture.h>
 
@@ -40,8 +41,8 @@ struct mesh_t
 
 struct model_t
 {
-	normal_t forward;
-	normal_t up;
+	vector_t forward;
+	vector_t up;
 	Matrix4x4 orientation;
 	vertex_t position;
 
@@ -94,7 +95,7 @@ inline void calculate_normals(model_t & model)
 			strip.normals.push_back((((i&0x1)==0) ? Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0])
 			                                      : Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]))
 			                       );
-			strip.normals.back().Normalize();
+			strip.normals.back().normalize();
 		}
 	}
 	// Preca model.normals for fans
@@ -107,7 +108,7 @@ inline void calculate_normals(model_t & model)
 		{
 			i2 = fan.indices[i];
 			fan.normals.push_back(Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]));
-			fan.normals.back().Normalize();
+			fan.normals.back().normalize();
 		}
 	}
 	// Preca model.normals for lose triangles
@@ -117,7 +118,7 @@ inline void calculate_normals(model_t & model)
 		int i1 = t.v1;
 		int i2 = t.v2;
 		t.normal = Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]);
-		t.normal.Normalize();
+		t.normal.normalize();
 	}
 }
 
@@ -137,8 +138,8 @@ inline model_t make_tri(float size, std::shared_ptr<Texture> & texture)
 	result.mesh.textures.push_back(texture);
 
 	result.smooth = false;
-	result.forward = normal_t(0.0, 0.0, 1.0);
-	result.up      = normal_t(0.0, 1.0, 0.0);
+	result.forward = vector_t(0.0, 0.0, 1.0);
+	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.mesh.triangle_list.emplace_back(triangle_solo{0,1,2, normal_t{0,0,0}, Vec2f{0.0f,0.0f}, Vec2f{0.0f,1.0f}, Vec2f{1.0f,0.0f}});
 
 	calculate_normals(result);
@@ -166,8 +167,8 @@ inline model_t make_cube(float size, std::shared_ptr<Texture> & texture)
 	result.mesh.textures.push_back(texture);
 
 	result.smooth = false;
-	result.forward = normal_t(0.0, 0.0, 1.0);
-	result.up      = normal_t(0.0, 1.0, 0.0);
+	result.forward = vector_t(0.0, 0.0, 1.0);
+	result.up      = vector_t(0.0, 1.0, 0.0);
 	//result.common->triangle_strips.push_back(triangle_strip{{0,1,3,2,7,6,4,5}, {{0.0,1.0},{0.5,1.0},{0.0,0.666},{0.5,0.666},{0.0,0.333},{0.5,0.333},{0.0,0.0},{0.5,0.0}}});
 	//result.common->triangle_strips.push_back(triangle_strip{{6,2,5,1,4,0,7,3}, {{0.5,1.0},{1.0,1.0},{0.5,0.666},{1.0,0.666},{0.5,0.333},{1.0,0.333},{0.5,0.0},{1.0,0.0}}});
 	result.mesh.triangle_fans.push_back(triangle_fan{{2,1,5,6,7,3,0,1}, {}, {{0.5,0.333},{0.5,0.666},{0.0,0.666},{0.0,0.333},{0.0,0.0},{0.5,0.0},{1.0,0.0},{1.0,0.333}}});
@@ -183,8 +184,8 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 	model_t result;
 
 	result.smooth = false;
-	result.forward = normal_t(0.0, 0.0, 1.0);
-	result.up      = normal_t(0.0, 1.0, 0.0);
+	result.forward = vector_t(0.0, 0.0, 1.0);
+	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::Matrix4x4::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.textures.push_back(texture);
@@ -203,7 +204,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 
 		for (unsigned int sm = 0; sm < precision; sm++)
 		{
-			vertices.push_back(Transform(Transform(vertex_t(), small), big));
+			vertices.push_back(Transform(Transform(vertex_t(0.0f, 0.0f, 0.0f), small), big));
 			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
 			//                                 Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));

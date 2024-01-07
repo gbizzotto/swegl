@@ -1,13 +1,12 @@
 
 #pragma once
 
-#include <swegl/Data/Mesh.h>
 #include <swegl/Data/Texture.h>
 
 #include <swegl/Projection/Camera.h>
 #include <swegl/Projection/Matrix4x4.h>
 #include <swegl/Projection/Vec2f.h>
-#include <swegl/Projection/Vec3f.h>
+#include <swegl/Projection/points.hpp>
 
 #include <swegl/Render/ViewPort.h>
 #include <swegl/Render/renderer.hpp>

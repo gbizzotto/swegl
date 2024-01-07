@@ -1,41 +1,52 @@
 
 #pragma once
 
-#include <swegl/Projection/Vec3f.h>
-#include <swegl/Projection/Vec2f.h>
+#include <freon/Matrix.hpp>
 
 namespace swegl
 {
 
 	struct ZInterpolator
 	{
-		Vec3f topalpha, topstep;
-		Vec3f ualpha;
+		freon::Matrix<float,1,3> topalpha, topstep;
+		freon::Matrix<float,1,3> ualpha;
 		float bottomalpha, bottomstep;
 
-		enum MajorType
+		inline void Init(const float dist, const float z1, const float z2, const Vec2f & t0, const Vec2f & t1)
 		{
-			VERTICAL,
-			HORIZONTAL
-		};
-
-		void Init(const MajorType & mt, const Vec3f & v0, const Vec3f & v1, const Vec2f & t0, const Vec2f & t1);
+			float alphastep = 1.0f / dist; // dist always != 0
+			bottomalpha = 1.0f / z1;
+			float invz1 = 1.0f / z2;
+			ualpha[0][0] = t0[0][0];
+			ualpha[0][1] = t0[0][1];
+			ualpha[0][2] = z1;
+			topalpha = ualpha;
+			topalpha *= bottomalpha;
+			topstep[0][0] = (t1[0][0] * invz1 - topalpha[0][0]) * alphastep;
+			topstep[0][1] = (t1[0][1] * invz1 - topalpha[0][1]) * alphastep;
+			topstep[0][2] = (z2       * invz1 - topalpha[0][2]) * alphastep;
+			bottomstep = (invz1-bottomalpha)*alphastep;
+		}
 		inline void DisplaceStartingPoint(const float & move) {
 			topalpha += topstep * move;
 			bottomalpha += bottomstep * move;
-			ualpha.ok(topalpha, bottomalpha);
-			//ualpha = topalpha;
-			//ualpha /= bottomalpha;
+			div(ualpha, topalpha, bottomalpha);
 		}
 		inline void Step() {
 			topalpha += topstep;
 			bottomalpha += bottomstep;
-			ualpha.ok(topalpha, bottomalpha);
-			//ualpha = topalpha;
-			//ualpha /= bottomalpha;
+			div(ualpha, topalpha, bottomalpha);
+		}
+
+		inline static void div(freon::Matrix<float,1,3> & a, const freon::Matrix<float,1,3> & b, float c)
+		{
+			a[0][0] = b[0][0] / c;
+			a[0][1] = b[0][1] / c;
+			a[0][2] = b[0][2] / c;
 		}
 	};
 
+	/*
 	// ZInterpolator with Quake optimization
 	class QInterpolator : public ZInterpolator
 	{
@@ -93,5 +104,6 @@ namespace swegl
 			}
 		}
 	};
+	*/
 
 }

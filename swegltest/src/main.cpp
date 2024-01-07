@@ -126,7 +126,7 @@ swegl::scene build_scene()
 	s.ambient_light_intensity = 0.2f;
 
 	s.sun_direction = swegl::normal_t{1.0, -1.0, 1.0};
-	s.sun_direction.Normalize();
+	s.sun_direction.normalize();
 	s.sun_intensity = 0.8;
 
 	s.point_source_lights.emplace_back(swegl::point_source_light{{10.0,10.0,10.0},0.2});
