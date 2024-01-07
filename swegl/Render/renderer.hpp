@@ -17,12 +17,26 @@
 namespace swegl
 {
 
-void fill_flat_poly(const Vec3f & _v0, const Vec3f & _v1, const Vec3f & _v2,
-                    const Vec2f & _t0, const Vec2f & _t1, const Vec2f & _t2,
-                    float light,
-                    const std::shared_ptr<Texture> & t, ViewPort & vp, float * zbuffer,
-                    const scene & scene);
+struct line_side
+{
+	ZInterpolator interpolator;
+	float ratio;
+	float x;
+};
 
+void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
+                    const Vec2f * t0, const Vec2f * t1, const Vec2f * t2,
+                    float light,
+                    const std::shared_ptr<Texture> & texture,
+                    ViewPort & vp,
+                    float * zbuffer,
+                    const scene & scene);
+void fill_half_tri(int y, int y_end,
+	               line_side & side_left, line_side & side_right,
+                   const std::shared_ptr<Texture> & t,
+                   float light,
+                   ViewPort & vp,
+                   float * zbuffer);
 void crude_line(ViewPort & m_viewport, int x1, int y1, int x2, int y2);
 
 class renderer
@@ -127,8 +141,8 @@ public:
 						light = 1.0f;
 
 					// Fill poly
-					fill_flat_poly(*v0, *v1, *v2,
-					                t0,  t1,  t2,
+					fill_flat_poly( v0,  v1,  v2,
+					               &t0, &t1, &t2,
 					               light,
 					               model.mesh.textures[0], m_viewport, m_zbuffer,
 					               m_scene);
@@ -186,8 +200,8 @@ public:
 						light = 1.0f;
 
 					// Fill poly
-					fill_flat_poly(*v0, *v1, *v2,
-					                t0,  t1,  t2,
+					fill_flat_poly( v0,  v1,  v2,
+					               &t0, &t1, &t2,
 					               light,
 					               model.mesh.textures[0], m_viewport, m_zbuffer,
 					               m_scene);
@@ -237,8 +251,8 @@ public:
 					light = 1.0f;
 
 				// Fill poly
-				fill_flat_poly(v0, v1, v2,
-				               t0, t1, t2,
+				fill_flat_poly(&v0, &v1, &v2,
+				               &t0, &t1, &t2,
 				               light,
 				               model.mesh.textures[0], m_viewport, m_zbuffer,
 				               m_scene);
@@ -414,273 +428,149 @@ void crude_line(ViewPort & vp, int x1, int y1, int x2, int y2)
 	}
 }
 
-
-void fill_flat_poly(const Vec3f & _v0, const Vec3f & _v1, const Vec3f & _v2,
-                    const Vec2f & _t0, const Vec2f & _t1, const Vec2f & _t2,
+void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
+                    const Vec2f * t0, const Vec2f * t1, const Vec2f * t2,
                     float light,
-                    const std::shared_ptr<Texture> & t, ViewPort & vp, float * zbuffer,
+                    const std::shared_ptr<Texture> & texture,
+                    ViewPort & vp,
+                    float * zbuffer,
                     const scene & scene)
 {
-	const Vec3f *v0, *v1, *v2;
-	const Vec2f *t0, *t1, *t2;
-
-	if (_v0[0][1] <= _v1[0][1] && _v1[0][1] <= _v2[0][1]) {
-		v0 = &_v0;
-		v1 = &_v1;
-		v2 = &_v2;
-		t0 = &_t0;
-		t1 = &_t1;
-		t2 = &_t2;
-	} else if (_v0[0][1] <= _v2[0][1] && _v2[0][1] <= _v1[0][1]) {
-		v0 = &_v0;
-		v1 = &_v2;
-		v2 = &_v1;
-		t0 = &_t0;
-		t1 = &_t2;
-		t2 = &_t1;
-	} else if (_v1[0][1] <= _v0[0][1] && _v0[0][1] <= _v2[0][1]) {
-		v0 = &_v1;
-		v1 = &_v0;
-		v2 = &_v2;
-		t0 = &_t1;
-		t1 = &_t0;
-		t2 = &_t2;
-	} else if (_v1[0][1] <= _v2[0][1] && _v2[0][1] <= _v0[0][1]) {
-		v0 = &_v1;
-		v1 = &_v2;
-		v2 = &_v0;
-		t0 = &_t1;
-		t1 = &_t2;
-		t2 = &_t0;
-	} else if (_v2[0][1] <= _v0[0][1] && _v0[0][1] <= _v1[0][1]) {
-		v0 = &_v2;
-		v1 = &_v0;
-		v2 = &_v1;
-		t0 = &_t2;
-		t1 = &_t0;
-		t2 = &_t1;
-	} else if (_v2[0][1] <= _v1[0][1] && _v1[0][1] <= _v0[0][1]) {
-		v0 = &_v2;
-		v1 = &_v1;
-		v2 = &_v0;
-		t0 = &_t2;
-		t1 = &_t1;
-		t2 = &_t0;
+	// Sort points
+	if ((*v1)[0][1] <= (*v0)[0][1]) {
+		std::swap(v0, v1);
+		std::swap(t0, t1);
+	}
+	if ((*v2)[0][1] <= (*v1)[0][1]) {
+		std::swap(v1, v2);
+		std::swap(t1, t2);
+	}
+	if ((*v1)[0][1] <= (*v0)[0][1]) {
+		std::swap(v0, v1);
+		std::swap(t0, t1);
 	}
 
-	int y0 = (int) floor((*v0)[0][1]);
-	int y1 = (int) floor((*v1)[0][1]);
-	int y2 = (int) floor((*v2)[0][1]);
-	int xa = (int) floor((*v0)[0][0]);
-	int xb = (int) floor((*v1)[0][0]);
-	int xc = (int) floor((*v2)[0][0]);
-	bool line2_on_right; // true if line2 is on the right and we must choose its highest x value
+	// get pixel limits
+	int y0 = (int) ceil((*v0)[0][1]);
+	int y1 = (int) ceil((*v1)[0][1]);
+	int y2 = (int) ceil((*v2)[0][1]);
+	int xa = (int) ceil((*v0)[0][0]);
+	int xb = (int) ceil((*v1)[0][0]);
+	int xc = (int) ceil((*v2)[0][0]);
 
 	if (y0==y2) return; // All on 1 scanline, not worth drawing
 
-	int y, ymax;
-	float x1f, x2f; // reference points for the (u,v)s
-	float ratio1, ratio2;
-	ZInterpolator zi1, zi2;
-	ZInterpolator qpixel;
-	float displacement;
+	line_side side_long;
+	line_side side_short;
 
-	unsigned int *tbitmap;
-	unsigned int twidth;
-	unsigned int theight;
-
-	auto fill_line = [&](int y, int x1, int x2, unsigned int *video, float * zb)
-		{
-			for ( ; x1 <= x2 ; x1++ )
-			{
-				int u, v;
-
-				if (qpixel.ualpha[0][2] < *zb && qpixel.ualpha[0][2] > 0.001) // Ugly z-near culling
-				{
-					u = ((int)qpixel.ualpha[0][0]) % twidth;
-					v = ((int)qpixel.ualpha[0][1]) % theight;
-					*video = tbitmap[v*twidth + u];
-					//video[0] *= scene.ambient_light_intensity;
-					((unsigned char*)video)[0] *= light;
-					((unsigned char*)video)[1] *= light;
-					((unsigned char*)video)[2] *= light;
-					//((unsigned char*)video)[3] *= scene.ambient_light_intensity;
-					*zb    = qpixel.ualpha[0][2];
-				}
-				video++;
-				zb++;
-
-				qpixel.Step();
-			}
-		};
-
-	// Init lines
-	displacement = y0+0.5f - (*v0)[0][1];
-	ratio2 = ((*v2)[0][0]-(*v0)[0][0]) / ((*v2)[0][1]-(*v0)[0][1]); // never div#0 because y0!=y2
-	zi2.Init(ZInterpolator::VERTICAL, *v0, *v2, *t0, *t2);
-	zi2.DisplaceStartingPoint(displacement);
-	x2f = (*v0)[0][0] + ratio2*displacement;
-
-	if (y1 <= vp.m_y || y0 == y1) {
-		// Start drawing at y1
-		if (y1 <= vp.m_y) {
-			// Skip first half of triangle
-			zi2.DisplaceStartingPoint((float)(y1-y0));
-			x2f = (*v0)[0][0] + ratio2*(y1-y0);
-		}
-		displacement = y1+0.5f - (*v1)[0][1];
-		ratio1 = ((*v2)[0][0]-(*v1)[0][0]) / ((*v2)[0][1]-(*v1)[0][1]); // never div#0 because y1!=y2
-		zi1.Init(ZInterpolator::VERTICAL, *v1, *v2, *t1, *t2);
-		zi1.DisplaceStartingPoint(displacement);
-		x1f = (*v1)[0][0] + ratio1*displacement;
-		line2_on_right = ratio2 < ratio1;
-		y = y1;
-		ymax = y2;
+	// Init long line
+	side_long.ratio = ((*v2)[0][0]-(*v0)[0][0]) / ((*v2)[0][1]-(*v0)[0][1]); // never div#0 because y0!=y2
+	side_long.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v2, *t0, *t2);
+	if (y0 < vp.m_y) {
+		// start at first scanline of viewport
+		side_long.interpolator.DisplaceStartingPoint(vp.m_y-(*v0)[0][1]);
+		side_long.x = (*v0)[0][0] + side_long.ratio*(vp.m_y-(*v0)[0][1]);
 	} else {
-		// Normal case (y0 != y1)
-		ratio1 = ((*v1)[0][0]-(*v0)[0][0]) / ((*v1)[0][1]-(*v0)[0][1]); // never div#0 because y1!=y0
-		zi1.Init(ZInterpolator::VERTICAL, *v0, *v1, *t0, *t1);
-		zi1.DisplaceStartingPoint(displacement);
-		x1f = (*v0)[0][0] + ratio1*displacement;
-		line2_on_right = ratio2 > ratio1;
-		y = y0;
-		ymax = y1;
+		side_long.interpolator.DisplaceStartingPoint(y0-(*v0)[0][1]);
+		side_long.x = (*v0)[0][0] + side_long.ratio*(y0-(*v0)[0][1]);
 	}
 
-	//if (ratio1-ratio2 < 0.01 && ratio1-ratio2 > -0.01) {
-	//	// Triangle too small, not worth drawing;
-	//	return;
-	//}
+	int y, y_end; // scanlines upper and lower bound of whole triangle
 
-	if (y < vp.m_y) {
-		zi1.DisplaceStartingPoint((float)(vp.m_y-y));
-		zi2.DisplaceStartingPoint((float)(vp.m_y-y));
-		x1f += ratio1 * (vp.m_y-y);
-		x2f += ratio2 * (vp.m_y-y);
-		y = vp.m_y;
-	}
-
-	tbitmap = t->m_mipmaps[0].m_bitmap;
-	twidth  = t->m_mipmaps[0].m_width;
-	theight = t->m_mipmaps[0].m_height;
-
-	if (vp.m_y + vp.m_h < ymax)
-		ymax = vp.m_y + vp.m_h;
-	while (y <= ymax)
+	// upper half of the triangle
+	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
 	{
-		int x1, x2;
+		side_short.ratio = ((*v1)[0][0]-(*v0)[0][0]) / ((*v1)[0][1]-(*v0)[0][1]); // never div#0 because y0!=y2
+		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v1, *t0, *t1);
+		y = std::max(y0, vp.m_y);
+		y_end = std::min(y1, vp.m_y + vp.m_h);
+		side_short.interpolator.DisplaceStartingPoint(y-(*v0)[0][1]);
+		side_short.x = (*v0)[0][0] + side_short.ratio*(y-(*v0)[0][1]);
 
-		//int ualphastep_x;
+		bool long_line_on_right = side_long.ratio > side_short.ratio;
+		auto [side_left, side_right] = [&]() -> std::tuple<line_side&,line_side&> {
+				if (long_line_on_right)
+					return {side_short, side_long};
+				else
+					return {side_long, side_short};
+			}();
 
-		if (line2_on_right) {
-			if (ratio2>0) {
-				if (y == y2) {
-					x2 = xc;
-				} else {
-					x2 = (int) (x2f + ratio2*0.5f);
-				}
-			} else {
-				if (y == y0) {
-					x2 = xa;
-				} else {
-					x2 = (int) (x2f - ratio2*0.5f);
-				}
-			}
-			if (ratio1<0) {
-				if (y == y1) {
-					x1 = xb;
-				} else if (y == y2) {
-					x1 = xc;
-				} else {
-					x1 = (int) (x1f + ratio1*0.5f);
-				}
-			} else {
-				if (y == y0) {
-					x1 = xa;
-				} else if (y == y1) {
-					x1 = xb;
-				} else {
-					x1 = (int) (x1f - ratio1*0.5f);
-				}
-			}
-		} else {
-			if (ratio2<0) {
-				if (y == y2) {
-					x1 = xc;
-				} else {
-					x1 = (int) (x2f + ratio2*0.5f);
-				}
-			} else {
-				if (y == y0) {
-					x1 = xa;
-				} else {
-					x1 = (int) (x2f - ratio2*0.5f);
-				}
-			}
-			if (ratio1>0) {
-				if (y == y1) {
-					x2 = xb;
-				} else if (y == y2) {
-					x2 = xc;
-				} else {
-					x2 = (int) (x1f + ratio1*0.5f);
-				}
-			} else {
-				if (y == y0) {
-					x2 = xa;
-				} else if (y == y1) {
-					x2 = xb;
-				} else {
-					x2 = (int) (x1f - ratio1*0.5f);
-				}
-			}
-		}
+		fill_half_tri(y, y_end, side_left, side_right, texture, light, vp, zbuffer);
+	}
 
-		Vec3f linev0(x1f, 0, zi1.ualpha[0][2]);
-		Vec3f linev1(x2f, 0, zi2.ualpha[0][2]);
-		if (x1f <= x2f) {
-			qpixel.Init(ZInterpolator::HORIZONTAL, linev0, linev1, {zi1.ualpha[0][0],zi1.ualpha[0][1]}, {zi2.ualpha[0][0],zi2.ualpha[0][1]});
-			displacement = x1+0.5f - linev0[0][0];
-		} else {
-			qpixel.Init(ZInterpolator::HORIZONTAL, linev1, linev0, {zi2.ualpha[0][0],zi2.ualpha[0][1]}, {zi1.ualpha[0][0],zi1.ualpha[0][1]});
-			displacement = x1+0.5f - linev1[0][0];
-		}
-		if (x1 < vp.m_x) {
-			displacement += (float)(vp.m_x - x1);
-			x1 = vp.m_x;
-		}
-		qpixel.DisplaceStartingPoint(displacement);
+	// lower half of the triangle
+	if (y1 < vp.m_y + vp.m_h) // dont skip: at least some part is in the viewport
+	{
+		side_short.ratio = ((*v2)[0][0]-(*v1)[0][0]) / ((*v2)[0][1]-(*v1)[0][1]); // never div#0 because y0!=y2
+		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v1, *v2, *t1, *t2);
+		y = std::max(y1, vp.m_y);
+		y_end = std::min(y2, vp.m_y + vp.m_h);
+		side_short.interpolator.DisplaceStartingPoint(y-(*v1)[0][1]);
+		side_short.x = (*v1)[0][0] + side_short.ratio*(y-(*v1)[0][1]);
 
-		if (x2 >= vp.m_x + vp.m_w) {
-			x2 = vp.m_x + vp.m_w - 1;
-		}
+		bool long_line_on_right = side_long.ratio < side_short.ratio;
+		auto [side_left, side_right] = [&]() -> std::tuple<line_side&,line_side&> {
+				if (long_line_on_right)
+					return {side_short, side_long};
+				else
+					return {side_long, side_short};
+			}();
 
-		//ASSERT(x1 <= x2 || x1 >= vp.m_x + vp.m_w);
-		//ASSERT(x1 >= vp.m_x);
-
-		//scanlines.emplace_back(y, x1, x2, qpixel);
-		unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
-		float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
-		fill_line(y, x1, x2, video, zb);
-
-
-		x1f += ratio1;
-		x2f += ratio2;
-		zi1.Step();
-		zi2.Step();
-		y++;
-		if (y == y1 && y1 != y2) {
-			displacement = y1+0.5f - (*v1)[0][1];
-			ratio1 = ((*v2)[0][0]-(*v1)[0][0]) / ((*v2)[0][1]-(*v1)[0][1]); // never div#0 because y1!=y2
-			zi1.Init(ZInterpolator::VERTICAL, *v1, *v2, *t1, *t2);
-			zi1.DisplaceStartingPoint(displacement);
-			x1f = (*v1)[0][0] + ratio1*displacement;
-			ymax = y2;
-			if (vp.m_y + vp.m_h < ymax)
-				ymax = vp.m_y + vp.m_h;
-		}
+		fill_half_tri(y, y_end, side_left, side_right, texture, light, vp, zbuffer);
 	}
 }
 
+void fill_half_tri(int y, int y_end,
+	               line_side & side_left, line_side & side_right,
+                   const std::shared_ptr<Texture> & t,
+                   float light,
+                   ViewPort & vp,
+                   float * zbuffer)
+{
+	// determine mipmap (hardcoded for now)
+	unsigned int *tbitmap = t->m_mipmaps[0].m_bitmap;
+	unsigned int twidth   = t->m_mipmaps[0].m_width;
+	unsigned int theight  = t->m_mipmaps[0].m_height;
+
+	for ( ; y < y_end ; y++)
+	{
+		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
+		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
+		ZInterpolator qpixel;
+		Vec3f linev0(side_left .x, 0, side_left .interpolator.ualpha[0][2]);
+		Vec3f linev1(side_right.x, 0, side_right.interpolator.ualpha[0][2]);
+		qpixel.Init(ZInterpolator::HORIZONTAL, linev0, linev1, Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
+		                                                       Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
+		qpixel.DisplaceStartingPoint(x1 - side_left.x);
+
+		// fill_line
+		unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
+		float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
+		for ( ; x1 < x2 ; x1++ )
+		{
+			int u, v;
+
+			if (qpixel.ualpha[0][2] < *zb && qpixel.ualpha[0][2] > 0.001) // Ugly z-near culling
+			{
+				u = ((int)qpixel.ualpha[0][0]) % twidth;
+				v = ((int)qpixel.ualpha[0][1]) % theight;
+				*video = tbitmap[v*twidth + u];
+				((unsigned char*)video)[0] *= light;
+				((unsigned char*)video)[1] *= light;
+				((unsigned char*)video)[2] *= light;
+				*zb    = qpixel.ualpha[0][2];
+			}
+			video++;
+			zb++;
+
+			qpixel.Step();
+		}
+
+		side_left .x += side_left .ratio;
+		side_right.x += side_right.ratio;
+		side_left .interpolator.Step();
+		side_right.interpolator.Step();
+	}
+}
 
 } // namespace
