@@ -232,5 +232,59 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 	return result;
 }
 
+inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<Texture> & texture)
+{
+	model_t result;
+
+	result.smooth = false;
+	result.forward = vector_t(0.0, 0.0, 1.0);
+	result.up      = vector_t(0.0, 1.0, 0.0);
+	result.orientation = swegl::Matrix4x4::Identity;
+	result.position = vertex_t(0.0,0.0,0.0);
+	result.mesh.textures.push_back(texture);
+
+	auto & vertices = result.mesh.vertices;
+	//auto & normals  = result.get_normals ();
+
+	float angle = (2 * 3.141592653589f) / precision;
+	Matrix4x4 big = Matrix4x4::Identity;
+	//big.Translate(0.0f, size, 0.0f);
+
+	for (unsigned int bg = 0; bg < precision; bg++)
+	{
+		Matrix4x4 small = Matrix4x4::Identity;
+
+		for (unsigned int sm = 0; sm < precision; sm++)
+		{
+			auto v = Transform(vertex_t(size, 0.0f, 0.0f),small);
+			auto v2 = Transform(v, big);
+			vertices.push_back(v2);
+			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
+			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
+			//                                 Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
+			small.RotateZ(angle);
+		}
+
+		big.RotateY(angle);
+	}
+
+	for (unsigned int bg = 1; bg <= precision; bg++)
+	{
+		result.mesh.triangle_strips.emplace_back();
+		auto & strip = result.mesh.triangle_strips.back();
+		for (unsigned int sm = 0; sm <= precision; sm++)
+		{
+			strip.indices.push_back((bg%precision)*precision + (sm%precision));
+			strip.indices.push_back((bg-1        )*precision + (sm%precision));
+			strip.texture_mapping.emplace_back((float)(bg  ) / precision, (float)(sm) / precision);
+			strip.texture_mapping.emplace_back((float)(bg-1) / precision, (float)(sm) / precision);
+		}
+	}
+
+	calculate_normals(result);
+
+	return result;
+}
+
 
 } // namespace

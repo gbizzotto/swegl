@@ -118,8 +118,9 @@ int main(int argc, char *argv[])
 
 swegl::scene build_scene()
 {
-	auto texture_dice = std::make_shared<swegl::Texture>("dice.bmp");
-	auto texture_grid = std::make_shared<swegl::Texture>("tex.bmp");
+	auto texture_dice     = std::make_shared<swegl::Texture>("dice.bmp");
+	auto texture_grid     = std::make_shared<swegl::Texture>("tex.bmp");
+	auto texture_mercator = std::make_shared<swegl::Texture>("mercator.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene s;
 
@@ -146,6 +147,14 @@ swegl::scene build_scene()
 	cube.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube));
+	//*/
+
+	//*
+	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
+	sphere.orientation = swegl::Matrix4x4::Identity;
+	sphere.position = swegl::vertex_t(3.0f, 0.0f, 6.0f);
+	//c->SetBumpMap(bumpmap);
+	s.models.push_back(std::move(sphere));
 	//*/
 
 	auto tri = swegl::make_tri(1, texture_dice);
