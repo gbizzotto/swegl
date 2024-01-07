@@ -59,4 +59,29 @@ namespace swegl
 		             m[1][0]*v[0][0] + m[1][1]*v[0][1] + m[1][2]*v[0][2] + m[1][3],
 		             m[2][0]*v[0][0] + m[2][1]*v[0][1] + m[2][2]*v[0][2] + m[2][3]);
 	}
+
+
+
+
+
+
+	vertex_t Transform(const vertex_t & v, const Matrix4x4 & m)
+	{
+		return vertex_t(m[0][0]*v[0][0] + m[0][1]*v[0][1] + m[0][2]*v[0][2] + m[0][3],
+		                m[1][0]*v[0][0] + m[1][1]*v[0][1] + m[1][2]*v[0][2] + m[1][3],
+		                m[2][0]*v[0][0] + m[2][1]*v[0][1] + m[2][2]*v[0][2] + m[2][3]);
+	}
+
+	normal_t Cross(const vector_t & left, const vector_t & right)
+	{
+		return normal_t(left.y()*right.z() - left.z()*right.y(),
+		                left.z()*right.x() - left.x()*right.z(),
+		                left.x()*right.y() - left.y()*right.x());
+	}
+	normal_t Transform(const normal_t & v, const Matrix4x4 & m)
+	{
+		return normal_t(m[0][0]*v[0][0] + m[0][1]*v[0][1] + m[0][2]*v[0][2] + m[0][3],
+		                m[1][0]*v[0][0] + m[1][1]*v[0][1] + m[1][2]*v[0][2] + m[1][3],
+		                m[2][0]*v[0][0] + m[2][1]*v[0][1] + m[2][2]*v[0][2] + m[2][3]);
+	}
 }

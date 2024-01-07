@@ -41,4 +41,54 @@ namespace swegl
 	{
 		return out << "{" << v[0][0] << "," << v[0][1] << "," << v[0][2] << "}";
 	}
+
+
+
+	class vertex_t : public Vec3f
+	{
+	public:
+		inline vertex_t() : Vec3f() {}
+		inline vertex_t(float x, float y, float z) : Vec3f(x, y, z) {}
+
+		      float & x()       { return (*this)[0][0]; }
+		const float & x() const { return (*this)[0][0]; }
+		      float & y()       { return (*this)[0][1]; }
+		const float & y() const { return (*this)[0][1]; }
+		      float & z()       { return (*this)[0][2]; }
+		const float & z() const { return (*this)[0][2]; }
+	};
+	
+	vertex_t Transform(const vertex_t &, const Matrix4x4 &);
+
+
+
+	class vector_t : public Vec3f
+	{
+	public:
+		inline vector_t() : Vec3f() {}
+		inline vector_t(float x, float y, float z) : Vec3f(x, y, z) {}
+
+		      float & x()       { return (*this)[0][0]; }
+		const float & x() const { return (*this)[0][0]; }
+		      float & y()       { return (*this)[0][1]; }
+		const float & y() const { return (*this)[0][1]; }
+		      float & z()       { return (*this)[0][2]; }
+		const float & z() const { return (*this)[0][2]; }
+	};
+
+	class normal_t : public vector_t
+	{
+	public:
+		inline normal_t() : vector_t() {}
+		inline normal_t(float x, float y, float z): vector_t(x, y, z) {}
+	};
+
+	inline vector_t operator-(const vertex_t left, const vertex_t right)
+	{
+		return vector_t{left.x() - right.x(),
+		                left.y() - right.y(),
+		                left.z() - right.z()};
+	}
+	normal_t Cross(const vector_t &, const vector_t &);
+	normal_t Transform(const normal_t &, const Matrix4x4 &);
 }

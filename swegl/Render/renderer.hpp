@@ -24,7 +24,7 @@ struct line_side
 	float x;
 };
 
-void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
+void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v2,
                     const Vec2f * t0, const Vec2f * t1, const Vec2f * t2,
                     float light,
                     const std::shared_ptr<Texture> & texture,
@@ -61,23 +61,23 @@ public:
 	{
 		//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
 
-		static std::vector<Vec3f> vertices;
-		static std::vector<Vec3f> normals;
+		static std::vector<vertex_t> vertices;
+		static std::vector<normal_t> normals;
 
 		for (const auto & model : m_scene.models)
 		{
 			auto model_matrix = model.orientation;
-			model_matrix.Translate(model.position[0][0], model.position[0][1], model.position[0][2]);
+			model_matrix.Translate(model.position.x(), model.position.y(), model.position.z());
 			auto world_matrix = m_camera.m_viewmatrix * model_matrix;
 			auto vertice_transform_matrix = m_camera.m_projectionmatrix * world_matrix;
 
 			vertices.clear();
 			vertices.reserve(model.mesh.vertices.size());
-			for (const Vec3f & v : model.mesh.vertices)
+			for (const vertex_t & v : model.mesh.vertices)
 			{
-				Vec3f vec = Transform(v, vertice_transform_matrix);
-				vec[0][0] /= fabs(vec[0][2]);
-				vec[0][1] /= fabs(vec[0][2]);
+				vertex_t vec = Transform(v, vertice_transform_matrix);
+				vec.x() /= fabs(vec.z());
+				vec.y() /= fabs(vec.z());
 				vertices.emplace_back(Transform(vec, m_viewport.m_viewportmatrix));
 			}
 
@@ -91,9 +91,9 @@ public:
 				for (const auto & n : strip.normals)
 					normals.emplace_back(Transform(n, model.orientation));
 
-				const Vec3f * v2;
-				const Vec3f * v0 = &vertices[strip.indices[0]];
-				const Vec3f * v1 = &vertices[strip.indices[1]];
+				const vertex_t * v2;
+				const vertex_t * v0 = &vertices[strip.indices[0]];
+				const vertex_t * v1 = &vertices[strip.indices[1]];
 				Vec2f t2;
 				Vec2f t0 = strip.texture_mapping[0];
 				Vec2f t1 = strip.texture_mapping[1];
@@ -110,11 +110,11 @@ public:
 					t2[0][1] *= model.mesh.textures[0]->m_mipmaps[0].m_height;
 					v2 = &vertices[strip.indices[i]];
 
-					// frustum culling
-					if (      ((*v0)[0][0]  < m_viewport.m_x                && (*v1)[0][0]  < m_viewport.m_x                && (*v2)[0][0]  < m_viewport.m_x               )
-							||((*v0)[0][1]  < m_viewport.m_y                && (*v1)[0][1]  < m_viewport.m_y                && (*v2)[0][1]  < m_viewport.m_y               )
-							||((*v0)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v1)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v2)[0][0] >= m_viewport.m_x+m_viewport.m_w)
-							||((*v0)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v1)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v2)[0][1] >= m_viewport.m_y+m_viewport.m_h)
+					// frustum clipping
+					if (      (v0->x()  < m_viewport.m_x                && v1->x()  < m_viewport.m_x                && v2->x()  < m_viewport.m_x               )
+							||(v0->y()  < m_viewport.m_y                && v1->y()  < m_viewport.m_y                && v2->y()  < m_viewport.m_y               )
+							||(v0->x() >= m_viewport.m_x+m_viewport.m_w && v1->x() >= m_viewport.m_x+m_viewport.m_w && v2->x() >= m_viewport.m_x+m_viewport.m_w)
+							||(v0->y() >= m_viewport.m_y+m_viewport.m_h && v1->y() >= m_viewport.m_y+m_viewport.m_h && v2->y() >= m_viewport.m_y+m_viewport.m_h)
 					   )
 					{
 						continue;
@@ -122,15 +122,15 @@ public:
 
 					// backface culling
 					if ((i&0x1)==0) {
-						if ( Cross((*v1-*v0),(*v2-*v0))[0][2] >= 0 )
+						if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 							continue;
 					} else {
-						if ( Cross((*v2-*v0),(*v1-*v0))[0][2] >= 0 )
+						if ( Cross((*v2-*v0),(*v1-*v0)).z() >= 0 )
 							continue;
 					}
 
 					// Z-near clipping
-					if ((*v0)[0][2] < 0.001 && (*v1)[0][2] < 0.001 && (*v2)[0][2] < 0.001)
+					if ((*v0).z() < 0.001 && (*v1).z() < 0.001 && (*v2).z() < 0.001)
 						continue;
 
 					float face_sun_intensity = -normals[i-2].Dot(m_scene.sun_direction);
@@ -156,9 +156,9 @@ public:
 				for (const auto & n : fan.normals)
 					normals.emplace_back(Transform(n, model.orientation));
 
-				const Vec3f * v2;
-				const Vec3f * v0 = &vertices[fan.indices[0]];
-				const Vec3f * v1 = &vertices[fan.indices[1]];
+				const vertex_t * v2;
+				const vertex_t * v0 = &vertices[fan.indices[0]];
+				const vertex_t * v1 = &vertices[fan.indices[1]];
 				Vec2f t2;
 				Vec2f t0 = fan.texture_mapping[0];
 				Vec2f t1 = fan.texture_mapping[1];
@@ -174,22 +174,22 @@ public:
 					t2[0][1] *= model.mesh.textures[0]->m_mipmaps[0].m_height;
 					v2 = &vertices[fan.indices[i]];
 
-					// frustum culling
-					if (  ((*v0)[0][0] <  m_viewport.m_x                && (*v1)[0][0] <  m_viewport.m_x                && (*v2)[0][0] <  m_viewport.m_x)
-						||((*v0)[0][1] <  m_viewport.m_y                && (*v1)[0][1] <  m_viewport.m_y                && (*v2)[0][1] <  m_viewport.m_y)
-						||((*v0)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v1)[0][0] >= m_viewport.m_x+m_viewport.m_w && (*v2)[0][0] >= m_viewport.m_x+m_viewport.m_w)
-						||((*v0)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v1)[0][1] >= m_viewport.m_y+m_viewport.m_h && (*v2)[0][1] >= m_viewport.m_y+m_viewport.m_h)
+					// frustum clipping
+					if (      (v0->x()  < m_viewport.m_x                && v1->x()  < m_viewport.m_x                && v2->x()  < m_viewport.m_x               )
+							||(v0->y()  < m_viewport.m_y                && v1->y()  < m_viewport.m_y                && v2->y()  < m_viewport.m_y               )
+							||(v0->x() >= m_viewport.m_x+m_viewport.m_w && v1->x() >= m_viewport.m_x+m_viewport.m_w && v2->x() >= m_viewport.m_x+m_viewport.m_w)
+							||(v0->y() >= m_viewport.m_y+m_viewport.m_h && v1->y() >= m_viewport.m_y+m_viewport.m_h && v2->y() >= m_viewport.m_y+m_viewport.m_h)
 					   )
 					{
 						continue;
 					}
 
 					// backface culling
-					if ( Cross((*v1-*v0),(*v2-*v0))[0][2] >= 0 )
+					if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 						continue;
 
 					// Z-near clipping
-					if ((*v0)[0][2] < 0.001 && (*v1)[0][2] < 0.001 && (*v2)[0][2] < 0.001)
+					if ((*v0).z() < 0.001 && (*v1).z() < 0.001 && (*v2).z() < 0.001)
 						continue;
 
 					float face_sun_intensity = -normals[i-2].Dot(m_scene.sun_direction);
@@ -212,9 +212,9 @@ public:
 			{
 				auto normal = Transform(tri.normal, model.orientation);
 
-				Vec3f v0 = vertices[tri.v0];
-				Vec3f v1 = vertices[tri.v1];
-				Vec3f v2 = vertices[tri.v2];
+				vertex_t v0 = vertices[tri.v0];
+				vertex_t v1 = vertices[tri.v1];
+				vertex_t v2 = vertices[tri.v2];
 				Vec2f t0 = tri.t0;
 				Vec2f t1 = tri.t1;
 				Vec2f t2 = tri.t2;
@@ -229,18 +229,18 @@ public:
 				if ( Cross((v1-v0),(v2-v0))[0][2] >= 0 )
 					continue;
 
-				// frustum culling
-				if (      ((v0)[0][0]  < m_viewport.m_x                && (v1)[0][0]  < m_viewport.m_x                && (v2)[0][0]  < m_viewport.m_x               )
-						||((v0)[0][1]  < m_viewport.m_y                && (v1)[0][1]  < m_viewport.m_y                && (v2)[0][1]  < m_viewport.m_y               )
-						||((v0)[0][0] >= m_viewport.m_x+m_viewport.m_w && (v1)[0][0] >= m_viewport.m_x+m_viewport.m_w && (v2)[0][0] >= m_viewport.m_x+m_viewport.m_w)
-						||((v0)[0][1] >= m_viewport.m_y+m_viewport.m_h && (v1)[0][1] >= m_viewport.m_y+m_viewport.m_h && (v2)[0][1] >= m_viewport.m_y+m_viewport.m_h)
+				// frustum clipping
+				if (      (v0.x()  < m_viewport.m_x                && v1.x()  < m_viewport.m_x                && v2.x()  < m_viewport.m_x               )
+						||(v0.y()  < m_viewport.m_y                && v1.y()  < m_viewport.m_y                && v2.y()  < m_viewport.m_y               )
+						||(v0.x() >= m_viewport.m_x+m_viewport.m_w && v1.x() >= m_viewport.m_x+m_viewport.m_w && v2.x() >= m_viewport.m_x+m_viewport.m_w)
+						||(v0.y() >= m_viewport.m_y+m_viewport.m_h && v1.y() >= m_viewport.m_y+m_viewport.m_h && v2.y() >= m_viewport.m_y+m_viewport.m_h)
 				   )
 				{
 					continue;
 				}
 
 				// Z-near clipping
-				if ((v0)[0][2] < 0.001 && (v1)[0][2] < 0.001 && (v2)[0][2] < 0.001)
+				if (v0.z() < 0.001 && v1.z() < 0.001 && v2.z() < 0.001)
 					continue;
 
 				float face_sun_intensity = -normal.Dot(m_scene.sun_direction);
@@ -428,7 +428,7 @@ void crude_line(ViewPort & vp, int x1, int y1, int x2, int y2)
 	}
 }
 
-void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
+void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v2,
                     const Vec2f * t0, const Vec2f * t1, const Vec2f * t2,
                     float light,
                     const std::shared_ptr<Texture> & texture,
@@ -437,26 +437,23 @@ void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
                     const scene & scene)
 {
 	// Sort points
-	if ((*v1)[0][1] <= (*v0)[0][1]) {
+	if ((*v1)[0][1] <= (*v0).y()) {
 		std::swap(v0, v1);
 		std::swap(t0, t1);
 	}
-	if ((*v2)[0][1] <= (*v1)[0][1]) {
+	if ((*v2)[0][1] <= (*v1).y()) {
 		std::swap(v1, v2);
 		std::swap(t1, t2);
 	}
-	if ((*v1)[0][1] <= (*v0)[0][1]) {
+	if ((*v1)[0][1] <= (*v0).y()) {
 		std::swap(v0, v1);
 		std::swap(t0, t1);
 	}
 
 	// get pixel limits
-	int y0 = (int) ceil((*v0)[0][1]);
-	int y1 = (int) ceil((*v1)[0][1]);
-	int y2 = (int) ceil((*v2)[0][1]);
-	int xa = (int) ceil((*v0)[0][0]);
-	int xb = (int) ceil((*v1)[0][0]);
-	int xc = (int) ceil((*v2)[0][0]);
+	int y0 = (int) ceil((*v0).y());
+	int y1 = (int) ceil((*v1).y());
+	int y2 = (int) ceil((*v2).y());
 
 	if (y0==y2) return; // All on 1 scanline, not worth drawing
 
@@ -464,15 +461,15 @@ void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
 	line_side side_short;
 
 	// Init long line
-	side_long.ratio = ((*v2)[0][0]-(*v0)[0][0]) / ((*v2)[0][1]-(*v0)[0][1]); // never div#0 because y0!=y2
+	side_long.ratio = ((*v2).x()-(*v0).x()) / ((*v2).y()-(*v0).y()); // never div#0 because y0!=y2
 	side_long.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v2, *t0, *t2);
 	if (y0 < vp.m_y) {
 		// start at first scanline of viewport
-		side_long.interpolator.DisplaceStartingPoint(vp.m_y-(*v0)[0][1]);
-		side_long.x = (*v0)[0][0] + side_long.ratio*(vp.m_y-(*v0)[0][1]);
+		side_long.interpolator.DisplaceStartingPoint(vp.m_y-(*v0).y());
+		side_long.x = v0->x() + side_long.ratio*(vp.m_y-(*v0).y());
 	} else {
-		side_long.interpolator.DisplaceStartingPoint(y0-(*v0)[0][1]);
-		side_long.x = (*v0)[0][0] + side_long.ratio*(y0-(*v0)[0][1]);
+		side_long.interpolator.DisplaceStartingPoint(y0-(*v0).y());
+		side_long.x = v0->x() + side_long.ratio*(y0-(*v0).y());
 	}
 
 	int y, y_end; // scanlines upper and lower bound of whole triangle
@@ -480,12 +477,12 @@ void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
 	// upper half of the triangle
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
 	{
-		side_short.ratio = ((*v1)[0][0]-(*v0)[0][0]) / ((*v1)[0][1]-(*v0)[0][1]); // never div#0 because y0!=y2
+		side_short.ratio = (v1->x()-v0->x()) / (v1->y()-v0->y()); // never div#0 because y0!=y2
 		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v0, *v1, *t0, *t1);
 		y = std::max(y0, vp.m_y);
 		y_end = std::min(y1, vp.m_y + vp.m_h);
-		side_short.interpolator.DisplaceStartingPoint(y-(*v0)[0][1]);
-		side_short.x = (*v0)[0][0] + side_short.ratio*(y-(*v0)[0][1]);
+		side_short.interpolator.DisplaceStartingPoint(y-v0->y());
+		side_short.x = v0->x() + side_short.ratio*(y-v0->y());
 
 		bool long_line_on_right = side_long.ratio > side_short.ratio;
 		auto [side_left, side_right] = [&]() -> std::tuple<line_side&,line_side&> {
@@ -501,12 +498,12 @@ void fill_flat_poly(const Vec3f * v0, const Vec3f * v1, const Vec3f * v2,
 	// lower half of the triangle
 	if (y1 < vp.m_y + vp.m_h) // dont skip: at least some part is in the viewport
 	{
-		side_short.ratio = ((*v2)[0][0]-(*v1)[0][0]) / ((*v2)[0][1]-(*v1)[0][1]); // never div#0 because y0!=y2
+		side_short.ratio = ((*v2).x()-(*v1).x()) / ((*v2).y()-(*v1).y()); // never div#0 because y0!=y2
 		side_short.interpolator.Init(ZInterpolator::VERTICAL, *v1, *v2, *t1, *t2);
 		y = std::max(y1, vp.m_y);
 		y_end = std::min(y2, vp.m_y + vp.m_h);
-		side_short.interpolator.DisplaceStartingPoint(y-(*v1)[0][1]);
-		side_short.x = (*v1)[0][0] + side_short.ratio*(y-(*v1)[0][1]);
+		side_short.interpolator.DisplaceStartingPoint(y-v1->y());
+		side_short.x = v1->x() + side_short.ratio*(y-v1->y());
 
 		bool long_line_on_right = side_long.ratio < side_short.ratio;
 		auto [side_left, side_right] = [&]() -> std::tuple<line_side&,line_side&> {

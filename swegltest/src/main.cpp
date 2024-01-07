@@ -125,7 +125,7 @@ swegl::scene build_scene()
 
 	s.ambient_light_intensity = 0.2f;
 
-	s.sun_direction = swegl::Vec3f{1.0, -1.0, 1.0};
+	s.sun_direction = swegl::normal_t{1.0, -1.0, 1.0};
 	s.sun_direction.Normalize();
 	s.sun_intensity = 0.8;
 
@@ -135,7 +135,7 @@ swegl::scene build_scene()
 	auto tore = swegl::make_tore(100, texture_grid);
 	tore.orientation = swegl::Matrix4x4::Identity;
 	tore.orientation.RotateZ(0.5);
-	tore.position = swegl::Vec3f(0.0f, 0.0f, 7.5f);
+	tore.position = swegl::vertex_t(0.0f, 0.0f, 7.5f);
 	//tore.SetBumpMap(bumpmap);
 	s.models.push_back(std::move(tore));
 	//*/
@@ -143,14 +143,14 @@ swegl::scene build_scene()
 	//*
 	auto cube = swegl::make_cube(1.0f, texture_dice);
 	cube.orientation = swegl::Matrix4x4::Identity;
-	cube.position = swegl::Vec3f(0.0f, 0.0f, 5.0f);
+	cube.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube));
 	//*/
 
 	auto tri = swegl::make_tri(1, texture_dice);
 	tri.orientation = swegl::Matrix4x4::Identity;
-	tri.position = swegl::Vec3f(0.0f, 0.0f, 5.0f);
+	tri.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	s.models.push_back(std::move(tri));
 
 	return s;
