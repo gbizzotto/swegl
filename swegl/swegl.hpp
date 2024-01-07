@@ -10,7 +10,7 @@
 #include <swegl/Projection/Vec3f.h>
 
 #include <swegl/Render/ViewPort.h>
-#include <swegl/Render/Renderer.h>
+#include <swegl/Render/renderer.hpp>
 
 #if defined(_MSC_VER)
 	#if !defined(BUILDING_SWEGL_LIB)

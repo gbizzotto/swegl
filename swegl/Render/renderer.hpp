@@ -7,7 +7,6 @@
 #include <mutex>
 #include <cmath>
 #include <algorithm>
-#include <swegl/Render/Filler.h>
 #include <swegl/Projection/Vec2f.h>
 #include <swegl/Data/model.hpp>
 #include <swegl/Projection/Camera.h>
