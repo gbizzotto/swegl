@@ -26,6 +26,11 @@ public:
 
 vertex_t Transform(const vertex_t &, const Matrix4x4 &);
 
+template<typename T>
+vertex_t operator+(const vertex_t & left, const T & right)
+{
+	return vertex_t(left.x()+right, left.y()+right, left.z()+right);
+}
 
 
 class vector_t
@@ -43,6 +48,12 @@ public:
 	      float & z()       { return matrix[0][2]; }
 	const float & z() const { return matrix[0][2]; }
 };
+
+template<typename T>
+vector_t operator*(const vector_t & left, const T & right)
+{
+	return vector_t(left.x()*right, left.y()*right, left.z()*right);
+}
 
 class normal_t : public vector_t
 {

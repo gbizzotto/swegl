@@ -11,16 +11,19 @@
 #include <swegl/Data/model.hpp>
 #include <swegl/Projection/Camera.h>
 #include <swegl/Render/ViewPort.h>
-#include <swegl/Render/ZInterpolator.h>
+#include <swegl/Render/interpolator.hpp>
 
 namespace swegl
 {
 
 struct line_side
 {
-	ZInterpolator interpolator;
+	interpolator_t interpolator;
 	float ratio;
 	float x;
+	//vertex_t v0;
+	//vector_t v_dir;
+	Vec2f t0, t_dir;
 };
 
 void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v2,
@@ -460,8 +463,10 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 	line_side side_short;
 
 	// Init long line
-	side_long.ratio = ((*v2).x()-(*v0).x()) / ((*v2).y()-(*v0).y()); // never div#0 because y0!=y2
-	side_long.interpolator.Init(v2->y() - v0->y(), v0->z(), v2->z(), *t0, *t2);
+	side_long.ratio = (v2->x()-v0->x()) / (v2->y()-v0->y()); // never div#0 because y0!=y2
+	side_long.interpolator.Init(v2->y() - v0->y(), v0->z(), v2->z()); // *t0, *t2
+	side_long.t0 = *t0;
+	side_long.t_dir = *t2 - *t0;
 	if (y0 < vp.m_y) {
 		// start at first scanline of viewport
 		side_long.interpolator.DisplaceStartingPoint(vp.m_y-(*v0).y());
@@ -477,7 +482,9 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
 	{
 		side_short.ratio = (v1->x()-v0->x()) / (v1->y()-v0->y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(v1->y() - v0->y(), v0->z(), v1->z(), *t0, *t1);
+		side_short.interpolator.Init(v1->y() - v0->y(), v0->z(), v1->z()); // *t0, *t1
+		side_short.t0 = *t0;
+		side_short.t_dir = *t1 - *t0;
 		y = std::max(y0, vp.m_y);
 		y_end = std::min(y1, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v0->y());
@@ -497,10 +504,10 @@ void fill_flat_poly(const vertex_t * v0, const vertex_t * v1, const vertex_t * v
 	// lower half of the triangle
 	if (y1 < vp.m_y + vp.m_h) // dont skip: at least some part is in the viewport
 	{
-		side_short.ratio = ((*v2).x()-(*v1).x()) / ((*v2).y()-(*v1).y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(v2->y() - v1->y(),
-		                             v1->z(), v2->z(),
-		                             *t1, *t2);
+		side_short.ratio = (v2->x()-v1->x()) / (v2->y()-v1->y()); // never div#0 because y0!=y2
+		side_short.interpolator.Init(v2->y() - v1->y(), v1->z(), v2->z()); // *t1, *t2
+		side_short.t0 = *t1;
+		side_short.t_dir = *t2 - *t1;
 		y = std::max(y1, vp.m_y);
 		y_end = std::min(y2, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v1->y());
@@ -534,12 +541,19 @@ void fill_half_tri(int y, int y_end,
 	{
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
 		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
-		ZInterpolator qpixel;
-		qpixel.Init(side_right.x - side_left .x,
-		            side_left .interpolator.ualpha[0][2],
-		            side_right.interpolator.ualpha[0][2],
-			        Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
-		            Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
+		interpolator_t qpixel;
+
+		//vertex_t vertex_left = side_left .vertex + side_left .vector * side_left .interpolator.progress();
+		//vector_t vertex_dir  = (side_right.vertex + side_right.vector * side_right.interpolator.progress()) - vertex_left;
+		Vec2f t_left  = side_left .t0 + side_left .t_dir * side_left .interpolator.progress();
+		Vec2f t_right = side_right.t0 + side_right.t_dir * side_right.interpolator.progress();
+		Vec2f t_dir = t_right - t_left;
+
+		qpixel.Init(side_right.x - side_left.x,
+		            side_left .interpolator.ualpha[0][1],
+		            side_right.interpolator.ualpha[0][1]);
+			        //Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
+		            //Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
 		qpixel.DisplaceStartingPoint(x1 - side_left.x);
 
 		// fill_line
@@ -547,17 +561,20 @@ void fill_half_tri(int y, int y_end,
 		float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
 		for ( ; x1 < x2 ; x1++ )
 		{
-			int u, v;
+			//int u, v;
 
-			if (qpixel.ualpha[0][2] < *zb && qpixel.ualpha[0][2] > 0.001) // Ugly z-near culling
+			if (qpixel.ualpha[0][1] < *zb && qpixel.ualpha[0][1] > 0.001) // Ugly z-near culling
 			{
-				u = ((int)qpixel.ualpha[0][0]) % twidth;
-				v = ((int)qpixel.ualpha[0][1]) % theight;
+				Vec2f t = t_left + t_dir * qpixel.progress();
+				//u = ((int)qpixel.ualpha[0][0]) % twidth;
+				//v = ((int)qpixel.ualpha[0][1]) % theight;
+				int u = (int)t[0][0] % twidth;
+				int v = (int)t[0][1] % theight;
 				*video = tbitmap[v*twidth + u];
 				((unsigned char*)video)[0] *= light;
 				((unsigned char*)video)[1] *= light;
 				((unsigned char*)video)[2] *= light;
-				*zb    = qpixel.ualpha[0][2];
+				*zb    = qpixel.ualpha[0][1];
 			}
 			video++;
 			zb++;
