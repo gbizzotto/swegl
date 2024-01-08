@@ -11,6 +11,9 @@
 
 #include <swegl/Data/model.hpp>
 #include <swegl/Render/renderer.hpp>
+#include <swegl/Render/vertex_shaders.hpp>
+#include <swegl/Render/pixel_shaders.hpp>
+
 
 #if defined(_DEBUG) || defined(DEBUG)
 	unsigned int g_trianglesdrawn;
@@ -71,14 +74,14 @@ public:
 	}
 };
 
-swegl::scene build_scene();
-int KeyboardWorks(SDLWrapper &, swegl::Camera &, swegl::scene & scene);
+swegl::scene_t build_scene();
+int KeyboardWorks(SDLWrapper &, swegl::Camera &, swegl::scene_t & scene);
 
 int main(int argc, char *argv[])
 {
 	SDLWrapper sdl;
 
-	swegl::scene scene = build_scene();
+	swegl::scene_t scene = build_scene();
 	Font font("ascii.bmp");
 
 	//*
@@ -116,13 +119,13 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-swegl::scene build_scene()
+swegl::scene_t build_scene()
 {
 	auto texture_dice     = std::make_shared<swegl::Texture>("dice.bmp");
 	auto texture_grid     = std::make_shared<swegl::Texture>("tex.bmp");
 	auto texture_mercator = std::make_shared<swegl::Texture>("mercator.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
-	swegl::scene s;
+	swegl::scene_t s;
 
 	s.ambient_light_intensity = 0.2f;
 
@@ -132,8 +135,13 @@ swegl::scene build_scene()
 
 	s.point_source_lights.emplace_back(swegl::point_source_light{{10.0,10.0,10.0},0.2});
 
+	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
+	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_standard;
+
 	//*
 	auto tore = swegl::make_tore(100, texture_grid);
+	tore.vertex_shader = vertex_shader_0;
+	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::Matrix4x4::Identity;
 	tore.orientation.RotateZ(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, 7.5f);
@@ -143,30 +151,38 @@ swegl::scene build_scene()
 
 	//*
 	auto cube = swegl::make_cube(1.0f, texture_dice);
+	cube.vertex_shader = vertex_shader_0;
+	cube.pixel_shader = pixel_shader_0;
 	cube.orientation = swegl::Matrix4x4::Identity;
 	cube.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube));
 	//*/
 
-	//*
+	/*
 	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
+	sphere.vertex_shader = vertex_shader_0;
+	sphere.pixel_shader = pixel_shader_0;
 	sphere.orientation = swegl::Matrix4x4::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, 6.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(sphere));
 	//*/
 
+	//*
 	auto tri = swegl::make_tri(1, texture_dice);
+	tri.vertex_shader = vertex_shader_0;
+	tri.pixel_shader = pixel_shader_0;
 	tri.orientation = swegl::Matrix4x4::Identity;
 	tri.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	s.models.push_back(std::move(tri));
+	//*/
 
 	return s;
 }
 
 
-int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene & scene)
+int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;

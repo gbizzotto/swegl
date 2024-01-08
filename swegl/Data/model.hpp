@@ -9,6 +9,9 @@
 namespace swegl
 {
 
+class vertex_shader_t;
+class pixel_shader_t;
+
 using vertex_idx = std::uint32_t;
 
 struct triangle_strip
@@ -23,11 +26,11 @@ struct triangle_fan
 	std::vector<normal_t> normals;
 	std::vector<Vec2f> texture_mapping;
 };
-struct triangle_solo
+struct triangle_list_t
 {
-	int v0, v1, v2;
-	normal_t normal;
-	Vec2f t0, t1, t2;
+	std::vector<vertex_idx> indices;
+	std::vector<normal_t> normals;
+	std::vector<Vec2f> texture_mapping;
 };
 
 struct mesh_t
@@ -35,12 +38,15 @@ struct mesh_t
 	std::vector<vertex_t> vertices;
 	std::vector<triangle_strip> triangle_strips;
 	std::vector<triangle_fan>   triangle_fans;
-	std::vector<triangle_solo>  triangle_list;
+	triangle_list_t             triangle_list;
 	std::vector<std::shared_ptr<Texture>> textures;
 };
 
 struct model_t
 {
+	vertex_shader_t * vertex_shader;
+	pixel_shader_t * pixel_shader;
+
 	vector_t forward;
 	vector_t up;
 	Matrix4x4 orientation;
@@ -62,7 +68,7 @@ struct point_source_light
 	float intensity;
 };
 
-struct scene
+struct scene_t
 {
 	std::vector<model_t> models;
 
@@ -112,13 +118,13 @@ inline void calculate_normals(model_t & model)
 		}
 	}
 	// Preca model.normals for lose triangles
-	for (auto & t : model.mesh.triangle_list)
+	for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+=3)
 	{
-		int i0 = t.v0;
-		int i1 = t.v1;
-		int i2 = t.v2;
-		t.normal = Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]);
-		t.normal.normalize();
+		int i0 = model.mesh.triangle_list.indices[i-2];
+		int i1 = model.mesh.triangle_list.indices[i-1];
+		int i2 = model.mesh.triangle_list.indices[i  ];
+		model.mesh.triangle_list.normals.push_back(Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]));
+		model.mesh.triangle_list.normals.back().normalize();
 	}
 }
 
@@ -140,7 +146,7 @@ inline model_t make_tri(float size, std::shared_ptr<Texture> & texture)
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.mesh.triangle_list.emplace_back(triangle_solo{0,1,2, normal_t{0,0,0}, Vec2f{0.0f,0.0f}, Vec2f{0.0f,1.0f}, Vec2f{1.0f,0.0f}});
+	result.mesh.triangle_list = triangle_list_t{{0,1,2}, {}, {Vec2f{0.0f,0.0f}, Vec2f{0.0f,1.0f}, Vec2f{1.0f,0.0f}}};
 
 	calculate_normals(result);
 
