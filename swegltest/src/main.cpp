@@ -133,7 +133,8 @@ swegl::scene_t build_scene()
 	s.sun_direction.normalize();
 	s.sun_intensity = 0.0;
 
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.8});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.6});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 0.6});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
 	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_standard;
@@ -186,6 +187,15 @@ swegl::scene_t build_scene()
 	cube2.position = swegl::vertex_t(0.0f, 3.0f, 5.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube2));
+	//*/
+	//*
+	auto cube3 = swegl::make_cube(0.1f, texture_dice);
+	cube3.vertex_shader = vertex_shader_0;
+	cube3.pixel_shader = pixel_shader_0;
+	cube3.orientation = swegl::Matrix4x4::Identity;
+	cube3.position = s.point_source_lights[1].position;
+	//c->SetBumpMap(bumpmap);
+	s.models.push_back(std::move(cube3));
 	//*/
 
 	return s;
@@ -337,10 +347,13 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & sce
 		}
 		if (sdl.keys['g'])
 		{
-			static swegl::Matrix4x4 rot = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateZ(0.01); return r; }();
+			static swegl::Matrix4x4 rot1 = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateZ(0.01); return r; }();
+			static swegl::Matrix4x4 rot2 = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateY(0.04); return r; }();
 
-			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot);
+			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot1);
+			scene.point_source_lights[1].position = Transform(scene.point_source_lights[1].position, rot2);
 			scene.models[4].position = scene.point_source_lights[0].position;
+			scene.models[5].position = scene.point_source_lights[1].position;
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
