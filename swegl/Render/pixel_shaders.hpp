@@ -153,18 +153,16 @@ struct pixel_shader_standard : public pixel_shader_t
 
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override
 	{
-		Vec2f t_right;
 		if (long_line_on_right)
 		{
 			t_left  = side_short_t + side_short_t_dir * progress_left ;
-			t_right =           t0 + side_long_t_dir  * progress_right;
+			t_dir = t0 + side_long_t_dir  * progress_right - t_left;
 		}
 		else
 		{
 			t_left  =           t0 + side_long_t_dir  * progress_left;
-			t_right = side_short_t + side_short_t_dir * progress_right;
+			t_dir = side_short_t + side_short_t_dir * progress_right - t_left;
 		}
-		t_dir = t_right - t_left;
 	}
 
 	virtual int shade(float progress) override

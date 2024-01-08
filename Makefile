@@ -37,7 +37,7 @@ CFLAGST      = $(DEPFLAGST) -Wall -std=c++2a $(CONFIG) -I. -I../freon/ -I../uttt
 all: $(LIBOUT) $(TESTOUT)
 
 debug: all
-release: CONFIG=-g -O3 -fno-omit-frame-pointer -DNDEBUG
+release: CONFIG=-g -O3 -fno-omit-frame-pointer -DNDEBUG -msse4 
 release: all
 
 $(OBJDIR)/%.o: src/%.cpp $(DEPDIR)/%.d

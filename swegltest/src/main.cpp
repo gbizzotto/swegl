@@ -159,7 +159,7 @@ swegl::scene_t build_scene()
 	s.models.push_back(std::move(cube));
 	//*/
 
-	/*
+	//*
 	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
 	sphere.vertex_shader = vertex_shader_0;
 	sphere.pixel_shader = pixel_shader_0;
