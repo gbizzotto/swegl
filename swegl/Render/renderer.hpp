@@ -65,7 +65,7 @@ public:
 
 		for (const auto & model : m_scene.models)
 		{
-			vertices = model.vertex_shader->shade(vertices, normals, model, m_scene, m_camera, m_viewport);
+			model.vertex_shader->shade(vertices, normals, model, m_scene, m_camera, m_viewport);
 
 			model.pixel_shader->prepare_for_model(vertices, normals, model, m_scene, m_camera, m_viewport);
 

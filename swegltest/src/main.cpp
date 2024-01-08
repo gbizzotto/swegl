@@ -131,9 +131,9 @@ swegl::scene_t build_scene()
 
 	s.sun_direction = swegl::normal_t{1.0, -1.0, 1.0};
 	s.sun_direction.normalize();
-	s.sun_intensity = 0.8;
+	s.sun_intensity = 0.0;
 
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 5.0, 5.0}, 0.8});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.8});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
 	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_standard;
@@ -176,6 +176,16 @@ swegl::scene_t build_scene()
 	tri.orientation = swegl::Matrix4x4::Identity;
 	tri.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
 	s.models.push_back(std::move(tri));
+	//*/
+
+	//*
+	auto cube2 = swegl::make_cube(0.1f, texture_dice);
+	cube2.vertex_shader = vertex_shader_0;
+	cube2.pixel_shader = pixel_shader_0;
+	cube2.orientation = swegl::Matrix4x4::Identity;
+	cube2.position = swegl::vertex_t(0.0f, 3.0f, 5.0f);
+	//c->SetBumpMap(bumpmap);
+	s.models.push_back(std::move(cube2));
 	//*/
 
 	return s;
@@ -229,6 +239,8 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & sce
 					sdl.keys['u'] = 1;
 				else if (event.key.keysym.sym == SDLK_t)
 					sdl.keys['t'] = 1;
+				else if (event.key.keysym.sym == SDLK_g)
+					sdl.keys['g'] = 1;
 				break;
 
 			case SDL_KEYUP:
@@ -277,6 +289,8 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & sce
 					sdl.keys['u'] = 0;
 				else if (event.key.keysym.sym == SDLK_t)
 					sdl.keys['t'] = 0;
+				else if (event.key.keysym.sym == SDLK_g)
+					sdl.keys['g'] = 0;
 				break;
 			case SDL_QUIT:
 				return -3;
@@ -320,6 +334,13 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & sce
 			scene.models[0].orientation.RotateY(0.02);
 			scene.models[1].orientation.RotateY(0.01);
 			scene.models[1].orientation.RotateX(0.001);
+		}
+		if (sdl.keys['g'])
+		{
+			static swegl::Matrix4x4 rot = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateZ(0.01); return r; }();
+
+			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot);
+			scene.models[4].position = scene.point_source_lights[0].position;
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])

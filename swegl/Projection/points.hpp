@@ -31,6 +31,15 @@ vertex_t operator+(const vertex_t & left, const T & right)
 {
 	return vertex_t(left.x()+right, left.y()+right, left.z()+right);
 }
+inline vertex_t operator+(const vertex_t & left, const vertex_t & right)
+{
+	return vertex_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
+}
+template<typename T>
+vertex_t operator/(const vertex_t & left, const T & right)
+{
+	return vertex_t(left.x()/right, left.y()/right, left.z()/right);
+}
 
 
 class vector_t
@@ -47,6 +56,20 @@ public:
 	const float & y() const { return matrix[0][1]; }
 	      float & z()       { return matrix[0][2]; }
 	const float & z() const { return matrix[0][2]; }
+
+	float len() const
+	{
+		return (float) sqrt(x()*x() + y()*y() + z()*z());
+	}
+
+	inline vector_t & normalize()
+	{
+		float l = len();
+		x() /= l;
+		y() /= l;
+		z() /= l;
+		return *this;
+	}
 };
 
 template<typename T>
@@ -61,21 +84,7 @@ public:
 	inline normal_t() : vector_t() {}
 	inline normal_t(float x, float y, float z): vector_t(x, y, z) {}
 
-	float len() const
-	{
-		return (float) sqrt(x()*x() + y()*y() + z()*z());
-	}
-
-	inline normal_t & normalize()
-	{
-		float l = len();
-		x() /= l;
-		y() /= l;
-		z() /= l;
-		return *this;
-	}
-
-	inline float dot(const normal_t & other) const
+	inline float dot(const vector_t & other) const
 	{
 		return x()*other.x() + y()*other.y() + z()*other.z();
 	}

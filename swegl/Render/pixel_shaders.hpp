@@ -3,6 +3,7 @@
 
 #include "swegl/Data/model.hpp"
 #include "swegl/Projection/points.hpp"
+#include "swegl/Render/vertex_shaders.hpp"
 
 namespace swegl
 {
@@ -29,9 +30,12 @@ public:
 
 class pixel_shader_lights_flat : public pixel_shader_t
 {
+	vertex_shader_world vertex_shader;
+
 	const model_t * model;
 	const scene_t * scene;
-	std::vector<vertex_t> * vertices;
+	std::vector<vertex_t> vertices;
+	const std::vector<vertex_idx> * indices;
 	std::vector<normal_t> * normals;
 	int triangle_idx;
 
@@ -47,12 +51,13 @@ public:
 	{
 		model = &m;
 		scene = &s;
-		vertices = &v;
+		vertex_shader.shade(vertices, n, m, s, c, vp);
 		normals = &n;
 	}
 
 	virtual void prepare_for_strip(const triangle_strip & strip) override
 	{
+		indices = &strip.indices;
 		normals->clear();
 		normals->reserve(strip.normals.size());
 		for (const auto & n : strip.normals)
@@ -62,6 +67,7 @@ public:
 	}
 	virtual void prepare_for_fan(const triangle_fan & fan) override
 	{
+		indices = &fan.indices;
 		normals->clear();
 		normals->reserve(fan.normals.size());
 		for (const auto & n : fan.normals)
@@ -71,6 +77,7 @@ public:
 	}
 	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
 	{
+		indices = &list.indices;
 		normals->clear();
 		normals->reserve(list.normals.size());
 		for (const auto & n : list.normals)
@@ -83,7 +90,21 @@ public:
 		float face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
-		light = scene->ambient_light_intensity + face_sun_intensity*scene->sun_intensity;
+		else
+			face_sun_intensity *= scene->sun_intensity;
+
+		vertex_t center_vertex = vertices[(*indices)[i0]]; /*((*vertices)[i0] + (*vertices)[i1] + (*vertices)[i2]) / 3;*/
+		float dynamic_lights_intensity = 0.0f;
+		for (const auto & psl : scene->point_source_lights)
+		{
+			vector_t light_direction = center_vertex - psl.position;
+			light_direction.normalize();
+			float light_intensity = -(*normals)[triangle_idx].dot(light_direction);
+			if (light_intensity > 0.0f)
+				dynamic_lights_intensity += light_intensity * psl.intensity;
+		}
+
+		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 		if (light > 1.0f)
 			light = 1.0f;
 	}
@@ -100,7 +121,6 @@ class pixel_shader_texture : public pixel_shader_t
 	const Camera * camera;
 	const ViewPort * viewport;
 
-	std::vector<vertex_t> * vertices;
 	const std::vector<Vec2f> * texture_mapping;
 
 	Vec2f t0;
@@ -118,7 +138,7 @@ class pixel_shader_texture : public pixel_shader_t
 	unsigned int *tbitmap;
 	unsigned int twidth;
 	unsigned int theight;
-	
+
 public:
 	virtual void prepare_for_model(std::vector<vertex_t> & v,
 	                               std::vector<normal_t> & n,
@@ -127,7 +147,6 @@ public:
 	                               const Camera & c,
 	                               const ViewPort & vp) override
 	{
-		vertices = & v;
 		model    = & m;
 		scene    = & s;
 		camera   = & c;
