@@ -40,18 +40,9 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	std::vector<normal_t> * normals;
 	int triangle_idx;
 
-	float ambient_light_intensity;
-	float face_sun_intensity;
-
-	vertex_t v0, v1, v2;
-	vertex_t vleft, vright;
-	vector_t vleftdir, vrightdir;
-	vertex_t v;
-	vector_t dir;
-
-public:
 	float light;
 
+public:
 	virtual void prepare_for_model(std::vector<vertex_t> & v,
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
@@ -63,8 +54,6 @@ public:
 		scene = &s;
 		vertex_shader.shade(vertices, n, m, s, c, vp);
 		normals = &n;
-
-		ambient_light_intensity = s.ambient_light_intensity;
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override
@@ -105,8 +94,116 @@ public:
 	}
 	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		// add new fake vertices
+		float face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
+		if (face_sun_intensity < 0.0f)
+			face_sun_intensity = 0.0f;
+		else
+			face_sun_intensity *= scene->sun_intensity;
 
+		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
+		float dynamic_lights_intensity = 0.0f;
+		for (const auto & psl : scene->point_source_lights)
+		{
+			vector_t light_direction = center_vertex - psl.position;
+			float distance_squared = light_direction.len_squared();
+			light_direction.normalize();
+			float light_intensity = -(*normals)[triangle_idx].dot(light_direction);
+			if (light_intensity > 0.0f)
+			{
+				// divide by square of distance to light
+				light_intensity /= distance_squared;
+				dynamic_lights_intensity += light_intensity * psl.intensity;
+			}
+		}
+
+		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
+		if (light > 1.0f)
+			light = 1.0f;
+
+		light *= 256;
+	}
+	virtual int shade(float progress) override
+	{
+		return light;
+	}
+	virtual void next_triangle() override
+	{
+		triangle_idx++;
+	}
+};
+
+class pixel_shader_lights_semiflat : public pixel_shader_t
+{
+	vertex_shader_world vertex_shader;
+
+	const model_t * model;
+	const scene_t * scene;
+	std::vector<vertex_t> vertices;
+	std::vector<normal_t> * normals;
+	int triangle_idx;
+
+	float face_sun_intensity;
+
+	vertex_t v0, v1, v2;
+	vertex_t vleft, vright;
+	vector_t vleftdir, vrightdir;
+	vertex_t v;
+	vector_t dir;
+
+	float light;
+
+public:
+	virtual void prepare_for_model(std::vector<vertex_t> & v,
+	                               std::vector<normal_t> & n,
+	                               const model_t & m,
+	                               const scene_t & s,
+	                               const Camera & c,
+	                               const ViewPort & vp)
+	{
+		model = &m;
+		scene = &s;
+		vertex_shader.shade(vertices, n, m, s, c, vp);
+		normals = &n;
+	}
+
+	virtual void push_back_vertex_temporary(vertex_t & v) override
+	{
+		vertices.push_back(vertex_shader.shade_one(v));
+	}
+	virtual void pop_back_vertex_temporary() override
+	{
+		vertices.pop_back();
+	}
+
+	virtual void prepare_for_strip(const triangle_strip & strip) override
+	{
+		normals->clear();
+		normals->reserve(strip.normals.size());
+		for (const auto & n : strip.normals)
+			normals->emplace_back(Transform(n, model->orientation));
+
+		triangle_idx = 0;
+	}
+	virtual void prepare_for_fan(const triangle_fan & fan) override
+	{
+		normals->clear();
+		normals->reserve(fan.normals.size());
+		for (const auto & n : fan.normals)
+			normals->emplace_back(Transform(n, model->orientation));
+
+		triangle_idx = 0;
+	}
+	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
+	{
+		normals->clear();
+		normals->reserve(list.normals.size());
+		for (const auto & n : list.normals)
+			normals->emplace_back(Transform(n, model->orientation));
+
+		triangle_idx = 0;
+	}
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	{
 		v0 = vertices[indices[i0]];
 		v1 = vertices[indices[i1]];
 		v2 = vertices[indices[i2]];
@@ -169,7 +266,7 @@ public:
 			}
 		}
 
-		light = ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
+		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 		if (light > 1.0f)
 			light = 1.0f;
 
