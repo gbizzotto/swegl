@@ -134,7 +134,7 @@ swegl::scene_t build_scene()
 	s.sun_intensity = 0.0;
 
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.6});
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 0.6});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 10});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
 	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_standard;

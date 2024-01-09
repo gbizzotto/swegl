@@ -21,7 +21,7 @@ namespace swegl
 
 struct line_side
 {
-	interpolator_t interpolator;
+	interpolator_g<1> interpolator;
 	float ratio;
 	float x;
 };
@@ -183,14 +183,18 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		vertex_idx new_i1 = vertices.size();
 		vertex_idx new_ii1 = indices.size();
 		indices.push_back(new_i1);
-		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i1]]-model.mesh.vertices[indices[i0]])*cut_1));
+		vertex_t new_vertex1 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i1]]-model.mesh.vertices[indices[i0]])*cut_1;
+		model.pixel_shader->push_back_vertex_temporary(new_vertex1);
+		vertices.push_back(model.vertex_shader->shade_one(new_vertex1));
 		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i1]-texture_mapping[i0])*cut_1);
 
 		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
 		vertex_idx new_i2 = vertices.size();
 		vertex_idx new_ii2 = indices.size();
 		indices.push_back(new_i2);
-		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_2));
+		vertex_t new_vertex2 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_2;
+		model.pixel_shader->push_back_vertex_temporary(new_vertex2);
+		vertices.push_back(model.vertex_shader->shade_one(new_vertex2));
 		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_2);
 
 		fill_triangle_2(indices, i0, new_ii1, new_ii2, vertices, texture_mapping, model, vp, zbuffer);
@@ -198,6 +202,8 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		texture_mapping.pop_back();
 		indices.pop_back();
 		indices.pop_back();
+		model.pixel_shader->pop_back_vertex_temporary();
+		model.pixel_shader->pop_back_vertex_temporary();
 		return;
 	}
 
@@ -207,14 +213,18 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		vertex_idx new_i0 = vertices.size();
 		vertex_idx new_ii0 = indices.size();
 		indices.push_back(new_i0);
-		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_0));
+		vertex_t new_vertex1 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_0;
+		model.pixel_shader->push_back_vertex_temporary(new_vertex1);
+		vertices.push_back(model.vertex_shader->shade_one(new_vertex1));
 		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_0);
 
 		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
 		vertex_idx new_i1 = vertices.size();
 		vertex_idx new_ii1 = indices.size();
 		indices.push_back(new_i1);
-		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i1]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i1]])*cut_1));
+		vertex_t new_vertex2 = model.mesh.vertices[indices[i1]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i1]])*cut_1;
+		model.pixel_shader->push_back_vertex_temporary(new_vertex2);
+		vertices.push_back(model.vertex_shader->shade_one(new_vertex2));
 		texture_mapping.push_back(texture_mapping[i1] + (texture_mapping[i2]-texture_mapping[i1])*cut_1);
 
 		fill_triangle_2(indices, i1,      i0, new_ii0, vertices, texture_mapping, model, vp, zbuffer);
@@ -223,6 +233,8 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		texture_mapping.pop_back();
 		indices.pop_back();
 		indices.pop_back();
+		model.pixel_shader->pop_back_vertex_temporary();
+		model.pixel_shader->pop_back_vertex_temporary();
 		return;
 	}
 
@@ -269,7 +281,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
 
 	// Init long line
 	side_long.ratio = (v2->x()-v0->x()) / (v2->y()-v0->y()); // never div#0 because y0!=y2
-	side_long.interpolator.Init(v2->y() - v0->y(), v0->z(), v2->z()); // *t0, *t2
+	side_long.interpolator.InitSelf(v2->y() - v0->y(), v0->z(), v2->z()); // *t0, *t2
 	if (y0 < vp.m_y) {
 		// start at first scanline of viewport
 		side_long.interpolator.DisplaceStartingPoint(vp.m_y-v0->y());
@@ -287,7 +299,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
 	{
 		side_short.ratio = (v1->x()-v0->x()) / (v1->y()-v0->y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(v1->y() - v0->y(), v0->z(), v1->z()); // *t0, *t1
+		side_short.interpolator.InitSelf(v1->y() - v0->y(), v0->z(), v1->z()); // *t0, *t1
 		y = std::max(y0, vp.m_y);
 		y_end = std::min(y1, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v0->y());
@@ -310,7 +322,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
 	if (y1 < vp.m_y + vp.m_h) // dont skip: at least some part is in the viewport
 	{
 		side_short.ratio = (v2->x()-v1->x()) / (v2->y()-v1->y()); // never div#0 because y0!=y2
-		side_short.interpolator.Init(v2->y() - v1->y(), v1->z(), v2->z()); // *t1, *t2
+		side_short.interpolator.InitSelf(v2->y() - v1->y(), v1->z(), v2->z()); // *t1, *t2
 		y = std::max(y1, vp.m_y);
 		y_end = std::min(y2, vp.m_y + vp.m_h);
 		side_short.interpolator.DisplaceStartingPoint(y-v1->y());
@@ -324,7 +336,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
 					return {side_long, side_short};
 			}();
 
-		model.pixel_shader->prepare_for_lower_triangle();
+		model.pixel_shader->prepare_for_lower_triangle(long_line_on_right);
 
 		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, *model.pixel_shader);
 	}
@@ -340,17 +352,14 @@ void fill_half_triangle(int y, int y_end,
 	{
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
 		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
-		interpolator_t qpixel;
+		interpolator_g<1> qpixel;
 
 		pixel_shader.prepare_for_scanline(side_left .interpolator.progress()
 		                                 ,side_right.interpolator.progress());
 
-
-		qpixel.Init(side_right.x - side_left.x,
-		            side_left .interpolator.z(),
-		            side_right.interpolator.z());
-			        //Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
-		            //Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
+		qpixel.InitSelf(side_right.x - side_left.x,
+		            side_left .interpolator.value(0),
+		            side_right.interpolator.value(0));
 		qpixel.DisplaceStartingPoint(x1 - side_left.x);
 
 		// fill_line
@@ -360,12 +369,12 @@ void fill_half_triangle(int y, int y_end,
 		{
 			//int u, v;
 
-			if (qpixel.z() < *zb && qpixel.z() > 0.001) // Ugly z-near culling
+			if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near culling
 			{
 				int color = pixel_shader.shade(qpixel.progress());
 
 				*video = color;
-				*zb = qpixel.z();
+				*zb = qpixel.value(0);
 			}
 			video++;
 			zb++;

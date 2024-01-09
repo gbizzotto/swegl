@@ -17,13 +17,15 @@ public:
 	                               const scene_t & scene,
 	                               const Camera & camera,
 	                               const ViewPort & viewport) {}
+	virtual void push_back_vertex_temporary(vertex_t & v) {}
+	virtual void pop_back_vertex_temporary() {}
 	virtual void prepare_for_strip(const triangle_strip & strip) {}
 	virtual void prepare_for_fan  (const triangle_fan & fan) {}
 	virtual void prepare_for_triangle_list(const triangle_list_t & list) {}
 	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) {}
 	virtual void next_triangle() {}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) {}
-	virtual void prepare_for_lower_triangle() {}
+	virtual void prepare_for_lower_triangle(bool long_line_on_right) {}
 	virtual void prepare_for_scanline(float progress_left, float progress_right) {}
 	virtual int shade(float progress) { return 0; }
 };
@@ -42,7 +44,6 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	float face_sun_intensity;
 
 	vertex_t v0, v1, v2;
-	bool long_line_on_right;
 	vertex_t vleft, vright;
 	vector_t vleftdir, vrightdir;
 	vertex_t v;
@@ -64,6 +65,15 @@ public:
 		normals = &n;
 
 		ambient_light_intensity = s.ambient_light_intensity;
+	}
+
+	virtual void push_back_vertex_temporary(vertex_t & v) override
+	{
+		vertices.push_back(vertex_shader.shade_one(v));
+	}
+	virtual void pop_back_vertex_temporary() override
+	{
+		vertices.pop_back();
 	}
 
 	virtual void prepare_for_strip(const triangle_strip & strip) override
@@ -109,7 +119,6 @@ public:
 	}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
-		this->long_line_on_right = long_line_on_right;
 		vleft = v0;
 		vright = v0;
 		if (long_line_on_right) {
@@ -120,15 +129,19 @@ public:
 			vrightdir = v1-v0;
 		}
 	}
-	virtual void prepare_for_lower_triangle() override
+	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
 	{
 		if (long_line_on_right)
 		{
+			vright = v0;
+			vrightdir = v2-v0;
 			vleft = v1;
 			vleftdir = v2-v1;
 		}
 		else
 		{
+			vleft = v0;
+			vleftdir = v2-v0;
 			vright = v1;
 			vrightdir = v2-v1;	
 		}
@@ -247,8 +260,9 @@ public:
 		side_short_t_dir = t1 - t0;
 	}
 
-	virtual void prepare_for_lower_triangle() override
+	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
 	{
+		this->long_line_on_right = long_line_on_right;
 		side_short_t = t1;
 		side_short_t_dir = t2 - t1;
 	}
@@ -292,6 +306,17 @@ class pixel_shader_standard : public pixel_shader_t
 		shader_texture.prepare_for_model(v, n, m, s, c, vp);
 	}
 
+	virtual void push_back_vertex_temporary(vertex_t & v) override
+	{
+		shader_flat_light.push_back_vertex_temporary(v);
+		shader_texture.push_back_vertex_temporary(v);
+	}
+	virtual void pop_back_vertex_temporary() override
+	{
+		shader_flat_light.pop_back_vertex_temporary();
+		shader_texture.pop_back_vertex_temporary();
+	}
+
 	virtual void prepare_for_strip(const triangle_strip & strip) override
 	{
 		shader_flat_light.prepare_for_strip(strip);
@@ -325,10 +350,10 @@ class pixel_shader_standard : public pixel_shader_t
 		shader_texture.prepare_for_upper_triangle(long_line_on_right);
 	}
 
-	virtual void prepare_for_lower_triangle() override
+	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
 	{
-		shader_flat_light.prepare_for_lower_triangle();
-		shader_texture.prepare_for_lower_triangle();
+		shader_flat_light.prepare_for_lower_triangle(long_line_on_right);
+		shader_texture.prepare_for_lower_triangle(long_line_on_right);
 	}
 
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override
