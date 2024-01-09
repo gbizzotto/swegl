@@ -175,7 +175,7 @@ swegl::scene_t build_scene()
 	tri.vertex_shader = vertex_shader_0;
 	tri.pixel_shader = pixel_shader_0;
 	tri.orientation = swegl::Matrix4x4::Identity;
-	tri.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
+	tri.position = swegl::vertex_t(1.0f, 1.0f, 5.1f);
 	s.models.push_back(std::move(tri));
 	//*/
 
@@ -184,10 +184,11 @@ swegl::scene_t build_scene()
 	cube2.vertex_shader = vertex_shader_0;
 	cube2.pixel_shader = pixel_shader_0;
 	cube2.orientation = swegl::Matrix4x4::Identity;
-	cube2.position = swegl::vertex_t(0.0f, 3.0f, 5.0f);
+	cube2.position = s.point_source_lights[0].position;
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube2));
 	//*/
+	
 	//*
 	auto cube3 = swegl::make_cube(0.1f, texture_dice);
 	cube3.vertex_shader = vertex_shader_0;
@@ -347,7 +348,7 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & sce
 		}
 		if (sdl.keys['g'])
 		{
-			static swegl::Matrix4x4 rot1 = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateZ(0.01); return r; }();
+			static swegl::Matrix4x4 rot1 = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateZ(0.017); return r; }();
 			static swegl::Matrix4x4 rot2 = []() { swegl::Matrix4x4 r = swegl::Matrix4x4::Identity; r.RotateY(0.04); return r; }();
 
 			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot1);

@@ -28,14 +28,24 @@ struct line_side
 
 void crude_line(ViewPort & m_viewport, int x1, int y1, int x2, int y2);
 
-void fill_triangle(const std::vector<vertex_idx> & indices,
+void fill_triangle(std::vector<vertex_idx> & indices,
                    vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
                    std::vector<vertex_t> & vertices,
-                   pixel_shader_t & pixel_shader,
+                   std::vector<Vec2f> & texture_mapping,
+                   model_t & model,
                    ViewPort & vp,
                    float * zbuffer);
+void fill_triangle_2(const std::vector<vertex_idx> & indices,
+                     vertex_idx i0,
+                     vertex_idx i1,
+                     vertex_idx i2,
+                     std::vector<vertex_t> & vertices,
+                     std::vector<Vec2f> & texture_mapping,
+                     model_t & model,
+                     ViewPort & vp,
+                     float * zbuffer);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         ViewPort & vp,
@@ -63,43 +73,68 @@ public:
 		static std::vector<vertex_t> vertices;
 		static std::vector<normal_t> normals;
 
-		for (const auto & model : m_scene.models)
+		for (auto & model : m_scene.models)
 		{
 			model.vertex_shader->shade(vertices, normals, model, m_scene, m_camera, m_viewport);
 
 			model.pixel_shader->prepare_for_model(vertices, normals, model, m_scene, m_camera, m_viewport);
 
 			// STRIPS
-			for (const triangle_strip & strip : model.mesh.triangle_strips)
+			for (triangle_strip & strip : model.mesh.triangle_strips)
 			{
 				model.pixel_shader->prepare_for_strip(strip);
 				for (unsigned int i=2 ; i<strip.indices.size() ; i++)
 					if ((i&0x1)==0)
-						fill_triangle(strip.indices, i-2, i-1, i  , vertices, *model.pixel_shader, m_viewport, m_zbuffer);
+						fill_triangle(strip.indices
+									 ,i-2
+						             ,i-1
+						             ,i  
+						             ,vertices
+						             ,strip.texture_mapping
+						             ,model, m_viewport, m_zbuffer);
 					else
-						fill_triangle(strip.indices, i-2, i  , i-1, vertices, *model.pixel_shader, m_viewport, m_zbuffer);
+						fill_triangle(strip.indices
+						             ,i-2
+						             ,i  
+						             ,i-1
+						             ,vertices
+						             ,strip.texture_mapping
+						             ,model, m_viewport, m_zbuffer);
 			}
 			// FANS
-			for (const triangle_fan & fan : model.mesh.triangle_fans)
+			for (triangle_fan & fan : model.mesh.triangle_fans)
 			{
 				model.pixel_shader->prepare_for_fan(fan);
 				for (unsigned int i=2 ; i<fan.indices.size() ; i++)
-					fill_triangle(fan.indices, 0, i-1, i, vertices, *model.pixel_shader, m_viewport, m_zbuffer);
+					fill_triangle(fan.indices
+					             ,0  
+					             ,i-1
+					             ,i  
+					             ,vertices
+						         ,fan.texture_mapping
+					             ,model, m_viewport, m_zbuffer);
 			}
 			// TRIs
 			model.pixel_shader->prepare_for_triangle_list(model.mesh.triangle_list);
 			for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-				fill_triangle(model.mesh.triangle_list.indices, i-2, i-1, i, vertices, *model.pixel_shader, m_viewport, m_zbuffer);
+				fill_triangle(model.mesh.triangle_list.indices
+				             ,i-2
+				             ,i-1
+				             ,i  
+				             ,vertices
+						     ,model.mesh.triangle_list.texture_mapping
+				             ,model, m_viewport, m_zbuffer);
 		}
 	}
 };
 
-void fill_triangle(const std::vector<vertex_idx> & indices,
+void fill_triangle(std::vector<vertex_idx> & indices,
                    vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
                    std::vector<vertex_t> & vertices,
-                   pixel_shader_t & pixel_shader,
+                   std::vector<Vec2f> & texture_mapping,
+                   model_t & model,
                    ViewPort & vp,
                    float * zbuffer)
 {
@@ -107,11 +142,11 @@ void fill_triangle(const std::vector<vertex_idx> & indices,
 	const vertex_t * v1 = &vertices[indices[i1]];
 	const vertex_t * v2 = &vertices[indices[i2]];
 
-	ON_SCOPE_EXIT([&](){pixel_shader.next_triangle();});
+	ON_SCOPE_EXIT([&](){ model.pixel_shader->next_triangle(); });
 
 	// frustum clipping
-	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x               )
-		||(v0->y()  < vp.m_y        && v1->y()  < vp.m_y        && v2->y()  < vp.m_y               )
+	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x       )
+		||(v0->y()  < vp.m_y        && v1->y()  < vp.m_y        && v2->y()  < vp.m_y       )
 		||(v0->x() >= vp.m_x+vp.m_w && v1->x() >= vp.m_x+vp.m_w && v2->x() >= vp.m_x+vp.m_w)
 		||(v0->y() >= vp.m_y+vp.m_h && v1->y() >= vp.m_y+vp.m_h && v2->y() >= vp.m_y+vp.m_h)
 	   )
@@ -123,20 +158,101 @@ void fill_triangle(const std::vector<vertex_idx> & indices,
 	if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 		return;
 
-	// Z-near clipping
-	if ((*v0).z() < 0.001 && (*v1).z() < 0.001 && (*v2).z() < 0.001)
-		return;
+	// handle cases where 1 or 2 vertices have screen z values below zero (behind the camera)
 
-	// Sort points
-	if (v1->y() <= v0->y()) {
+	// sort by Z DESC
+	if (v1->z() > v0->z()) {
 		std::swap(v0, v1);
 		std::swap(i0, i1);
 	}
-	if (v2->y() <= v1->y()) {
+	if (v2->z() > v1->z()) {
 		std::swap(v1, v2);
 		std::swap(i1, i2);
 	}
-	if (v1->y() <= v0->y()) {
+	if (v1->z() > v0->z()) {
+		std::swap(v0, v1);
+		std::swap(i0, i1);
+	}
+
+	if (v0->z() < 0.001) // no vertex in front of the camera
+		return; // Z-near clipping
+
+	if (v1->z() < 0.001) // only v0 in front of the camera
+	{
+		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
+		vertex_idx new_i1 = vertices.size();
+		vertex_idx new_ii1 = indices.size();
+		indices.push_back(new_i1);
+		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i1]]-model.mesh.vertices[indices[i0]])*cut_1));
+		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i1]-texture_mapping[i0])*cut_1);
+
+		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
+		vertex_idx new_i2 = vertices.size();
+		vertex_idx new_ii2 = indices.size();
+		indices.push_back(new_i2);
+		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_2));
+		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_2);
+
+		fill_triangle_2(indices, i0, new_ii1, new_ii2, vertices, texture_mapping, model, vp, zbuffer);
+		texture_mapping.pop_back();
+		texture_mapping.pop_back();
+		indices.pop_back();
+		indices.pop_back();
+		return;
+	}
+
+	if (v2->z() < 0.001) // only v2 is in the back of the camera
+	{
+		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
+		vertex_idx new_i0 = vertices.size();
+		vertex_idx new_ii0 = indices.size();
+		indices.push_back(new_i0);
+		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_0));
+		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_0);
+
+		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
+		vertex_idx new_i1 = vertices.size();
+		vertex_idx new_ii1 = indices.size();
+		indices.push_back(new_i1);
+		vertices.push_back(model.vertex_shader->shade_one(model.mesh.vertices[indices[i1]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i1]])*cut_1));
+		texture_mapping.push_back(texture_mapping[i1] + (texture_mapping[i2]-texture_mapping[i1])*cut_1);
+
+		fill_triangle_2(indices, i1,      i0, new_ii0, vertices, texture_mapping, model, vp, zbuffer);
+		fill_triangle_2(indices, i1, new_ii0, new_ii1, vertices, texture_mapping, model, vp, zbuffer);
+		texture_mapping.pop_back();
+		texture_mapping.pop_back();
+		indices.pop_back();
+		indices.pop_back();
+		return;
+	}
+
+	fill_triangle_2(indices, i0, i1, i2, vertices, texture_mapping, model, vp, zbuffer);
+}
+
+void fill_triangle_2(const std::vector<vertex_idx> & indices,
+                     vertex_idx i0,
+                     vertex_idx i1,
+                     vertex_idx i2,
+                     std::vector<vertex_t> & vertices,
+                     std::vector<Vec2f> & texture_mapping,
+                     model_t & model,
+                     ViewPort & vp,
+                     float * zbuffer)
+{
+	const vertex_t * v0 = &vertices[indices[i0]];
+	const vertex_t * v1 = &vertices[indices[i1]];
+	const vertex_t * v2 = &vertices[indices[i2]];
+
+	// Sort points by screen Y ASC
+	if (v1->y() < v0->y()) {
+		std::swap(v0, v1);
+		std::swap(i0, i1);
+	}
+	if (v2->y() < v1->y()) {
+		std::swap(v1, v2);
+		std::swap(i1, i2);
+	}
+	if (v1->y() < v0->y()) {
 		std::swap(v0, v1);
 		std::swap(i0, i1);
 	}
@@ -165,7 +281,7 @@ void fill_triangle(const std::vector<vertex_idx> & indices,
 
 	int y, y_end; // scanlines upper and lower bound of whole triangle
 
-	pixel_shader.prepare_for_triangle(i0, i1, i2);
+	model.pixel_shader->prepare_for_triangle(indices, i0, i1, i2);
 
 	// upper half of the triangle
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
@@ -185,9 +301,9 @@ void fill_triangle(const std::vector<vertex_idx> & indices,
 					return {side_long, side_short};
 			}();
 
-		pixel_shader.prepare_for_upper_triangle(long_line_on_right);
+		model.pixel_shader->prepare_for_upper_triangle(long_line_on_right);
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, *model.pixel_shader);
 	}
 
 	// lower half of the triangle
@@ -208,9 +324,9 @@ void fill_triangle(const std::vector<vertex_idx> & indices,
 					return {side_long, side_short};
 			}();
 
-		pixel_shader.prepare_for_lower_triangle();
+		model.pixel_shader->prepare_for_lower_triangle();
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, *model.pixel_shader);
 	}
 }
 
@@ -231,8 +347,8 @@ void fill_half_triangle(int y, int y_end,
 
 
 		qpixel.Init(side_right.x - side_left.x,
-		            side_left .interpolator.ualpha[0][1],
-		            side_right.interpolator.ualpha[0][1]);
+		            side_left .interpolator.z(),
+		            side_right.interpolator.z());
 			        //Vec2f{side_left .interpolator.ualpha[0][0],side_left .interpolator.ualpha[0][1]},
 		            //Vec2f{side_right.interpolator.ualpha[0][0],side_right.interpolator.ualpha[0][1]});
 		qpixel.DisplaceStartingPoint(x1 - side_left.x);
@@ -244,12 +360,12 @@ void fill_half_triangle(int y, int y_end,
 		{
 			//int u, v;
 
-			if (qpixel.ualpha[0][1] < *zb && qpixel.ualpha[0][1] > 0.001) // Ugly z-near culling
+			if (qpixel.z() < *zb && qpixel.z() > 0.001) // Ugly z-near culling
 			{
 				int color = pixel_shader.shade(qpixel.progress());
 
 				*video = color;
-				*zb = qpixel.ualpha[0][1];
+				*zb = qpixel.z();
 			}
 			video++;
 			zb++;

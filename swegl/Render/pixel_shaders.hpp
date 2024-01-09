@@ -20,7 +20,7 @@ public:
 	virtual void prepare_for_strip(const triangle_strip & strip) {}
 	virtual void prepare_for_fan  (const triangle_fan & fan) {}
 	virtual void prepare_for_triangle_list(const triangle_list_t & list) {}
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) {}
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) {}
 	virtual void next_triangle() {}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle() {}
@@ -35,9 +35,18 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	const model_t * model;
 	const scene_t * scene;
 	std::vector<vertex_t> vertices;
-	const std::vector<vertex_idx> * indices;
 	std::vector<normal_t> * normals;
 	int triangle_idx;
+
+	float ambient_light_intensity;
+	float face_sun_intensity;
+
+	vertex_t v0, v1, v2;
+	bool long_line_on_right;
+	vertex_t vleft, vright;
+	vector_t vleftdir, vrightdir;
+	vertex_t v;
+	vector_t dir;
 
 public:
 	float light;
@@ -53,11 +62,12 @@ public:
 		scene = &s;
 		vertex_shader.shade(vertices, n, m, s, c, vp);
 		normals = &n;
+
+		ambient_light_intensity = s.ambient_light_intensity;
 	}
 
 	virtual void prepare_for_strip(const triangle_strip & strip) override
 	{
-		indices = &strip.indices;
 		normals->clear();
 		normals->reserve(strip.normals.size());
 		for (const auto & n : strip.normals)
@@ -67,7 +77,6 @@ public:
 	}
 	virtual void prepare_for_fan(const triangle_fan & fan) override
 	{
-		indices = &fan.indices;
 		normals->clear();
 		normals->reserve(fan.normals.size());
 		for (const auto & n : fan.normals)
@@ -77,7 +86,6 @@ public:
 	}
 	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
 	{
-		indices = &list.indices;
 		normals->clear();
 		normals->reserve(list.normals.size());
 		for (const auto & n : list.normals)
@@ -85,28 +93,74 @@ public:
 
 		triangle_idx = 0;
 	}
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2)
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		float face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
+		// add new fake vertices
+
+		v0 = vertices[indices[i0]];
+		v1 = vertices[indices[i1]];
+		v2 = vertices[indices[i2]];
+
+		face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
 		else
 			face_sun_intensity *= scene->sun_intensity;
-
-		vertex_t center_vertex = vertices[(*indices)[i0]]; /*((*vertices)[i0] + (*vertices)[i1] + (*vertices)[i2]) / 3;*/
+	}
+	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
+	{
+		this->long_line_on_right = long_line_on_right;
+		vleft = v0;
+		vright = v0;
+		if (long_line_on_right) {
+			vleftdir = v1-v0;
+			vrightdir = v2-v0;
+		} else {
+			vleftdir = v2-v0;
+			vrightdir = v1-v0;
+		}
+	}
+	virtual void prepare_for_lower_triangle() override
+	{
+		if (long_line_on_right)
+		{
+			vleft = v1;
+			vleftdir = v2-v1;
+		}
+		else
+		{
+			vright = v1;
+			vrightdir = v2-v1;	
+		}
+	}
+	virtual void prepare_for_scanline(float progress_left, float progress_right) override
+	{
+		v = vleft + vleftdir*progress_left;
+		dir = vright + vrightdir*progress_right - v;
+	}
+	virtual int shade(float progress) override
+	{
+		vertex_t center_vertex = v + dir*progress;
 		float dynamic_lights_intensity = 0.0f;
 		for (const auto & psl : scene->point_source_lights)
 		{
 			vector_t light_direction = center_vertex - psl.position;
+			float distance_squared = light_direction.len_squared();
 			light_direction.normalize();
 			float light_intensity = -(*normals)[triangle_idx].dot(light_direction);
 			if (light_intensity > 0.0f)
+			{
+				// divide by square of distance to light
+				light_intensity /= distance_squared;
 				dynamic_lights_intensity += light_intensity * psl.intensity;
+			}
 		}
 
-		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
+		light = ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 		if (light > 1.0f)
 			light = 1.0f;
+
+		return light*256;
 	}
 	virtual void next_triangle() override
 	{
@@ -170,7 +224,7 @@ public:
 		texture_mapping = &list.texture_mapping;
 	}
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
 		t0 = (*texture_mapping)[i0];
 		t1 = (*texture_mapping)[i1];
@@ -216,8 +270,8 @@ public:
 	virtual int shade(float progress) override
 	{
 		Vec2f t = t_left + t_dir * progress;
-		int u = (int)t[0][0]/* % twidth*/;
-		int v = (int)t[0][1]/* % theight*/;
+		int u = (int)t[0][0] % twidth;
+		int v = (int)t[0][1] % theight;
 		return tbitmap[v*twidth + u];
 	}
 };
@@ -254,10 +308,10 @@ class pixel_shader_standard : public pixel_shader_t
 		shader_texture.prepare_for_triangle_list(list);
 	}
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		shader_flat_light.prepare_for_triangle(i0, i1, i2);
-		shader_texture.prepare_for_triangle(i0, i1, i2);
+		shader_flat_light.prepare_for_triangle(indices, i0, i1, i2);
+		shader_texture.prepare_for_triangle(indices, i0, i1, i2);
 	}
 	virtual void next_triangle() override
 	{
@@ -267,25 +321,29 @@ class pixel_shader_standard : public pixel_shader_t
 
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
+		shader_flat_light.prepare_for_upper_triangle(long_line_on_right);
 		shader_texture.prepare_for_upper_triangle(long_line_on_right);
 	}
 
 	virtual void prepare_for_lower_triangle() override
 	{
+		shader_flat_light.prepare_for_lower_triangle();
 		shader_texture.prepare_for_lower_triangle();
 	}
 
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override
 	{
+		shader_flat_light.prepare_for_scanline(progress_left, progress_right);
 		shader_texture.prepare_for_scanline(progress_left, progress_right);
 	}
 
 	virtual int shade(float progress) override
 	{
 		int color = shader_texture.shade(progress);
-		((unsigned char*)&color)[0] *= shader_flat_light.light;
-		((unsigned char*)&color)[1] *= shader_flat_light.light;
-		((unsigned char*)&color)[2] *= shader_flat_light.light;
+		float light = shader_flat_light.shade(progress) / 256.0f;
+		((unsigned char*)&color)[0] *= light;
+		((unsigned char*)&color)[1] *= light;
+		((unsigned char*)&color)[2] *= light;
 		return color;
 	}
 };

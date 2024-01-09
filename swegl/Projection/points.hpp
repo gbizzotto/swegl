@@ -61,6 +61,10 @@ public:
 	{
 		return (float) sqrt(x()*x() + y()*y() + z()*z());
 	}
+	float len_squared() const
+	{
+		return (float) (x()*x() + y()*y() + z()*z());
+	}
 
 	inline vector_t & normalize()
 	{
@@ -76,6 +80,10 @@ template<typename T>
 vector_t operator*(const vector_t & left, const T & right)
 {
 	return vector_t(left.x()*right, left.y()*right, left.z()*right);
+}
+inline vertex_t operator+(const vertex_t & left, const vector_t & right)
+{
+	return vertex_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
 }
 
 class normal_t : public vector_t
