@@ -74,6 +74,10 @@ public:
 		z() /= l;
 		return *this;
 	}
+	inline float dot(const vector_t & other) const
+	{
+		return x()*other.x() + y()*other.y() + z()*other.z();
+	}
 };
 
 template<typename T>
@@ -85,17 +89,16 @@ inline vertex_t operator+(const vertex_t & left, const vector_t & right)
 {
 	return vertex_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
 }
+inline vector_t operator-(const vector_t & left, const vector_t & right)
+{
+	return vector_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
+}
 
 class normal_t : public vector_t
 {
 public:
 	inline normal_t() : vector_t() {}
 	inline normal_t(float x, float y, float z): vector_t(x, y, z) {}
-
-	inline float dot(const vector_t & other) const
-	{
-		return x()*other.x() + y()*other.y() + z()*other.z();
-	}
 };
 
 inline vector_t operator-(const vertex_t left, const vertex_t right)

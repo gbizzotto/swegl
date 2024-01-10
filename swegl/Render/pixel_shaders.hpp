@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <numeric>
+
 #include "swegl/Data/model.hpp"
 #include "swegl/Projection/points.hpp"
 #include "swegl/Render/vertex_shaders.hpp"
@@ -39,6 +41,7 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	std::vector<vertex_t> vertices;
 	std::vector<normal_t> * normals;
 	int triangle_idx;
+	const Camera * camera;
 
 	float light;
 
@@ -54,6 +57,7 @@ public:
 		scene = &s;
 		vertex_shader.shade(vertices, n, m, s, c, vp);
 		normals = &n;
+		camera = &c;
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override
@@ -101,25 +105,43 @@ public:
 			face_sun_intensity *= scene->sun_intensity;
 
 		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
-		float dynamic_lights_intensity = 0.0f;
-		for (const auto & psl : scene->point_source_lights)
-		{
-			vector_t light_direction = center_vertex - psl.position;
-			float distance_squared = light_direction.len_squared();
-			light_direction.normalize();
-			float light_intensity = -(*normals)[triangle_idx].dot(light_direction);
-			if (light_intensity > 0.0f)
+		vector_t camera_vector = vertex_t(0,0,0) - Transform(center_vertex, camera->m_viewmatrix);
+		camera_vector.normalize();
+
+		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
+			[&](float total, const auto & psl)
 			{
-				// divide by square of distance to light
-				light_intensity /= distance_squared;
-				dynamic_lights_intensity += light_intensity * psl.intensity;
-			}
-		}
+				vector_t light_direction = center_vertex - psl.position;
+				float light_distance_squared = light_direction.len_squared();
+				float intensity = psl.intensity / light_distance_squared;
+				if (intensity < 0.05)
+					return total;
+				light_direction.normalize();
+				vector_t & normal = (*normals)[triangle_idx];
+				float alignment = -normal.dot(light_direction);
+				if (alignment < 0.0f)
+					return total;
+				intensity *= alignment;
+
+				vector_t reflection = light_direction - normal * normal.dot(light_direction) * 2;
+				float reflection_intensity = reflection.dot(camera_vector);
+				if (reflection_intensity > 0)
+				{
+					reflection_intensity *= reflection_intensity;
+					reflection_intensity *= reflection_intensity;
+					reflection_intensity *= reflection_intensity;
+					reflection_intensity *= reflection_intensity;
+					reflection_intensity = reflection_intensity * 16 / light_distance_squared;
+				}
+				else
+				{
+					reflection_intensity = 0.0f;
+				}
+
+				return total + alignment * intensity + reflection_intensity;
+			});
 
 		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
-		if (light > 1.0f)
-			light = 1.0f;
-
 		light *= 256;
 	}
 	virtual int shade(float progress) override
@@ -149,8 +171,6 @@ class pixel_shader_lights_semiflat : public pixel_shader_t
 	vector_t vleftdir, vrightdir;
 	vertex_t v;
 	vector_t dir;
-
-	float light;
 
 public:
 	virtual void prepare_for_model(std::vector<vertex_t> & v,
@@ -251,26 +271,21 @@ public:
 	virtual int shade(float progress) override
 	{
 		vertex_t center_vertex = v + dir*progress;
-		float dynamic_lights_intensity = 0.0f;
-		for (const auto & psl : scene->point_source_lights)
-		{
-			vector_t light_direction = center_vertex - psl.position;
-			float distance_squared = light_direction.len_squared();
-			light_direction.normalize();
-			float light_intensity = -(*normals)[triangle_idx].dot(light_direction);
-			if (light_intensity > 0.0f)
+		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
+			[&](float total, const auto & psl)
 			{
-				// divide by square of distance to light
-				light_intensity /= distance_squared;
-				dynamic_lights_intensity += light_intensity * psl.intensity;
-			}
-		}
+				vector_t light_direction = center_vertex - psl.position;
+				float intensity = psl.intensity / light_direction.len_squared();
+				if (intensity < 0.05)
+					return total;
+				light_direction.normalize();
+				float alignment = -(*normals)[triangle_idx].dot(light_direction);
+				if (alignment < 0.0f)
+					return total;
+				return total + alignment * intensity;
+			});
 
-		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
-		if (light > 1.0f)
-			light = 1.0f;
-
-		return light*256;
+		return 256 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 	}
 	virtual void next_triangle() override
 	{
@@ -462,10 +477,10 @@ class pixel_shader_standard : public pixel_shader_t
 	virtual int shade(float progress) override
 	{
 		int color = shader_texture.shade(progress);
-		float light = shader_flat_light.shade(progress) / 256.0f;
-		((unsigned char*)&color)[0] *= light;
-		((unsigned char*)&color)[1] *= light;
-		((unsigned char*)&color)[2] *= light;
+		float light = shader_flat_light.shade(progress) / 256.0;
+		((unsigned char*)&color)[0] = (unsigned char) std::min((int) (((unsigned char*)&color)[0] * light), 255);
+		((unsigned char*)&color)[1] = (unsigned char) std::min((int) (((unsigned char*)&color)[1] * light), 255);
+		((unsigned char*)&color)[2] = (unsigned char) std::min((int) (((unsigned char*)&color)[2] * light), 255);
 		return color;
 	}
 };
