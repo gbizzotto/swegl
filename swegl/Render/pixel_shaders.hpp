@@ -114,8 +114,6 @@ public:
 				vector_t light_direction = center_vertex - psl.position;
 				float light_distance_squared = light_direction.len_squared();
 				float intensity = psl.intensity / light_distance_squared;
-				if (intensity < 0.05)
-					return total;
 				light_direction.normalize();
 				vector_t & normal = (*normals)[triangle_idx];
 				float alignment = -normal.dot(light_direction);
@@ -123,6 +121,7 @@ public:
 					return total;
 				intensity *= alignment;
 
+				// specular
 				vector_t reflection = light_direction - normal * normal.dot(light_direction) * 2;
 				float reflection_intensity = reflection.dot(camera_vector);
 				if (reflection_intensity > 0)
