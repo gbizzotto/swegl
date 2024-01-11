@@ -134,13 +134,13 @@ swegl::scene_t build_scene()
 	s.sun_intensity = 0.0;
 
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.6});
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 10});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 100});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
-	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_standard;
+	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture>;
 
 	//*
-	auto tore = swegl::make_tore(100, texture_grid);
+	auto tore = swegl::make_tore(500, texture_grid);
 	tore.vertex_shader = vertex_shader_0;
 	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::Matrix4x4::Identity;
@@ -161,7 +161,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(500, 2.0f, texture_mercator);
 	sphere.vertex_shader = vertex_shader_0;
 	sphere.pixel_shader = pixel_shader_0;
 	sphere.orientation = swegl::Matrix4x4::Identity;

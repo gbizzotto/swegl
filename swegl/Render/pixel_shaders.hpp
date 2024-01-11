@@ -2,6 +2,7 @@
 #pragma once
 
 #include <numeric>
+#include <cmath>
 
 #include "swegl/Data/model.hpp"
 #include "swegl/Projection/points.hpp"
@@ -9,6 +10,25 @@
 
 namespace swegl
 {
+
+struct pixel_colors
+{
+	unsigned char r,g,b,a;
+	int to_int() { return *(int*)this; }
+};
+pixel_colors operator*(const pixel_colors & left, float right)
+{
+	return pixel_colors{(unsigned char)(left.r*right), (unsigned char)(left.g*right), (unsigned char)(left.b*right), (unsigned char)(left.a*right)};
+}
+pixel_colors operator+(const pixel_colors & left, const pixel_colors & right)
+{
+	return pixel_colors{
+		(unsigned char)left.r+(unsigned char)right.r,
+		(unsigned char)left.g+(unsigned char)right.g,
+		(unsigned char)left.b+(unsigned char)right.b,
+		(unsigned char)left.a+(unsigned char)right.a}
+		;
+}
 
 class pixel_shader_t
 {
@@ -105,7 +125,8 @@ public:
 			face_sun_intensity *= scene->sun_intensity;
 
 		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
-		vector_t camera_vector = vertex_t(0,0,0) - Transform(center_vertex, camera->m_viewmatrix);
+		vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
+		vector_t camera_vector = camera_position - center_vertex;
 		camera_vector.normalize();
 
 		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
@@ -113,31 +134,25 @@ public:
 			{
 				vector_t light_direction = center_vertex - psl.position;
 				float light_distance_squared = light_direction.len_squared();
-				float intensity = psl.intensity / light_distance_squared;
+				float diffuse = psl.intensity / light_distance_squared;
 				light_direction.normalize();
 				vector_t & normal = (*normals)[triangle_idx];
 				float alignment = -normal.dot(light_direction);
 				if (alignment < 0.0f)
 					return total;
-				intensity *= alignment;
+				diffuse *= alignment;
 
 				// specular
 				vector_t reflection = light_direction - normal * normal.dot(light_direction) * 2;
-				float reflection_intensity = reflection.dot(camera_vector);
-				if (reflection_intensity > 0)
-				{
-					reflection_intensity *= reflection_intensity;
-					reflection_intensity *= reflection_intensity;
-					reflection_intensity *= reflection_intensity;
-					reflection_intensity *= reflection_intensity;
-					reflection_intensity = reflection_intensity * 16 / light_distance_squared;
-				}
-				else
-				{
-					reflection_intensity = 0.0f;
-				}
+				float specular = reflection.dot(camera_vector);
+				specular = (specular + 1) /2; // make (-1,1) (0.5,1)
+				specular *= specular;
+				specular *= specular;
+				specular *= specular;
+				specular *= specular;
+				specular = specular/* / light_distance_squared*/;
 
-				return total + alignment * intensity + reflection_intensity;
+				return total + diffuse + specular;
 			});
 
 		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
@@ -401,10 +416,138 @@ public:
 	}
 };
 
-class pixel_shader_standard : public pixel_shader_t
+
+class pixel_shader_texture_bilinear : public pixel_shader_t
 {
-	pixel_shader_lights_flat shader_flat_light;
-	pixel_shader_texture shader_texture;
+	const model_t * model;
+	const scene_t * scene;
+	const Camera * camera;
+	const ViewPort * viewport;
+
+	const std::vector<Vec2f> * texture_mapping;
+
+	Vec2f t0;
+	Vec2f t1;
+	Vec2f t2;
+
+	Vec2f side_long_t_dir;
+	Vec2f side_short_t;
+	Vec2f side_short_t_dir;
+
+	bool long_line_on_right;	
+	Vec2f t_left;
+	Vec2f t_dir;
+
+	unsigned int *tbitmap;
+	float twidth;
+	float theight;
+
+public:
+	virtual void prepare_for_model(std::vector<vertex_t> & v,
+	                               std::vector<normal_t> & n,
+	                               const model_t & m,
+	                               const scene_t & s,
+	                               const Camera & c,
+	                               const ViewPort & vp) override
+	{
+		model    = & m;
+		scene    = & s;
+		camera   = & c;
+		viewport = & vp;
+
+		tbitmap = m.mesh.textures[0]->m_mipmaps[0].m_bitmap;
+		twidth  = m.mesh.textures[0]->m_mipmaps[0].m_width;
+		theight = m.mesh.textures[0]->m_mipmaps[0].m_height;
+	}
+
+	virtual void prepare_for_strip(const triangle_strip & strip) override
+	{
+		texture_mapping = &strip.texture_mapping;
+	}
+	virtual void prepare_for_fan(const triangle_fan & fan) override
+	{
+		texture_mapping = &fan.texture_mapping;
+	}
+	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
+	{
+		texture_mapping = &list.texture_mapping;
+	}
+
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	{
+		t0 = (*texture_mapping)[i0];
+		t1 = (*texture_mapping)[i1];
+		t2 = (*texture_mapping)[i2];
+
+		t0[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t0[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t1[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t1[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t2[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t2[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+
+		side_long_t_dir = t2 - t0;
+	}
+
+	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
+	{
+		this->long_line_on_right = long_line_on_right;
+		side_short_t = t0;
+		side_short_t_dir = t1 - t0;
+	}
+
+	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
+	{
+		this->long_line_on_right = long_line_on_right;
+		side_short_t = t1;
+		side_short_t_dir = t2 - t1;
+	}
+
+	virtual void prepare_for_scanline(float progress_left, float progress_right) override
+	{
+		if (long_line_on_right)
+		{
+			t_left  = side_short_t + side_short_t_dir * progress_left ;
+			t_dir = t0 + side_long_t_dir  * progress_right - t_left;
+		}
+		else
+		{
+			t_left  =           t0 + side_long_t_dir  * progress_left;
+			t_dir = side_short_t + side_short_t_dir * progress_right - t_left;
+		}
+	}
+
+	virtual int shade(float progress) override
+	{
+		const pixel_colors * pc = (pixel_colors*)tbitmap;
+
+		Vec2f t = t_left + t_dir * progress;
+		float u1 = t[0][0]-0.5;
+		float u2 = t[0][0]+0.5;
+		float v1 = t[0][1]-0.5;
+		float v2 = t[0][1]+0.5;
+
+		float u = fmod(t[0][0], twidth);
+		float v = fmod(t[0][1], theight);
+
+		return ( (pc[(int)(fmod(v1, theight)*twidth) + (int)fmod(u1, twidth)] * (round(u) - u1) * (round(v) - v1))
+		        +(pc[(int)(fmod(v2, theight)*twidth) + (int)fmod(u1, twidth)] * (round(u) - u1) * (v2 - round(v)))
+		        +(pc[(int)(fmod(v1, theight)*twidth) + (int)fmod(u2, twidth)] * (u2 - round(u)) * (round(v) - v1))
+		        +(pc[(int)(fmod(v2, theight)*twidth) + (int)fmod(u2, twidth)] * (u2 - round(u)) * (v2 - round(v)))
+		       ).to_int();
+
+		//return ( (pc[v*twidth + ((int)u1 % twidth)] * (round(u) - u1))
+		//        +(pc[v*twidth + ((int)u2 % twidth)] * (u2 - round(u)))
+		//       ).to_int();
+	}
+};
+
+
+template<typename L, typename T>
+class pixel_shader_light_and_texture : public pixel_shader_t
+{
+	L shader_flat_light;
+	T shader_texture;
 
 	virtual void prepare_for_model(std::vector<vertex_t> & v,
 	                               std::vector<normal_t> & n,
@@ -477,9 +620,20 @@ class pixel_shader_standard : public pixel_shader_t
 	{
 		int color = shader_texture.shade(progress);
 		float light = shader_flat_light.shade(progress) / 256.0;
-		((unsigned char*)&color)[0] = (unsigned char) std::min((int) (((unsigned char*)&color)[0] * light), 255);
-		((unsigned char*)&color)[1] = (unsigned char) std::min((int) (((unsigned char*)&color)[1] * light), 255);
-		((unsigned char*)&color)[2] = (unsigned char) std::min((int) (((unsigned char*)&color)[2] * light), 255);
+		if (light < 1)
+		{
+			((unsigned char*)&color)[0] = ((unsigned char*)&color)[0] * light;
+			((unsigned char*)&color)[1] = ((unsigned char*)&color)[1] * light;
+			((unsigned char*)&color)[2] = ((unsigned char*)&color)[2] * light;
+		}
+		else
+		{
+			light = sqrt(light);
+			light = sqrt(light);
+			((unsigned char*)&color)[0] = 255 - (unsigned char) ((255 - ((unsigned char*)&color)[0]) / light);
+			((unsigned char*)&color)[1] = 255 - (unsigned char) ((255 - ((unsigned char*)&color)[1]) / light);
+			((unsigned char*)&color)[2] = 255 - (unsigned char) ((255 - ((unsigned char*)&color)[2]) / light);
+		}
 		return color;
 	}
 };
