@@ -125,8 +125,9 @@ public:
 			face_sun_intensity *= scene->sun_intensity;
 
 		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
-		vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
-		vector_t camera_vector = camera_position - center_vertex;
+		//vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
+		//vertex_t camera_position = 
+		vector_t camera_vector = camera->position() - center_vertex;
 		camera_vector.normalize();
 
 		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
@@ -143,20 +144,25 @@ public:
 				diffuse *= alignment;
 
 				// specular
-				vector_t reflection = light_direction - normal * normal.dot(light_direction) * 2;
+				vector_t reflection = light_direction + normal * alignment * 2;
 				float specular = reflection.dot(camera_vector);
-				specular = (specular + 1) /2; // make (-1,1) (0.5,1)
-				specular *= specular;
-				specular *= specular;
-				specular *= specular;
-				specular *= specular;
-				specular = specular/* / light_distance_squared*/;
+				if (specular > 0)
+				{
+					static const int p = 32;
+					specular = pow(specular, p);
+					specular = specular * p / 2; // make the integral[0,1] of specular 0.5 again so that no extra light is generated
+					// should multiply by overall albedo, too so that some light is absorbed
+				}
+				else
+				{
+					specular = 0;
+				}
 
 				return total + diffuse + specular;
 			});
 
 		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
-		light *= 256;
+		light *= 65536;
 	}
 	virtual int shade(float progress) override
 	{
@@ -299,7 +305,7 @@ public:
 				return total + alignment * intensity;
 			});
 
-		return 256 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
+		return 65536 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 	}
 	virtual void next_triangle() override
 	{
@@ -619,7 +625,7 @@ class pixel_shader_light_and_texture : public pixel_shader_t
 	virtual int shade(float progress) override
 	{
 		int color = shader_texture.shade(progress);
-		float light = shader_flat_light.shade(progress) / 256.0;
+		float light = shader_flat_light.shade(progress) / 65536.0;
 		if (light < 1)
 		{
 			((unsigned char*)&color)[0] = ((unsigned char*)&color)[0] * light;
