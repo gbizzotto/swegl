@@ -146,7 +146,7 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 100});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
-	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture>;
+	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
 
 	//*
 	auto tore = swegl::make_tore(500, texture_grid);

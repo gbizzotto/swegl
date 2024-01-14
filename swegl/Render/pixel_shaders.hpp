@@ -535,23 +535,21 @@ public:
 		const pixel_colors * pc = (pixel_colors*)tbitmap;
 
 		Vec2f t = t_left + t_dir * progress;
-		float u1 = t[0][0]-0.5;
-		float u2 = t[0][0]+0.5;
-		float v1 = t[0][1]-0.5;
-		float v2 = t[0][1]+0.5;
+		float v = t[0][0];
+		float u = t[0][1];
+		float u1 = u-0.5;
+		float u2 = u+0.5;
+		float v1 = v-0.5;
+		float v2 = v+0.5;
 
-		float u = fmod(t[0][0], twidth);
-		float v = fmod(t[0][1], theight);
+		u = round(u);
+		v = round(v);
 
-		return ( (pc[(int)(fmod(v1, theight)*twidth) + (int)fmod(u1, twidth)] * (round(u) - u1) * (round(v) - v1))
-		        +(pc[(int)(fmod(v2, theight)*twidth) + (int)fmod(u1, twidth)] * (round(u) - u1) * (v2 - round(v)))
-		        +(pc[(int)(fmod(v1, theight)*twidth) + (int)fmod(u2, twidth)] * (u2 - round(u)) * (round(v) - v1))
-		        +(pc[(int)(fmod(v2, theight)*twidth) + (int)fmod(u2, twidth)] * (u2 - round(u)) * (v2 - round(v)))
+		return ( (pc[(int)fmod(v1, theight)*(int)twidth + (int)fmod(u1, twidth)] * (u - u1) * (v - v1))
+		        +(pc[(int)fmod(v2, theight)*(int)twidth + (int)fmod(u1, twidth)] * (u - u1) * (v2 - v))
+		        +(pc[(int)fmod(v1, theight)*(int)twidth + (int)fmod(u2, twidth)] * (u2 - u) * (v - v1))
+		        +(pc[(int)fmod(v2, theight)*(int)twidth + (int)fmod(u2, twidth)] * (u2 - u) * (v2 - v))
 		       ).to_int();
-
-		//return ( (pc[v*twidth + ((int)u1 % twidth)] * (round(u) - u1))
-		//        +(pc[v*twidth + ((int)u2 % twidth)] * (u2 - round(u)))
-		//       ).to_int();
 	}
 };
 
