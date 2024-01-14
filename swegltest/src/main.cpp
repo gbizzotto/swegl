@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <sstream>
 
 #include <SDL2/SDL.h>
 
@@ -102,6 +103,14 @@ int main(int argc, char *argv[])
 			std::fill(zbuffer, zbuffer+viewport1.m_w*viewport1.m_h, std::numeric_limits<std::remove_pointer<decltype(zbuffer)>::type>::max());
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
+
+			//std::stringstream ss;
+			//ss << camera.position();
+			//font.Print(ss.str().c_str(), 10, 30, sdl.surface);
+
+			//std::stringstream ss2;
+			//ss2 << camera.m_viewmatrix;
+			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
 
 			//VideoWorks(sdl, renderer1, font);
 			renderer.render();

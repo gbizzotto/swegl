@@ -93,6 +93,14 @@ inline vector_t operator-(const vector_t & left, const vector_t & right)
 {
 	return vector_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
 }
+inline vertex_t operator-(const vertex_t & left, const vector_t & right)
+{
+	return vertex_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
+}
+inline vector_t operator+(const vector_t & left, const vector_t & right)
+{
+	return vector_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
+}
 
 class normal_t : public vector_t
 {
@@ -109,5 +117,22 @@ inline vector_t operator-(const vertex_t left, const vertex_t right)
 }
 normal_t Cross(const vector_t &, const vector_t &);
 normal_t Transform(const normal_t &, const Matrix4x4 &);
+
+template<typename O>
+O & operator<<(O & out, const vertex_t & v)
+{
+	out << '{' << v.x() << ',' << v.y() << ',' << v.z() << '}';
+	return out;
+}
+template<typename O>
+O & operator<<(O & out, const vector_t & v)
+{
+	return out << '{' << v.x() << ',' << v.y() << ',' << v.z() << '}';
+}
+template<typename O>
+O & operator<<(O & out, const normal_t & v)
+{
+	return out << '{' << v.x() << ',' << v.y() << ',' << v.z() << '}';
+}
 
 } // namespace

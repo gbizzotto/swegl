@@ -53,10 +53,17 @@ Font::Font(const char *filename)
 	}
 }
 
-void Font::Print(const char * str, unsigned x, unsigned y, SDL_Surface *surface)
+void Font::Print(const char * str, const unsigned x_, unsigned y, SDL_Surface *surface)
 {
+	auto x = x_;
 	for (size_t c = 0; str[c] != 0; ++c)
 	{
+		if (str[c] == '\n')
+		{
+			y += 20;
+			x = x_;
+			continue;
+		}
 		unsigned char *bitmap = &data[16*16* (str[c])];
 		for (unsigned int j=0 ; j<16 ; j++)
 			for (unsigned int i=0 ; i<16 ; i++)

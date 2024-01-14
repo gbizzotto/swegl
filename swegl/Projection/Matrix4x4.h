@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <memory.h>
 #include <initializer_list>
 
@@ -29,5 +30,15 @@ namespace swegl
 	};
 
 	//Matrix4x4 operator*(const Matrix4x4 & left, const Matrix4x4 & up);
+
+	template<typename O>
+	O & operator<<(O & out, const Matrix4x4 & m)
+	{
+		out << m[0][0] << ',' << m[0][1] << ',' << m[0][2] << "\n"
+			<< m[1][0] << ',' << m[1][1] << ',' << m[1][2] << "\n"
+			<< m[2][0] << ',' << m[2][1] << ',' << m[2][2] << "\n"
+			;
+		return out;
+	}
 
 }

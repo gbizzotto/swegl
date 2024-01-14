@@ -33,6 +33,7 @@ struct vertex_shader_standard : public vertex_shader_t
 	{
 		auto model_matrix = model.orientation;
 		model_matrix.Translate(model.position.x(), model.position.y(), model.position.z());
+		//auto world_matrix = camera.m_viewmatrix * model_matrix;
 		auto world_matrix = camera.m_viewmatrix * model_matrix;
 		vertice_transform_matrix = camera.m_projectionmatrix * world_matrix;
 		viewportmatrix = &viewport.m_viewportmatrix;

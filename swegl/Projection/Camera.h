@@ -10,10 +10,8 @@ namespace swegl
 	class Camera
 	{
 	public:
-		vertex_t m_center;
-		vector_t m_direction;
-		vector_t m_roll;
 		float m_xfov, m_yfov;
+		vertex_t m_center;
 		Matrix4x4 m_viewmatrix;
 		Matrix4x4 m_projectionmatrix;
 
@@ -23,6 +21,7 @@ namespace swegl
 		void RotateY(float a);
 		void RotateZ(float a);
 		void Translate(float x, float y , float z);
+		inline vertex_t position() const { return m_center; };
 	};
 
 }
