@@ -233,8 +233,8 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 		{
 			strip.indices.push_back((bg-1          )*precision + (sm%precision));
 			strip.indices.push_back((bg%precision  )*precision + (sm%precision));
-			strip.texture_mapping.emplace_back((float)(bg  ) / precision, (float)(sm) / precision);
 			strip.texture_mapping.emplace_back((float)(bg-1) / precision, (float)(sm) / precision);
+			strip.texture_mapping.emplace_back((float)(bg  ) / precision, (float)(sm) / precision);
 		}
 	}
 
