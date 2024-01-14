@@ -13,23 +13,23 @@ namespace swegl
 
 struct pixel_colors
 {
-	typedef int v1si __attribute__ ((vector_size (4)));
+	typedef int v4i __attribute__ ((vector_size (4)));
 	union
 	{
 		struct { unsigned char a,b,c,d; } o;
-		v1si v;
+		v4i v;
 	};
 	pixel_colors(unsigned char a, unsigned char b, unsigned char c, unsigned char d)
 		: o{a,b,c,d}
 	{}
-	pixel_colors(v1si v)
+	pixel_colors(v4i v)
 		: v(v)
 	{}
 	int to_int() const { return *(int*)this; }
 };
 pixel_colors operator*(const pixel_colors & left, float right)
 {
-	return pixel_colors{(unsigned char)(left.o.a*right), (unsigned char)(left.o.b*right), (unsigned char)(left.o.c*right), (unsigned char)(left.o.d*right)};
+	return {(unsigned char)(left.o.a*right), (unsigned char)(left.o.b*right), (unsigned char)(left.o.c*right), (unsigned char)(left.o.d*right)};
 }
 pixel_colors operator+(const pixel_colors & left, const pixel_colors & right)
 {
@@ -159,13 +159,12 @@ public:
 					specular = pow(specular, p);
 					specular = specular * p / 2; // make the integral[0,1] of specular 0.5 again so that no extra light is generated
 					// should multiply by overall albedo, too so that some light is absorbed
+					return total + diffuse + specular / light_distance_squared;
 				}
 				else
 				{
-					specular = 0;
+					return total + diffuse;
 				}
-
-				return total + diffuse + specular;
 			});
 
 		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;

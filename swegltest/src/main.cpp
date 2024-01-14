@@ -112,7 +112,6 @@ int main(int argc, char *argv[])
 			//ss2 << camera.m_viewmatrix;
 			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
 
-			//VideoWorks(sdl, renderer1, font);
 			renderer.render();
 
 			if (int a=KeyboardWorks(sdl, camera, scene) < 0)
