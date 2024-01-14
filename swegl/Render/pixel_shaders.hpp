@@ -13,22 +13,29 @@ namespace swegl
 
 struct pixel_colors
 {
-	unsigned char r,g,b,a;
-	int to_int() { return *(int*)this; }
+	typedef int v1si __attribute__ ((vector_size (4)));
+	union
+	{
+		struct { unsigned char a,b,c,d; } o;
+		v1si v;
+	};
+	pixel_colors(unsigned char a, unsigned char b, unsigned char c, unsigned char d)
+		: o{a,b,c,d}
+	{}
+	pixel_colors(v1si v)
+		: v(v)
+	{}
+	int to_int() const { return *(int*)this; }
 };
 pixel_colors operator*(const pixel_colors & left, float right)
 {
-	return pixel_colors{(unsigned char)(left.r*right), (unsigned char)(left.g*right), (unsigned char)(left.b*right), (unsigned char)(left.a*right)};
+	return pixel_colors{(unsigned char)(left.o.a*right), (unsigned char)(left.o.b*right), (unsigned char)(left.o.c*right), (unsigned char)(left.o.d*right)};
 }
 pixel_colors operator+(const pixel_colors & left, const pixel_colors & right)
 {
-	return pixel_colors{
-		(unsigned char)left.r+(unsigned char)right.r,
-		(unsigned char)left.g+(unsigned char)right.g,
-		(unsigned char)left.b+(unsigned char)right.b,
-		(unsigned char)left.a+(unsigned char)right.a}
-		;
+	return pixel_colors{left.v+right.v};
 }
+
 
 class pixel_shader_t
 {
