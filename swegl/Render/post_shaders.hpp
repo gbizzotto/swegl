@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <SDL2/SDL.h>
+
 #include <swegl/Render/colors.hpp>
 #include <swegl/misc/lerp.hpp>
 
@@ -12,12 +14,12 @@ struct post_shader_t
 	virtual void shade(ViewPort & m_viewport, float *m_zbuffer) {}
 };
 
-struct post_shader_depth : public post_shader_t
+struct post_shader_depth_box : public post_shader_t
 {
 	float focal_distance;
 	float focal_depth;
 
-	post_shader_depth(float dist, float depth)
+	post_shader_depth_box(float dist, float depth)
 		: focal_distance(dist)
 		, focal_depth(depth)
 	{}
@@ -30,23 +32,20 @@ struct post_shader_depth : public post_shader_t
 			for (int x=0 ; x<vp.m_w ; x++)
 			{
 				float z = zb[y*vp.m_w + x];
-				if (z == std::numeric_limits<std::remove_pointer<decltype(zb)>::type>::max())
-					continue;
 				int blur = remap_clipped(0.0f, focal_depth, 0.0f, 5.0f, abs(focal_distance-z));
-				int a=0, b=0, c=0, d=0;
+				int b=0, g=0, r=0;
 				int count = 0;
 				for (int j=std::max(0,y-blur) ; j<std::min(vp.m_h,y+blur) ; j++)
 					for (int i=std::max(0,x-blur) ; i<std::min(vp.m_w,x+blur) ; i++)
 					{
 						count++;
 						pixel_colors & p = frame_buffer[(j+vp.m_y)*vp.m_screen->pitch/4 + i+vp.m_x];
-						a += p.o.a;
 						b += p.o.b;
-						c += p.o.c;
-						d += p.o.d;
+						g += p.o.g;
+						r += p.o.r;
 					}
 				if (count)
-					frame_buffer[(y+vp.m_y)*vp.m_screen->pitch/4 + x+vp.m_x] = pixel_colors(a/count,b/count,c/count,d/count);
+					frame_buffer[(y+vp.m_y)*vp.m_screen->pitch/4 + x+vp.m_x] = pixel_colors(b/count,g/count,r/count,0);
 			}
 	}
 };

@@ -29,7 +29,6 @@ public:
 	char keys[256];
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-	SDL_Texture *texture;
 	SDL_Surface *surface;
 
 	SDLWrapper()
@@ -59,20 +58,19 @@ public:
 			throw;
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-		texture = SDL_CreateTexture(renderer,
-			SDL_PIXELFORMAT_ARGB8888,
-			SDL_TEXTUREACCESS_STREAMING,
-			SCR_WIDTH, SCR_HEIGHT);
-		if (texture == nullptr)
-			throw;
-
-		surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
+		surface = SDL_GetWindowSurface(window);
+		//surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
 		if (surface == nullptr)
 			throw;
 	}
 	~SDLWrapper()
 	{
 		SDL_Quit();
+	}
+
+	SDL_Surface * make_surface()
+	{
+		return SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
 	}
 };
 
@@ -95,8 +93,8 @@ int main(int argc, char *argv[])
 	
 	utttil::measurement_point mp("frame");
 
-	swegl::post_shader_depth depth_shader{5, 5};
-	//swegl::post_shader_t depth_shader;
+	swegl::post_shader_t depth_shader;
+	//swegl::post_shader_depth_box depth_shader(5, 5);
 	
 	while (1)
 	{
@@ -104,8 +102,6 @@ int main(int argc, char *argv[])
 			utttil::measurement m(mp);
 
 			viewport1.Clear();
-
-			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
 			//std::stringstream ss;
 			//ss << camera.position();
@@ -117,13 +113,13 @@ int main(int argc, char *argv[])
 
 			renderer.render(depth_shader);
 
+			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
+
 			if (int a=KeyboardWorks(sdl, camera, scene) < 0)
 				return -a;
 
 			// Tell SDL to update the whole screen
-			SDL_UpdateTexture(sdl.texture, NULL, sdl.surface->pixels, SCR_WIDTH * sizeof(Uint32));
-			SDL_RenderCopy(sdl.renderer, sdl.texture, NULL, NULL);
-			SDL_RenderPresent(sdl.renderer);
+			SDL_UpdateWindowSurface(sdl.window);
 		}
 
 	}
@@ -138,7 +134,7 @@ swegl::scene_t build_scene()
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene_t s;
 
-	s.ambient_light_intensity = 0.2f;
+	s.ambient_light_intensity = 0.5f;
 
 	s.sun_direction = swegl::normal_t{1.0, -1.0, 1.0};
 	s.sun_direction.normalize();
@@ -148,7 +144,7 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
-	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture>;
+	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
 
 	//*
 	auto tore = swegl::make_tore(100, texture_grid);
