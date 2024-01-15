@@ -98,8 +98,8 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<strip.indices.size() ; i++, i0=i1, i1=i2)
 		{
 			i2 = strip.indices[i];
-			strip.normals.push_back((((i&0x1)==0) ? Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0])
-			                                      : Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]))
+			strip.normals.push_back((((i&0x1)==0) ? Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0])
+			                                      : Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]))
 			                       );
 			strip.normals.back().normalize();
 		}
@@ -113,7 +113,7 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<fan.indices.size() ; i++, i1=i2)
 		{
 			i2 = fan.indices[i];
-			fan.normals.push_back(Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]));
+			fan.normals.push_back(Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
 			fan.normals.back().normalize();
 		}
 	}
@@ -123,7 +123,7 @@ inline void calculate_normals(model_t & model)
 		int i0 = model.mesh.triangle_list.indices[i-2];
 		int i1 = model.mesh.triangle_list.indices[i-1];
 		int i2 = model.mesh.triangle_list.indices[i  ];
-		model.mesh.triangle_list.normals.push_back(Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]));
+		model.mesh.triangle_list.normals.push_back(Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
 		model.mesh.triangle_list.normals.back().normalize();
 	}
 }
@@ -164,14 +164,14 @@ inline model_t make_cube(float size, std::shared_ptr<Texture> & texture)
 
 	result.mesh.vertices = std::vector<vertex_t>
 		{
-			vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f),
-			vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f),
-			vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f),
-			vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f),
 			vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f),
 			vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f),
 			vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f),
-			vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f)
+			vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f),
+			vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f),
+			vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f),
+			vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f),
+			vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f)
 		};
 	result.orientation = Matrix4x4::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
@@ -231,10 +231,10 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 		auto & strip = result.mesh.triangle_strips.back();
 		for (unsigned int sm = 0; sm <= precision; sm++)
 		{
-			strip.indices.push_back((bg-1          )*precision + (sm%precision));
 			strip.indices.push_back((bg%precision  )*precision + (sm%precision));
-			strip.texture_mapping.emplace_back((float)(bg-1) / precision, (float)(sm) / precision);
+			strip.indices.push_back((bg-1          )*precision + (sm%precision));
 			strip.texture_mapping.emplace_back((float)(bg  ) / precision, (float)(sm) / precision);
+			strip.texture_mapping.emplace_back((float)(bg-1) / precision, (float)(sm) / precision);
 		}
 	}
 
@@ -276,7 +276,7 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<T
 			small.RotateZ(angle/2);
 		}
 
-		big.RotateY(-angle);
+		big.RotateY(angle);
 	}
 
 	for (unsigned int bg = 1; bg <= precision; bg++)

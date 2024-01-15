@@ -13,6 +13,7 @@
 #include <swegl/Projection/Camera.h>
 #include <swegl/Render/vertex_shaders.hpp>
 #include <swegl/Render/pixel_shaders.hpp>
+#include <swegl/Render/post_shaders.hpp>
 #include <swegl/Render/ViewPort.h>
 #include <swegl/Render/interpolator.hpp>
 
@@ -66,9 +67,11 @@ public:
 		,m_zbuffer(zb)
 	{}
 
-	inline void render()
+	inline void render(post_shader_t & post_shader)
 	{
 		//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
+
+		std::fill(m_zbuffer, m_zbuffer+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<decltype(m_zbuffer)>::type>::max());
 
 		static std::vector<vertex_t> vertices;
 		static std::vector<normal_t> normals;
@@ -125,6 +128,8 @@ public:
 						     ,model.mesh.triangle_list.texture_mapping
 				             ,model, m_viewport, m_zbuffer);
 		}
+
+		post_shader.shade(m_viewport, m_zbuffer);
 	}
 };
 
@@ -155,6 +160,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	}
 
 	// backface culling
+	// z already inversed by viewmatrix (high Z = far)
 	if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 		return;
 

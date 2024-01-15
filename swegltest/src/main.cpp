@@ -14,6 +14,7 @@
 #include <swegl/Render/renderer.hpp>
 #include <swegl/Render/vertex_shaders.hpp>
 #include <swegl/Render/pixel_shaders.hpp>
+#include <swegl/Render/post_shaders.hpp>
 
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -94,13 +95,15 @@ int main(int argc, char *argv[])
 	
 	utttil::measurement_point mp("frame");
 
+	swegl::post_shader_depth depth_shader{5, 5};
+	//swegl::post_shader_t depth_shader;
+	
 	while (1)
 	{
 		{
 			utttil::measurement m(mp);
 
 			viewport1.Clear();
-			std::fill(zbuffer, zbuffer+viewport1.m_w*viewport1.m_h, std::numeric_limits<std::remove_pointer<decltype(zbuffer)>::type>::max());
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
@@ -112,7 +115,7 @@ int main(int argc, char *argv[])
 			//ss2 << camera.m_viewmatrix;
 			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
 
-			renderer.render();
+			renderer.render(depth_shader);
 
 			if (int a=KeyboardWorks(sdl, camera, scene) < 0)
 				return -a;
@@ -141,19 +144,19 @@ swegl::scene_t build_scene()
 	s.sun_direction.normalize();
 	s.sun_intensity = 0.0;
 
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 5.0}, 0.6});
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 5.0}, 100});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, -5.0}, 0.6});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
 	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
-	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
+	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture>;
 
 	//*
-	auto tore = swegl::make_tore(500, texture_grid);
+	auto tore = swegl::make_tore(100, texture_grid);
 	tore.vertex_shader = vertex_shader_0;
 	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::Matrix4x4::Identity;
 	tore.orientation.RotateZ(0.5);
-	tore.position = swegl::vertex_t(0.0f, 0.0f, 7.5f);
+	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
 	//tore.SetBumpMap(bumpmap);
 	s.models.push_back(std::move(tore));
 	//*/
@@ -163,17 +166,17 @@ swegl::scene_t build_scene()
 	cube.vertex_shader = vertex_shader_0;
 	cube.pixel_shader = pixel_shader_0;
 	cube.orientation = swegl::Matrix4x4::Identity;
-	cube.position = swegl::vertex_t(0.0f, 0.0f, 5.0f);
+	cube.position = swegl::vertex_t(0.0f, 0.0f, -5.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(cube));
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(500, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
 	sphere.vertex_shader = vertex_shader_0;
 	sphere.pixel_shader = pixel_shader_0;
 	sphere.orientation = swegl::Matrix4x4::Identity;
-	sphere.position = swegl::vertex_t(3.0f, 0.0f, 6.0f);
+	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
 	//c->SetBumpMap(bumpmap);
 	s.models.push_back(std::move(sphere));
 	//*/
@@ -183,7 +186,7 @@ swegl::scene_t build_scene()
 	tri.vertex_shader = vertex_shader_0;
 	tri.pixel_shader = pixel_shader_0;
 	tri.orientation = swegl::Matrix4x4::Identity;
-	tri.position = swegl::vertex_t(1.0f, 1.0f, 5.1f);
+	tri.position = swegl::vertex_t(1.0f, 1.0f, -5.1f);
 	s.models.push_back(std::move(tri));
 	//*/
 

@@ -7,34 +7,10 @@
 #include "swegl/Data/model.hpp"
 #include "swegl/Projection/points.hpp"
 #include "swegl/Render/vertex_shaders.hpp"
+#include "swegl/Render/colors.hpp"
 
 namespace swegl
 {
-
-struct pixel_colors
-{
-	typedef int v4i __attribute__ ((vector_size (4)));
-	union
-	{
-		struct { unsigned char a,b,c,d; } o;
-		v4i v;
-	};
-	pixel_colors(unsigned char a, unsigned char b, unsigned char c, unsigned char d)
-		: o{a,b,c,d}
-	{}
-	pixel_colors(v4i v)
-		: v(v)
-	{}
-	int to_int() const { return *(int*)this; }
-};
-pixel_colors operator*(const pixel_colors & left, float right)
-{
-	return {(unsigned char)(left.o.a*right), (unsigned char)(left.o.b*right), (unsigned char)(left.o.c*right), (unsigned char)(left.o.d*right)};
-}
-pixel_colors operator+(const pixel_colors & left, const pixel_colors & right)
-{
-	return pixel_colors{left.v+right.v};
-}
 
 
 class pixel_shader_t

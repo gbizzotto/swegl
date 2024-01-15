@@ -13,6 +13,9 @@ namespace swegl
 		//this->setXFov(90);
 		//this->setYFov(60);
 
+		// point to negative Z
+		m_viewmatrix[2][2] = -1;
+
 		float n = 1.0f;
 		float f = 10.0f;
 		float w = 1.0f;
@@ -32,6 +35,9 @@ namespace swegl
 	{
 		//this->setXFov(90);
 		//this->setYFov(60);
+
+		// point to negative Z
+		m_viewmatrix[2][2] = -1;
 
 		float n = 1.0f;
 		float f = 10.0f;
