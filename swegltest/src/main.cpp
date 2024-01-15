@@ -93,8 +93,8 @@ int main(int argc, char *argv[])
 	
 	utttil::measurement_point mp("frame");
 
-	swegl::post_shader_t depth_shader;
-	//swegl::post_shader_depth_box depth_shader(5, 5);
+	//swegl::post_shader_t depth_shader;
+	swegl::post_shader_depth_box depth_shader(5, 5);
 	
 	while (1)
 	{
@@ -134,7 +134,7 @@ swegl::scene_t build_scene()
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene_t s;
 
-	s.ambient_light_intensity = 0.5f;
+	s.ambient_light_intensity = 0.2f;
 
 	s.sun_direction = swegl::normal_t{1.0, -1.0, 1.0};
 	s.sun_direction.normalize();
@@ -147,7 +147,7 @@ swegl::scene_t build_scene()
 	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
 
 	//*
-	auto tore = swegl::make_tore(100, texture_grid);
+	auto tore = swegl::make_tore(500, texture_grid);
 	tore.vertex_shader = vertex_shader_0;
 	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::Matrix4x4::Identity;
@@ -168,7 +168,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(500, 2.0f, texture_mercator);
 	sphere.vertex_shader = vertex_shader_0;
 	sphere.pixel_shader = pixel_shader_0;
 	sphere.orientation = swegl::Matrix4x4::Identity;

@@ -147,7 +147,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	const vertex_t * v1 = &vertices[indices[i1]];
 	const vertex_t * v2 = &vertices[indices[i2]];
 
-	ON_SCOPE_EXIT([&](){ model.pixel_shader->next_triangle(); });
+	//ON_SCOPE_EXIT([&](){ model.pixel_shader->next_triangle(); });
 
 	// frustum clipping
 	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x       )
@@ -156,13 +156,17 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		||(v0->y() >= vp.m_y+vp.m_h && v1->y() >= vp.m_y+vp.m_h && v2->y() >= vp.m_y+vp.m_h)
 	   )
 	{
+		model.pixel_shader->next_triangle();
 		return;
 	}
 
 	// backface culling
 	// z already inversed by viewmatrix (high Z = far)
 	if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
+	{
+		model.pixel_shader->next_triangle();
 		return;
+	}
 
 	// handle cases where 1 or 2 vertices have screen z values below zero (behind the camera)
 
@@ -181,7 +185,10 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	}
 
 	if (v0->z() < 0.001) // no vertex in front of the camera
+	{
+		model.pixel_shader->next_triangle();
 		return; // Z-near clipping
+	}
 
 	if (v1->z() < 0.001) // only v0 in front of the camera
 	{
@@ -210,6 +217,8 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		indices.pop_back();
 		model.pixel_shader->pop_back_vertex_temporary();
 		model.pixel_shader->pop_back_vertex_temporary();
+
+		model.pixel_shader->next_triangle();
 		return;
 	}
 
@@ -241,10 +250,13 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		indices.pop_back();
 		model.pixel_shader->pop_back_vertex_temporary();
 		model.pixel_shader->pop_back_vertex_temporary();
+		
+		model.pixel_shader->next_triangle();
 		return;
 	}
 
 	fill_triangle_2(indices, i0, i1, i2, vertices, texture_mapping, model, vp, zbuffer);
+	model.pixel_shader->next_triangle();
 }
 
 void fill_triangle_2(const std::vector<vertex_idx> & indices,
