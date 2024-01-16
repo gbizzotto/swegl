@@ -2,7 +2,7 @@
 #include <SDL.h>
 
 #include <stdio.h>
-#include "font.h"
+#include "font.hpp"
 
 Font::Font(const char *filename)
 {

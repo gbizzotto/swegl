@@ -7,8 +7,8 @@
 #include <utttil/perf.hpp>
 
 #include <swegl/swegl.hpp>
-#include "main.h"
-#include "font.h"
+#include "main.hpp"
+#include "font.hpp"
 
 #include <swegl/data/model.hpp>
 #include <swegl/render/renderer.hpp>
