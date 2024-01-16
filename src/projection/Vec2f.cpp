@@ -1,6 +1,6 @@
 
 #include <cmath>
-#include <swegl/Projection/Vec2f.h>
+#include <swegl/projection/Vec2f.h>
 
 namespace swegl
 {

@@ -3,10 +3,10 @@
 
 #include <swegl/data/texture.hpp>
 
-#include <swegl/Projection/Camera.h>
-#include <swegl/Projection/Matrix4x4.h>
-#include <swegl/Projection/Vec2f.h>
-#include <swegl/Projection/points.hpp>
+#include <swegl/projection/Camera.h>
+#include <swegl/projection/Matrix4x4.h>
+#include <swegl/projection/Vec2f.h>
+#include <swegl/projection/points.hpp>
 
 #include <swegl/render/viewport.hpp>
 #include <swegl/render/renderer.hpp>

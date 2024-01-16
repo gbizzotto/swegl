@@ -1,6 +1,6 @@
 
 #include <cmath>
-#include <swegl/Projection/points.hpp>
+#include <swegl/projection/points.hpp>
 
 namespace swegl
 {

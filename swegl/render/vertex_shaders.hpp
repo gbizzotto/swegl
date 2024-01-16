@@ -2,7 +2,7 @@
 #pragma once
 
 #include "swegl/data/model.hpp"
-#include "swegl/Projection/points.hpp"
+#include "swegl/projection/points.hpp"
 
 namespace swegl
 {

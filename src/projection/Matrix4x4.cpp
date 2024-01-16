@@ -1,7 +1,7 @@
 
 #include <memory.h>
 #include <math.h>
-#include <swegl/Projection/Matrix4x4.h>
+#include <swegl/projection/Matrix4x4.h>
 
 namespace swegl
 {

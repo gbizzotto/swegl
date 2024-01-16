@@ -1,6 +1,6 @@
 
 #include <math.h>
-#include <swegl/Projection/Camera.h>
+#include <swegl/projection/Camera.h>
 
 namespace swegl
 {

@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <swegl/Projection/points.hpp>
-#include <swegl/Projection/Matrix4x4.h>
+#include <swegl/projection/points.hpp>
+#include <swegl/projection/Matrix4x4.h>
 
 namespace swegl
 {

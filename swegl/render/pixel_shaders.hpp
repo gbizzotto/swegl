@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "swegl/data/model.hpp"
-#include "swegl/Projection/points.hpp"
+#include "swegl/projection/points.hpp"
 #include "swegl/render/vertex_shaders.hpp"
 #include "swegl/render/colors.hpp"
 
