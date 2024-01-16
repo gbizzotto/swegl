@@ -520,10 +520,15 @@ public:
 		u = round(u);
 		v = round(v);
 
-		return ( (pc[(int)fmod(v1, theight)*(int)twidth + (int)fmod(u1, twidth)] * (u - u1) * (v - v1))
-		        +(pc[(int)fmod(v2, theight)*(int)twidth + (int)fmod(u1, twidth)] * (u - u1) * (v2 - v))
-		        +(pc[(int)fmod(v1, theight)*(int)twidth + (int)fmod(u2, twidth)] * (u2 - u) * (v - v1))
-		        +(pc[(int)fmod(v2, theight)*(int)twidth + (int)fmod(u2, twidth)] * (u2 - u) * (v2 - v))
+		float v1m = fmod(v1, theight);
+		float v2m = fmod(v2, theight);
+		float u1m = fmod(u1, twidth);
+		float u2m = fmod(u2, twidth);
+
+		return ( (pc[(int)v1m*(int)twidth + (int)u1m] * (u - u1) * (v - v1))
+		        +(pc[(int)v2m*(int)twidth + (int)u1m] * (u - u1) * (v2 - v))
+		        +(pc[(int)v1m*(int)twidth + (int)u2m] * (u2 - u) * (v - v1))
+		        +(pc[(int)v2m*(int)twidth + (int)u2m] * (u2 - u) * (v2 - v))
 		       ).to_int();
 	}
 };
