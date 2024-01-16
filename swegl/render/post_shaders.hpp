@@ -45,7 +45,7 @@ struct post_shader_depth_box : public post_shader_t
 						r += p.o.r;
 					}
 				if (count)
-					frame_buffer[(y+vp.m_y)*vp.m_screen->pitch/4 + x+vp.m_x] = pixel_colors(b/count,g/count,r/count,0);
+					frame_buffer[(y+vp.m_y)*vp.m_screen->pitch/4 + x+vp.m_x] = pixel_colors(b/count,g/count,r/count);
 			}
 	}
 };

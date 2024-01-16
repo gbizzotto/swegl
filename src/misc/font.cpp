@@ -2,7 +2,7 @@
 #include <SDL.h>
 
 #include <stdio.h>
-#include "font.hpp"
+#include <swegl/misc/font.hpp>
 
 font_t::font_t(const char *filename)
 {

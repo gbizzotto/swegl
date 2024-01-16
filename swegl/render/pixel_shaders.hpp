@@ -523,14 +523,14 @@ public:
 
 		unsigned int v1m = (unsigned int) (((int)v1) % (int)theight);
 		unsigned int v2m = v1m + 1;
-		if (v2m > theight)
-			v2m -= theight;
+		if (v2m == theight)
+			v2m = 0;
 		v1m *= twidth;
 		v2m *= twidth;
 		unsigned int u1m = (unsigned int) (((int)u1) % (int)twidth);
 		unsigned int u2m = u1m + 1;
-		if (u2m > twidth)
-			u2m -= twidth;
+		if (u2m == twidth)
+			u2m = 0;
 		
 		return ( (pc[v1m + u1m] * ((u - u1) * (v - v1)))
 		        +(pc[v2m + u1m] * ((u - u1) * (v2 - v)))

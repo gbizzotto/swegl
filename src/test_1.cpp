@@ -7,14 +7,26 @@
 #include <utttil/perf.hpp>
 
 #include <swegl/swegl.hpp>
-#include "main.hpp"
-#include "font.hpp"
+#include <swegl/misc/font.hpp>
 
 #include <swegl/data/model.hpp>
 #include <swegl/render/renderer.hpp>
 #include <swegl/render/vertex_shaders.hpp>
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>
+
+
+#define SCR_WIDTH 800
+#define SCR_HEIGHT 600
+
+#if defined(_DEBUG) || defined(DEBUG)
+	void AssertFailed(char * cond, char * filename, int line);
+	#define ASSERT(cond) do { if (!(cond)) {AssertFailed(#cond, __FILE__, __LINE__);} } while(0)
+	extern unsigned int g_trianglesdrawn;
+	extern unsigned int g_pixelsdrawn;
+#else
+	#define ASSERT(cond)
+#endif
 
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -93,8 +105,8 @@ int main(int argc, char *argv[])
 	
 	utttil::measurement_point mp("frame");
 
-	swegl::post_shader_t depth_shader;
-	//swegl::post_shader_depth_box depth_shader(5, 5);
+	//swegl::post_shader_t depth_shader;
+	swegl::post_shader_depth_box depth_shader(5, 5);
 	
 	while (1)
 	{
@@ -147,7 +159,7 @@ swegl::scene_t build_scene()
 	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
 
 	//*
-	auto tore = swegl::make_tore(20, texture_grid);
+	auto tore = swegl::make_tore(500, texture_grid);
 	tore.vertex_shader = vertex_shader_0;
 	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::matrix44_t::Identity;
@@ -168,7 +180,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(20, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(500, 2.0f, texture_mercator);
 	sphere.vertex_shader = vertex_shader_0;
 	sphere.pixel_shader = pixel_shader_0;
 	sphere.orientation = swegl::matrix44_t::Identity;
