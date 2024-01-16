@@ -40,6 +40,12 @@ all_tests = $(patsubst $(SRCDIR)/%.cpp,%,$(wildcard $(SRCDIR)/test_*.cpp))
 all_bins  = $(filter-out $(all_tests), $(patsubst $(SRCDIR)/%.cpp,%,$(wildcard $(SRCDIR)/*.cpp)))
 lib       = swegl.a
 
+release:
+	@$(MAKE) -s all TYPE=$@
+
+debug:
+	@$(MAKE) -s all TYPE=$@
+
 all: $(all_bins) $(all_tests)
 	
 thorough: 
@@ -91,26 +97,22 @@ $(TESTDIR): $(all_tests)
 
 $(OBJDIR)/$(lib): $(all_objs)
 	@mkdir -p $(@D)
-	@echo ;
-	ar rcs $@ $(all_objs)
-	@echo ;
-
-$(BINDIR)/$(lib): $(OBJDIR)/$(lib)
-	@mkdir -p $(@D)
-	@cp $< $(BINDIR_BASE)/$(lib)
-	cp $< $@
+	@echo $(lib)
+	@ar rcs $@ $(all_objs)
+	@mkdir -p $(BINDIR)
+	@cp $@ $(BINDIR)/$(lib)
 
 headers: $(SRCDIR)/headers.hpp.gch
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/headers.hpp.gch 
 	@mkdir -p $(@D)
 	@echo $<
-	$(CXX) $(CFLAGS) -c -MMD -o $@ $< $(LDFLAGS)
+	@$(CXX) $(CFLAGS) -c -MMD -o $@ $< $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cc $(SRCDIR)/headers.hpp.gch
 	@mkdir -p $(@D)
 	@echo $<
-	$(CC) $(CFLAGS) -c -MMD -o $@ $< $(LDFLAGS)
+	@$(CC) $(CFLAGS) -c -MMD -o $@ $< $(LDFLAGS)
 
 %: $(BINDIR)/%
 	@cp $< $(BINDIR_BASE)/$@
@@ -119,10 +121,10 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cc $(SRCDIR)/headers.hpp.gch
 $(SRCDIR)/headers.hpp.gch: $(SRCDIR)/headers.hpp
 	@echo Precompiling headers
 	@mkdir -p $(OBJDIR)
-	$(CXX) -MMD -MF $(OBJDIR)/headers.d -MT $(SRCDIR)/headers.hpp.gch $(CFLAGS) $<
-	$(CXX) $(CFLAGS) $<
+	@$(CXX) -MMD -MF $(OBJDIR)/headers.d -MT $(SRCDIR)/headers.hpp.gch $(CFLAGS) $<
+	@$(CXX) $(CFLAGS) $<
 
-$(BINDIR)/%: $(OBJDIR)/%.o $(BINDIR)/$(lib)
+$(BINDIR)/%: $(OBJDIR)/%.o $(OBJDIR)/$(lib)
 	$(eval rule := $(shell cat $(OBJDIR)/$*.d))
 	$(eval hdrs := $(filter %.hpp,$(rule)))
 	$(eval old_objs := $(filter %.o,$(rule)))
@@ -134,7 +136,7 @@ $(BINDIR)/%: $(OBJDIR)/%.o $(BINDIR)/$(lib)
 	$(if $(new_objs), @$(MAKE) --no-print-directory $@)
 	$(if $(new_objs), , @echo "Linking $(GREEN)$@$(NC)")
 	$(if $(new_objs), , @mkdir -p $(dir $@))
-	$(if $(new_objs), , $(LD) $(LDFLAGS) $(EXTRA_CFLAGS) -o $@ $(OBJDIR)/$*.o $(objs) $(LDLIBS)) $(BINDIR)/$(lib)
+	$(if $(new_objs), , @$(LD) $(LDFLAGS) $(EXTRA_CFLAGS) -o $@ $(OBJDIR)/$*.o $(objs) $(LDLIBS)) $(BINDIR)/$(lib)
 
 .PHONY: clean all tests test thorough docker perf loc gen
 
