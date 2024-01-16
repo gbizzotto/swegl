@@ -4,7 +4,7 @@
 #include <swegl/Projection/Vec2f.h>
 #include <swegl/Projection/points.hpp>
 #include <swegl/Projection/Matrix4x4.h>
-#include <swegl/Data/Texture.h>
+#include <swegl/data/texture.hpp>
 
 namespace swegl
 {
@@ -39,7 +39,7 @@ struct mesh_t
 	std::vector<triangle_strip> triangle_strips;
 	std::vector<triangle_fan>   triangle_fans;
 	triangle_list_t             triangle_list;
-	std::vector<std::shared_ptr<Texture>> textures;
+	std::vector<std::shared_ptr<texture_t>> textures;
 };
 
 struct model_t
@@ -129,7 +129,7 @@ inline void calculate_normals(model_t & model)
 }
 
 
-inline model_t make_tri(float size, std::shared_ptr<Texture> & texture)
+inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;
 
@@ -158,7 +158,7 @@ inline model_t make_tri(float size, std::shared_ptr<Texture> & texture)
 	return result;	
 }
 
-inline model_t make_cube(float size, std::shared_ptr<Texture> & texture)
+inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;
 
@@ -190,7 +190,7 @@ inline model_t make_cube(float size, std::shared_ptr<Texture> & texture)
 	return result;	
 }
 
-inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & texture)
+inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;
 
@@ -243,7 +243,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<Texture> & text
 	return result;
 }
 
-inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<Texture> & texture)
+inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;
 

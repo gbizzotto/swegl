@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "swegl/Data/model.hpp"
+#include "swegl/data/model.hpp"
 #include "swegl/Projection/points.hpp"
 
 namespace swegl
@@ -17,7 +17,7 @@ public:
 	                   const model_t & model,
 	                   const scene_t & scene,
 	                   const Camera & camera,
-	                   const ViewPort & viewport) = 0;
+	                   const viewport_t & viewport) = 0;
 	virtual vertex_t shade_one(vertex_t v) = 0;
 };
 
@@ -29,7 +29,7 @@ struct vertex_shader_standard : public vertex_shader_t
 	                   const model_t & model,
 	                   const scene_t & scene,
 	                   const Camera & camera,
-	                   const ViewPort & viewport) override
+	                   const viewport_t & viewport) override
 	{
 		auto model_matrix = model.orientation;
 		model_matrix.Translate(model.position.x(), model.position.y(), model.position.z());
@@ -65,7 +65,7 @@ struct vertex_shader_world : public vertex_shader_t
 	                   const model_t & model,
 	                   const scene_t & scene,
 	                   const Camera & camera,
-	                   const ViewPort & viewport) override
+	                   const viewport_t & viewport) override
 	{
 		vertice_transform_matrix = model.orientation;
 		vertice_transform_matrix.Translate(model.position.x(), model.position.y(), model.position.z());

@@ -10,11 +10,11 @@
 #include "main.h"
 #include "font.h"
 
-#include <swegl/Data/model.hpp>
-#include <swegl/Render/renderer.hpp>
-#include <swegl/Render/vertex_shaders.hpp>
-#include <swegl/Render/pixel_shaders.hpp>
-#include <swegl/Render/post_shaders.hpp>
+#include <swegl/data/model.hpp>
+#include <swegl/render/renderer.hpp>
+#include <swegl/render/vertex_shaders.hpp>
+#include <swegl/render/pixel_shaders.hpp>
+#include <swegl/render/post_shaders.hpp>
 
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
 	//*
 	swegl::Camera camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
-	swegl::ViewPort viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
+	swegl::viewport_t viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
 	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
 	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
 	//*/
@@ -128,9 +128,9 @@ int main(int argc, char *argv[])
 
 swegl::scene_t build_scene()
 {
-	auto texture_dice     = std::make_shared<swegl::Texture>("dice.bmp");
-	auto texture_grid     = std::make_shared<swegl::Texture>("tex.bmp");
-	auto texture_mercator = std::make_shared<swegl::Texture>("mercator.bmp");
+	auto texture_dice     = std::make_shared<swegl::texture_t>("dice.bmp");
+	auto texture_grid     = std::make_shared<swegl::texture_t>("tex.bmp");
+	auto texture_mercator = std::make_shared<swegl::texture_t>("mercator.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene_t s;
 

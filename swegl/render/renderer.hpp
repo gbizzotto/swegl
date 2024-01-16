@@ -9,13 +9,13 @@
 #include <algorithm>
 #include <freon/OnScopeExit.hpp>
 #include <swegl/Projection/Vec2f.h>
-#include <swegl/Data/model.hpp>
+#include <swegl/data/model.hpp>
 #include <swegl/Projection/Camera.h>
-#include <swegl/Render/vertex_shaders.hpp>
-#include <swegl/Render/pixel_shaders.hpp>
-#include <swegl/Render/post_shaders.hpp>
-#include <swegl/Render/ViewPort.h>
-#include <swegl/Render/interpolator.hpp>
+#include <swegl/render/vertex_shaders.hpp>
+#include <swegl/render/pixel_shaders.hpp>
+#include <swegl/render/post_shaders.hpp>
+#include <swegl/render/viewport.hpp>
+#include <swegl/render/interpolator.hpp>
 
 namespace swegl
 {
@@ -27,7 +27,7 @@ struct line_side
 	float x;
 };
 
-void crude_line(ViewPort & m_viewport, int x1, int y1, int x2, int y2);
+void crude_line(viewport_t & m_viewport, int x1, int y1, int x2, int y2);
 
 void fill_triangle(std::vector<vertex_idx> & indices,
                    vertex_idx i0,
@@ -36,7 +36,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
                    std::vector<vertex_t> & vertices,
                    std::vector<Vec2f> & texture_mapping,
                    model_t & model,
-                   ViewPort & vp,
+                   viewport_t & vp,
                    float * zbuffer);
 void fill_triangle_2(const std::vector<vertex_idx> & indices,
                      vertex_idx i0,
@@ -45,11 +45,11 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
                      std::vector<vertex_t> & vertices,
                      std::vector<Vec2f> & texture_mapping,
                      model_t & model,
-                     ViewPort & vp,
+                     viewport_t & vp,
                      float * zbuffer);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
-                        ViewPort & vp,
+                        viewport_t & vp,
                         float * zbuffer,
                         pixel_shader_t & pixel_shader);
 
@@ -58,9 +58,9 @@ class renderer
 public:
 	scene_t & m_scene;
 	Camera & m_camera;
-	ViewPort & m_viewport;
+	viewport_t & m_viewport;
 	float *m_zbuffer;
-	inline renderer(scene_t & scene, Camera & camera, ViewPort & viewport, float *zb)
+	inline renderer(scene_t & scene, Camera & camera, viewport_t & viewport, float *zb)
 		:m_scene(scene)
 		,m_camera(camera)
 		,m_viewport(viewport)
@@ -140,7 +140,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
                    std::vector<vertex_t> & vertices,
                    std::vector<Vec2f> & texture_mapping,
                    model_t & model,
-                   ViewPort & vp,
+                   viewport_t & vp,
                    float * zbuffer)
 {
 	const vertex_t * v0 = &vertices[indices[i0]];
@@ -266,7 +266,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
                      std::vector<vertex_t> & vertices,
                      std::vector<Vec2f> & texture_mapping,
                      model_t & model,
-                     ViewPort & vp,
+                     viewport_t & vp,
                      float * zbuffer)
 {
 	const vertex_t * v0 = &vertices[indices[i0]];
@@ -362,7 +362,7 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
 
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
-                        ViewPort & vp,
+                        viewport_t & vp,
                         float * zbuffer,
                         pixel_shader_t & pixel_shader)
 {
@@ -407,7 +407,7 @@ void fill_half_triangle(int y, int y_end,
 	}
 }
 
-void crude_line(ViewPort & vp, int x1, int y1, int x2, int y2)
+void crude_line(viewport_t & vp, int x1, int y1, int x2, int y2)
 {
 	if ((x2-x1) == 0)
 		return;

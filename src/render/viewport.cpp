@@ -1,11 +1,11 @@
 
 #include <memory.h>
-#include <swegl/Render/ViewPort.h>
+#include <swegl/render/viewport.hpp>
 
 namespace swegl
 {
 
-	ViewPort::ViewPort(int x, int y, int w, int h, SDL_Surface *screen)
+	viewport_t::viewport_t(int x, int y, int w, int h, SDL_Surface *screen)
 		:m_viewportmatrix(Matrix4x4::Identity)
 	{
 		this->m_x = x;
@@ -24,7 +24,7 @@ namespace swegl
 
 
 	/*
-	inline void ViewPort::ShowPoint(int x, int y, unsigned char shade)
+	inline void viewport_t::ShowPoint(int x, int y, unsigned char shade)
 	{
 		if (x<m_x || x>=m_x+m_w)
 			return;
@@ -34,7 +34,7 @@ namespace swegl
 		((unsigned int*)m_screen->pixels)[(int) ( y*m_screen->pitch/4 + x)] = shade<<16|shade<<8|shade;
 	}
 	*/
-	void ViewPort::HLine(int x0, int x1, int y, unsigned char shade)
+	void viewport_t::HLine(int x0, int x1, int y, unsigned char shade)
 	{
 		if (x1<m_x || x0>=m_x+this->m_w)
 			return;
@@ -48,7 +48,7 @@ namespace swegl
 			   sizeof(int)*(x1-x0));
 	}
 
-	void ViewPort::Clear()
+	void viewport_t::Clear()
 	{
 		for (int j=m_y ; j<m_y+m_h ; j++)
 			memset(&((unsigned char*)m_screen->pixels)[(int) (j*m_screen->pitch)], 0, m_w*4);

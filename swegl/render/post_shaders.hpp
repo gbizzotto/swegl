@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include <swegl/Render/colors.hpp>
+#include <swegl/render/colors.hpp>
 #include <swegl/misc/lerp.hpp>
 
 namespace swegl
@@ -11,7 +11,7 @@ namespace swegl
 
 struct post_shader_t
 {
-	virtual void shade(ViewPort & m_viewport, float *m_zbuffer) {}
+	virtual void shade(viewport_t & m_viewport, float *m_zbuffer) {}
 };
 
 struct post_shader_depth_box : public post_shader_t
@@ -24,7 +24,7 @@ struct post_shader_depth_box : public post_shader_t
 		, focal_depth(depth)
 	{}
 
-	virtual void shade(ViewPort & vp, float * zb) override
+	virtual void shade(viewport_t & vp, float * zb) override
 	{
 		pixel_colors * frame_buffer = (pixel_colors *) vp.m_screen->pixels;
 

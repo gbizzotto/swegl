@@ -14,15 +14,15 @@ namespace swegl
 	
 	}Mipmap;
 
-	class Texture
-	{	
+	class texture_t
+	{
 	public:
 		int m_mipmapsCount;
 		Mipmap *m_mipmaps;
 
-		Texture(const char *filename);
-		Texture(unsigned int rgb);
-		Texture(unsigned * data, int w, int h);
+		texture_t(const char *filename);
+		texture_t(unsigned int rgb);
+		texture_t(unsigned * data, int w, int h);
 	};
 
 }

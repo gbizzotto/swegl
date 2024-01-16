@@ -4,10 +4,10 @@
 #include <numeric>
 #include <cmath>
 
-#include "swegl/Data/model.hpp"
+#include "swegl/data/model.hpp"
 #include "swegl/Projection/points.hpp"
-#include "swegl/Render/vertex_shaders.hpp"
-#include "swegl/Render/colors.hpp"
+#include "swegl/render/vertex_shaders.hpp"
+#include "swegl/render/colors.hpp"
 
 namespace swegl
 {
@@ -21,7 +21,7 @@ public:
 	                               const model_t & model,
 	                               const scene_t & scene,
 	                               const Camera & camera,
-	                               const ViewPort & viewport) {}
+	                               const viewport_t & viewport) {}
 	virtual void push_back_vertex_temporary(vertex_t & v) {}
 	virtual void pop_back_vertex_temporary() {}
 	virtual void prepare_for_strip(const triangle_strip & strip) {}
@@ -54,7 +54,7 @@ public:
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const Camera & c,
-	                               const ViewPort & vp)
+	                               const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
@@ -180,7 +180,7 @@ public:
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const Camera & c,
-	                               const ViewPort & vp)
+	                               const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
@@ -300,7 +300,7 @@ class pixel_shader_texture : public pixel_shader_t
 	const model_t * model;
 	const scene_t * scene;
 	const Camera * camera;
-	const ViewPort * viewport;
+	const viewport_t * viewport;
 
 	const std::vector<Vec2f> * texture_mapping;
 
@@ -326,7 +326,7 @@ public:
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const Camera & c,
-	                               const ViewPort & vp) override
+	                               const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
@@ -410,7 +410,7 @@ class pixel_shader_texture_bilinear : public pixel_shader_t
 	const model_t * model;
 	const scene_t * scene;
 	const Camera * camera;
-	const ViewPort * viewport;
+	const viewport_t * viewport;
 
 	const std::vector<Vec2f> * texture_mapping;
 
@@ -436,7 +436,7 @@ public:
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const Camera & c,
-	                               const ViewPort & vp) override
+	                               const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
@@ -540,7 +540,7 @@ class pixel_shader_light_and_texture : public pixel_shader_t
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const Camera & c,
-	                               const ViewPort & vp) override
+	                               const viewport_t & vp) override
 	{
 		shader_flat_light.prepare_for_model(v, n, m, s, c, vp);
 		shader_texture.prepare_for_model(v, n, m, s, c, vp);

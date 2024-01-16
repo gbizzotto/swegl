@@ -1,15 +1,15 @@
 
 #pragma once
 
-#include <swegl/Data/Texture.h>
+#include <swegl/data/texture.hpp>
 
 #include <swegl/Projection/Camera.h>
 #include <swegl/Projection/Matrix4x4.h>
 #include <swegl/Projection/Vec2f.h>
 #include <swegl/Projection/points.hpp>
 
-#include <swegl/Render/ViewPort.h>
-#include <swegl/Render/renderer.hpp>
+#include <swegl/render/viewport.hpp>
+#include <swegl/render/renderer.hpp>
 
 #if defined(_MSC_VER)
 	#if !defined(BUILDING_SWEGL_LIB)

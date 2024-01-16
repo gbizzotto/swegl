@@ -8,7 +8,7 @@
 namespace swegl
 {
 
-	class ViewPort
+	class viewport_t
 	{
 	public:
 		int m_x, m_y;
@@ -16,7 +16,7 @@ namespace swegl
 		Matrix4x4 m_viewportmatrix;
 		SDL_Surface *m_screen;
 
-		ViewPort(int x, int y, int w, int h, SDL_Surface *screen);
+		viewport_t(int x, int y, int w, int h, SDL_Surface *screen);
 
 		inline void ShowPoint(int x, int y, unsigned char shade)
 		{

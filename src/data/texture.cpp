@@ -1,12 +1,12 @@
 
 #include <memory.h>
 #include <stdio.h>
-#include <swegl/Data/Texture.h>
+#include <swegl/data/texture.hpp>
 
 namespace swegl
 {
 
-	Texture::Texture(const char *filename)
+	texture_t::texture_t(const char *filename)
 	{
 		unsigned int file_size;
 		unsigned int data_offset;
@@ -124,7 +124,7 @@ namespace swegl
 	/**
 	 * Build a 1-pixel dummy texture
 	 */
-	Texture::Texture(unsigned int rgb)
+	texture_t::texture_t(unsigned int rgb)
 	{
 		m_mipmaps = new Mipmap[1];
 		m_mipmaps[0].m_height = 1;
@@ -133,7 +133,7 @@ namespace swegl
 		m_mipmaps[0].m_bitmap[0] = rgb;
 	}
 
-	Texture::Texture(unsigned int * data, int w, int h)
+	texture_t::texture_t(unsigned int * data, int w, int h)
 	{
 		m_mipmapsCount = 0;
 		m_mipmaps = new Mipmap[1];
