@@ -3,9 +3,9 @@
 
 #include <swegl/data/texture.hpp>
 
-#include <swegl/projection/Camera.h>
-#include <swegl/projection/Matrix4x4.h>
-#include <swegl/projection/Vec2f.h>
+#include <swegl/projection/camera.hpp>
+#include <swegl/projection/matrix44.hpp>
+#include <swegl/projection/vec2f.hpp>
 #include <swegl/projection/points.hpp>
 
 #include <swegl/render/viewport.hpp>

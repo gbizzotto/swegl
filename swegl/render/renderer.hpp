@@ -8,9 +8,9 @@
 #include <cmath>
 #include <algorithm>
 #include <freon/OnScopeExit.hpp>
-#include <swegl/projection/Vec2f.h>
+#include <swegl/projection/vec2f.hpp>
 #include <swegl/data/model.hpp>
-#include <swegl/projection/Camera.h>
+#include <swegl/projection/camera.hpp>
 #include <swegl/render/vertex_shaders.hpp>
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>

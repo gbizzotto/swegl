@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include <swegl/projection/Vec2f.h>
+#include <swegl/projection/vec2f.hpp>
 #include <swegl/projection/points.hpp>
-#include <swegl/projection/Matrix4x4.h>
+#include <swegl/projection/matrix44.hpp>
 #include <swegl/data/texture.hpp>
 
 namespace swegl

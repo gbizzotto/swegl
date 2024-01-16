@@ -2,7 +2,7 @@
 #pragma once
 
 #include <swegl/projection/points.hpp>
-#include <swegl/projection/Matrix4x4.h>
+#include <swegl/projection/matrix44.hpp>
 
 namespace swegl
 {
