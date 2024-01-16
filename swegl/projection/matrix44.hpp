@@ -21,8 +21,8 @@ namespace swegl
 		void rotate_x(float a);
 		void rotate_y(float a);
 		void rotate_z(float a);
-		void SetRotateXY(float x, float y);
-		void Translate(float x, float y, float z);
+		void set_rotate_xy(float x, float y);
+		void translate(float x, float y, float z);
 
 		//operator freon::Matrix<float,4,4>() { return *static_cast<freon::Matrix<float,4,4>*>(this); }
 

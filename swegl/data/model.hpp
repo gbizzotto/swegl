@@ -206,12 +206,12 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 
 	float angle = (2 * 3.141592653589f) / precision;
 	matrix44_t big = matrix44_t::Identity;
-	big.Translate(2.0f, 0.0f, 0.0f);
+	big.translate(2.0f, 0.0f, 0.0f);
 
 	for (unsigned int bg = 0; bg < precision; bg++)
 	{
 		matrix44_t small = matrix44_t::Identity;
-		small.Translate(0.8f, 0.0f, 0.0f);
+		small.translate(0.8f, 0.0f, 0.0f);
 
 		for (unsigned int sm = 0; sm < precision; sm++)
 		{
@@ -259,7 +259,7 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 
 	float angle = (2 * 3.141592653589f) / precision;
 	matrix44_t big = matrix44_t::Identity;
-	//big.Translate(0.0f, size, 0.0f);
+	//big.translate(0.0f, size, 0.0f);
 
 	for (unsigned int bg = 0; bg < precision; bg++)
 	{

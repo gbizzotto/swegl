@@ -32,7 +32,7 @@ struct vertex_shader_standard : public vertex_shader_t
 	                   const viewport_t & viewport) override
 	{
 		auto model_matrix = model.orientation;
-		model_matrix.Translate(model.position.x(), model.position.y(), model.position.z());
+		model_matrix.translate(model.position.x(), model.position.y(), model.position.z());
 		//auto world_matrix = camera.m_viewmatrix * model_matrix;
 		auto world_matrix = camera.m_viewmatrix * model_matrix;
 		vertice_transform_matrix = camera.m_projectionmatrix * world_matrix;
@@ -68,7 +68,7 @@ struct vertex_shader_world : public vertex_shader_t
 	                   const viewport_t & viewport) override
 	{
 		vertice_transform_matrix = model.orientation;
-		vertice_transform_matrix.Translate(model.position.x(), model.position.y(), model.position.z());
+		vertice_transform_matrix.translate(model.position.x(), model.position.y(), model.position.z());
 
 		vertices.clear();
 		vertices.reserve(model.mesh.vertices.size());

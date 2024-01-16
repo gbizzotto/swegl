@@ -74,7 +74,7 @@ namespace swegl
 
 	void camera_t::Translate(float x, float y, float z)
 	{
-		this->m_viewmatrix.Translate(-x,-y,-z);
+		this->m_viewmatrix.translate(-x,-y,-z);
 
 		auto & m = this->m_viewmatrix;
 		m_center.x() += x * m[0][0] + y * m[1][0] + z * m[2][0];

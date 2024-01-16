@@ -65,7 +65,7 @@ namespace swegl
 		(*this)[1][3] = -sina*d3 + cosa*(*this)[1][3];
 	}
 
-	void matrix44_t::SetRotateXY(float x, float y)
+	void matrix44_t::set_rotate_xy(float x, float y)
 	{
 		float cosx = (float)cos(x);
 		float sinx = (float)sin(x);
@@ -83,7 +83,7 @@ namespace swegl
 		(*this)[2][2] =  cosx*cosy;
 	}
 
-	void matrix44_t::Translate(float x, float y, float z)
+	void matrix44_t::translate(float x, float y, float z)
 	{
 		(*this)[0][3] += x;
 		(*this)[1][3] += y;
