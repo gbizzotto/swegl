@@ -59,15 +59,15 @@ namespace swegl
 		this->m_projectionmatrix[3][2] = 1;
 	}
 
-	void camera_t::RotateX(float a)
+	void camera_t::rotate_x(float a)
 	{
 		this->m_viewmatrix.rotate_x(-a);
 	}
-	void camera_t::RotateY(float a)
+	void camera_t::rotate_y(float a)
 	{
 		this->m_viewmatrix.rotate_y(-a);
 	}
-	void camera_t::RotateZ(float a)
+	void camera_t::rotate_z(float a)
 	{
 		this->m_viewmatrix.rotate_z(-a);
 	}

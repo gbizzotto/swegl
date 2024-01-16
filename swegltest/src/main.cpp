@@ -222,10 +222,10 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 		switch (event.type)
 		{
 			case SDL_MOUSEMOTION:
-				camera.RotateX(-cameraxrotation);
-				camera.RotateY(event.motion.xrel / 2000.0f);
+				camera.rotate_x(-cameraxrotation);
+				camera.rotate_y(event.motion.xrel / 2000.0f);
 				cameraxrotation += event.motion.yrel / 2000.0f;
-				camera.RotateX(cameraxrotation);
+				camera.rotate_x(cameraxrotation);
 				break;
 
 			case SDL_KEYDOWN:
@@ -319,20 +319,20 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 	//if ( (SDL_GetTicks())-keystick > 100 )
 	{
 		if (sdl.keys['d'])
-			camera.RotateY(multiplier * 3.14159f / 2000.0f);
+			camera.rotate_y(multiplier * 3.14159f / 2000.0f);
 		if (sdl.keys['a'])
-			camera.RotateY(multiplier * 3.14159f / -2000.0f);
+			camera.rotate_y(multiplier * 3.14159f / -2000.0f);
 		if (sdl.keys['w'])
-			camera.RotateX(multiplier * 3.14159f / 2000.0f);
+			camera.rotate_x(multiplier * 3.14159f / 2000.0f);
 		if (sdl.keys['s'])
-			camera.RotateX(multiplier * 3.14159f / -2000.0f);
+			camera.rotate_x(multiplier * 3.14159f / -2000.0f);
 		if (sdl.keys['e'])
-			camera.RotateZ(multiplier * 3.14159f / 2000.0f);
+			camera.rotate_z(multiplier * 3.14159f / 2000.0f);
 		if (sdl.keys['q'])
-			camera.RotateZ(multiplier * 3.14159f / -2000.0f);
+			camera.rotate_z(multiplier * 3.14159f / -2000.0f);
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
-				camera.RotateX(-cameraxrotation);
+				camera.rotate_x(-cameraxrotation);
 
 		if (sdl.keys['i'])
 			camera.Translate(0.0f, 0.0f, multiplier * 0.004f);
@@ -365,7 +365,7 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
-			camera.RotateX(cameraxrotation);
+			camera.rotate_x(cameraxrotation);
 
 		keystick = SDL_GetTicks();
 	}
