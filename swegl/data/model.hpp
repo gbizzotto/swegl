@@ -18,19 +18,19 @@ struct triangle_strip
 {
 	std::vector<vertex_idx> indices;
 	std::vector<normal_t> normals;
-	std::vector<Vec2f> texture_mapping;
+	std::vector<vec2f_t> texture_mapping;
 };
 struct triangle_fan
 {
 	std::vector<vertex_idx> indices;
 	std::vector<normal_t> normals;
-	std::vector<Vec2f> texture_mapping;
+	std::vector<vec2f_t> texture_mapping;
 };
 struct triangle_list_t
 {
 	std::vector<vertex_idx> indices;
 	std::vector<normal_t> normals;
-	std::vector<Vec2f> texture_mapping;
+	std::vector<vec2f_t> texture_mapping;
 };
 
 struct mesh_t
@@ -151,7 +151,7 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.mesh.triangle_list = triangle_list_t{{0,1,2}, {}, {Vec2f{0.0f,0.0f}, Vec2f{0.0f,1.0f}, Vec2f{1.0f,0.0f}}};
+	result.mesh.triangle_list = triangle_list_t{{0,1,2}, {}, {vec2f_t{0.0f,0.0f}, vec2f_t{0.0f,1.0f}, vec2f_t{1.0f,0.0f}}};
 
 	calculate_normals(result);
 
@@ -218,7 +218,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 			vertices.push_back(Transform(Transform(vertex_t(0.0f, 0.0f, 0.0f), small), big));
 			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
-			//                                 Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
+			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 			small.RotateZ(angle);
 		}
 
@@ -272,7 +272,7 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 			vertices.push_back(v2);
 			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
-			//                                 Vec2f(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
+			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 			small.RotateZ(angle/2);
 		}
 

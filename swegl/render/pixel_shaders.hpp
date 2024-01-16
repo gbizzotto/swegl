@@ -302,19 +302,19 @@ class pixel_shader_texture : public pixel_shader_t
 	const camera_t * camera;
 	const viewport_t * viewport;
 
-	const std::vector<Vec2f> * texture_mapping;
+	const std::vector<vec2f_t> * texture_mapping;
 
-	Vec2f t0;
-	Vec2f t1;
-	Vec2f t2;
+	vec2f_t t0;
+	vec2f_t t1;
+	vec2f_t t2;
 
-	Vec2f side_long_t_dir;
-	Vec2f side_short_t;
-	Vec2f side_short_t_dir;
+	vec2f_t side_long_t_dir;
+	vec2f_t side_short_t;
+	vec2f_t side_short_t_dir;
 
 	bool long_line_on_right;	
-	Vec2f t_left;
-	Vec2f t_dir;
+	vec2f_t t_left;
+	vec2f_t t_dir;
 
 	unsigned int *tbitmap;
 	unsigned int twidth;
@@ -397,7 +397,7 @@ public:
 
 	virtual int shade(float progress) override
 	{
-		Vec2f t = t_left + t_dir * progress;
+		vec2f_t t = t_left + t_dir * progress;
 		int u = (int)t[0][0] % twidth;
 		int v = (int)t[0][1] % theight;
 		return tbitmap[v*twidth + u];
@@ -412,19 +412,19 @@ class pixel_shader_texture_bilinear : public pixel_shader_t
 	const camera_t * camera;
 	const viewport_t * viewport;
 
-	const std::vector<Vec2f> * texture_mapping;
+	const std::vector<vec2f_t> * texture_mapping;
 
-	Vec2f t0;
-	Vec2f t1;
-	Vec2f t2;
+	vec2f_t t0;
+	vec2f_t t1;
+	vec2f_t t2;
 
-	Vec2f side_long_t_dir;
-	Vec2f side_short_t;
-	Vec2f side_short_t_dir;
+	vec2f_t side_long_t_dir;
+	vec2f_t side_short_t;
+	vec2f_t side_short_t_dir;
 
 	bool long_line_on_right;	
-	Vec2f t_left;
-	Vec2f t_dir;
+	vec2f_t t_left;
+	vec2f_t t_dir;
 
 	unsigned int *tbitmap;
 	float twidth;
@@ -509,7 +509,7 @@ public:
 	{
 		const pixel_colors * pc = (pixel_colors*)tbitmap;
 
-		Vec2f t = t_left + t_dir * progress;
+		vec2f_t t = t_left + t_dir * progress;
 		float v = t[0][0];
 		float u = t[0][1];
 		float u1 = u-0.5;

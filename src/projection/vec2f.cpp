@@ -5,19 +5,19 @@
 namespace swegl
 {
 
-	Vec2f::Vec2f()
+	vec2f_t::vec2f_t()
 		:freon::Matrix<float,1,2>(freon::Matrix<float,1,2>::Zero)
 	{}
-	Vec2f::Vec2f(float x, float y)
+	vec2f_t::vec2f_t(float x, float y)
 		:freon::Matrix<float,1,2>({x,y})
 	{}
-	Vec2f::Vec2f(const Vec2f & other)
+	vec2f_t::vec2f_t(const vec2f_t & other)
 		:freon::Matrix<float,1,2>({other[0][0], other[0][1]})
 	{}
 
-	Vec2f Vec2f::operator/(const Vec2f & other) const
+	vec2f_t vec2f_t::operator/(const vec2f_t & other) const
 	{
-		return Vec2f((*this)[0][0]/other[0][0],(*this)[0][1]/other[0][1]);
+		return vec2f_t((*this)[0][0]/other[0][0],(*this)[0][1]/other[0][1]);
 	}
 
 }
