@@ -20,7 +20,7 @@ public:
 	                               std::vector<normal_t> & normals,
 	                               const model_t & model,
 	                               const scene_t & scene,
-	                               const Camera & camera,
+	                               const camera_t & camera,
 	                               const viewport_t & viewport) {}
 	virtual void push_back_vertex_temporary(vertex_t & v) {}
 	virtual void pop_back_vertex_temporary() {}
@@ -44,7 +44,7 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	std::vector<vertex_t> vertices;
 	std::vector<normal_t> * normals;
 	int triangle_idx;
-	const Camera * camera;
+	const camera_t * camera;
 
 	float light;
 
@@ -53,7 +53,7 @@ public:
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const Camera & c,
+	                               const camera_t & c,
 	                               const viewport_t & vp)
 	{
 		model = &m;
@@ -179,7 +179,7 @@ public:
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const Camera & c,
+	                               const camera_t & c,
 	                               const viewport_t & vp)
 	{
 		model = &m;
@@ -299,7 +299,7 @@ class pixel_shader_texture : public pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
-	const Camera * camera;
+	const camera_t * camera;
 	const viewport_t * viewport;
 
 	const std::vector<Vec2f> * texture_mapping;
@@ -325,7 +325,7 @@ public:
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const Camera & c,
+	                               const camera_t & c,
 	                               const viewport_t & vp) override
 	{
 		model    = & m;
@@ -409,7 +409,7 @@ class pixel_shader_texture_bilinear : public pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
-	const Camera * camera;
+	const camera_t * camera;
 	const viewport_t * viewport;
 
 	const std::vector<Vec2f> * texture_mapping;
@@ -435,7 +435,7 @@ public:
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const Camera & c,
+	                               const camera_t & c,
 	                               const viewport_t & vp) override
 	{
 		model    = & m;
@@ -539,7 +539,7 @@ class pixel_shader_light_and_texture : public pixel_shader_t
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const Camera & c,
+	                               const camera_t & c,
 	                               const viewport_t & vp) override
 	{
 		shader_flat_light.prepare_for_model(v, n, m, s, c, vp);

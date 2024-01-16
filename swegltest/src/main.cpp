@@ -75,7 +75,7 @@ public:
 };
 
 swegl::scene_t build_scene();
-int KeyboardWorks(SDLWrapper &, swegl::Camera &, swegl::scene_t & scene);
+int KeyboardWorks(SDLWrapper &, swegl::camera_t &, swegl::scene_t & scene);
 
 int main(int argc, char *argv[])
 {
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 	Font font("ascii.bmp");
 
 	//*
-	swegl::Camera camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
+	swegl::camera_t camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
 	swegl::viewport_t viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
 	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
 	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
@@ -210,7 +210,7 @@ swegl::scene_t build_scene()
 }
 
 
-int KeyboardWorks(SDLWrapper & sdl, swegl::Camera & camera, swegl::scene_t & scene)
+int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;

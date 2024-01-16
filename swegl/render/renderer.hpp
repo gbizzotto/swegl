@@ -57,10 +57,10 @@ class renderer
 {
 public:
 	scene_t & m_scene;
-	Camera & m_camera;
+	camera_t & m_camera;
 	viewport_t & m_viewport;
 	float *m_zbuffer;
-	inline renderer(scene_t & scene, Camera & camera, viewport_t & viewport, float *zb)
+	inline renderer(scene_t & scene, camera_t & camera, viewport_t & viewport, float *zb)
 		:m_scene(scene)
 		,m_camera(camera)
 		,m_viewport(viewport)

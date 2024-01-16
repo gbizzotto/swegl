@@ -5,7 +5,7 @@
 namespace swegl
 {
 
-	Camera::Camera()
+	camera_t::camera_t()
 		:m_center(0,0,0)
 		,m_viewmatrix(Matrix4x4::Identity)
 		,m_projectionmatrix(Matrix4x4::Identity)
@@ -28,7 +28,7 @@ namespace swegl
 		this->m_projectionmatrix[3][2] = 1;
 	}
 
-	Camera::Camera(float aspectratio)
+	camera_t::camera_t(float aspectratio)
 		:m_center(0,0,0)
 		,m_viewmatrix(Matrix4x4::Identity)
 		,m_projectionmatrix(Matrix4x4::Identity)
@@ -59,20 +59,20 @@ namespace swegl
 		this->m_projectionmatrix[3][2] = 1;
 	}
 
-	void Camera::RotateX(float a)
+	void camera_t::RotateX(float a)
 	{
 		this->m_viewmatrix.RotateX(-a);
 	}
-	void Camera::RotateY(float a)
+	void camera_t::RotateY(float a)
 	{
 		this->m_viewmatrix.RotateY(-a);
 	}
-	void Camera::RotateZ(float a)
+	void camera_t::RotateZ(float a)
 	{
 		this->m_viewmatrix.RotateZ(-a);
 	}
 
-	void Camera::Translate(float x, float y, float z)
+	void camera_t::Translate(float x, float y, float z)
 	{
 		this->m_viewmatrix.Translate(-x,-y,-z);
 

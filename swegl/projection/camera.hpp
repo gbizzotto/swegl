@@ -7,7 +7,7 @@
 namespace swegl
 {
 
-	class Camera
+	class camera_t
 	{
 	public:
 		float m_xfov, m_yfov;
@@ -15,8 +15,8 @@ namespace swegl
 		Matrix4x4 m_viewmatrix;
 		Matrix4x4 m_projectionmatrix;
 
-		Camera();
-		Camera(float aspectratio);
+		camera_t();
+		camera_t(float aspectratio);
 		void RotateX(float a);
 		void RotateY(float a);
 		void RotateZ(float a);

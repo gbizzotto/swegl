@@ -16,7 +16,7 @@ public:
 	                   std::vector<normal_t> & normals,
 	                   const model_t & model,
 	                   const scene_t & scene,
-	                   const Camera & camera,
+	                   const camera_t & camera,
 	                   const viewport_t & viewport) = 0;
 	virtual vertex_t shade_one(vertex_t v) = 0;
 };
@@ -28,7 +28,7 @@ struct vertex_shader_standard : public vertex_shader_t
 	                   std::vector<normal_t> & normals,
 	                   const model_t & model,
 	                   const scene_t & scene,
-	                   const Camera & camera,
+	                   const camera_t & camera,
 	                   const viewport_t & viewport) override
 	{
 		auto model_matrix = model.orientation;
@@ -64,7 +64,7 @@ struct vertex_shader_world : public vertex_shader_t
 	                   std::vector<normal_t> & normals,
 	                   const model_t & model,
 	                   const scene_t & scene,
-	                   const Camera & camera,
+	                   const camera_t & camera,
 	                   const viewport_t & viewport) override
 	{
 		vertice_transform_matrix = model.orientation;
