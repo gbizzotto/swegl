@@ -510,6 +510,7 @@ public:
 		const pixel_colors * pc = (pixel_colors*)tbitmap;
 
 		vec2f_t t = t_left + t_dir * progress;
+
 		float v = t[0][0];
 		float u = t[0][1];
 		float u1 = u-0.5;
@@ -517,8 +518,8 @@ public:
 		float v1 = v-0.5;
 		float v2 = v+0.5;
 
-		u = round(u);
-		v = round(v);
+		u = floor(u2);
+		v = floor(v2);
 
 		unsigned int v1m = (unsigned int) (((int)v1) % (int)theight);
 		unsigned int v2m = v1m + 1;
@@ -531,10 +532,10 @@ public:
 		if (u2m > twidth)
 			u2m -= twidth;
 		
-		return ( (pc[v1m + u1m] * (u - u1) * (v - v1))
-		        +(pc[v2m + u1m] * (u - u1) * (v2 - v))
-		        +(pc[v1m + u2m] * (u2 - u) * (v - v1))
-		        +(pc[v2m + u2m] * (u2 - u) * (v2 - v))
+		return ( (pc[v1m + u1m] * ((u - u1) * (v - v1)))
+		        +(pc[v2m + u1m] * ((u - u1) * (v2 - v)))
+		        +(pc[v1m + u2m] * ((u2 - u) * (v - v1)))
+		        +(pc[v2m + u2m] * ((u2 - u) * (v2 - v)))
 		       ).to_int();
 	}
 };
