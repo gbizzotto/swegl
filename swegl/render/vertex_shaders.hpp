@@ -42,19 +42,19 @@ struct vertex_shader_standard : public vertex_shader_t
 		vertices.reserve(model.mesh.vertices.size());
 		for (const vertex_t & v : model.mesh.vertices)
 		{
-			vertex_t vec = Transform(v, vertice_transform_matrix);
+			vertex_t vec = transform(v, vertice_transform_matrix);
 			vec.x() /= fabs(vec.z());
 			vec.y() /= fabs(vec.z());
-			vertices.emplace_back(Transform(vec, *viewportmatrix));
+			vertices.emplace_back(transform(vec, *viewportmatrix));
 		}
 	}
 
 	virtual vertex_t shade_one(vertex_t v) override
 	{
-		v = Transform(v, vertice_transform_matrix);
+		v = transform(v, vertice_transform_matrix);
 		v.x() /= fabs(v.z());
 		v.y() /= fabs(v.z());
-		return Transform(v, *viewportmatrix);
+		return transform(v, *viewportmatrix);
 	}
 };
 
@@ -74,14 +74,14 @@ struct vertex_shader_world : public vertex_shader_t
 		vertices.reserve(model.mesh.vertices.size());
 		for (const vertex_t & v : model.mesh.vertices)
 		{
-			vertex_t vec = Transform(v, vertice_transform_matrix);
+			vertex_t vec = transform(v, vertice_transform_matrix);
 			vertices.emplace_back(vec);
 		}
  	}
 
 	virtual vertex_t shade_one(vertex_t v) override
 	{
-		return Transform(v, vertice_transform_matrix);
+		return transform(v, vertice_transform_matrix);
 	}
 };
 

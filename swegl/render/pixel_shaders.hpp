@@ -77,7 +77,7 @@ public:
 		normals->clear();
 		normals->reserve(strip.normals.size());
 		for (const auto & n : strip.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}
@@ -86,7 +86,7 @@ public:
 		normals->clear();
 		normals->reserve(fan.normals.size());
 		for (const auto & n : fan.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}
@@ -95,7 +95,7 @@ public:
 		normals->clear();
 		normals->reserve(list.normals.size());
 		for (const auto & n : list.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}
@@ -202,7 +202,7 @@ public:
 		normals->clear();
 		normals->reserve(strip.normals.size());
 		for (const auto & n : strip.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}
@@ -211,7 +211,7 @@ public:
 		normals->clear();
 		normals->reserve(fan.normals.size());
 		for (const auto & n : fan.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}
@@ -220,7 +220,7 @@ public:
 		normals->clear();
 		normals->reserve(list.normals.size());
 		for (const auto & n : list.normals)
-			normals->emplace_back(Transform(n, model->orientation));
+			normals->emplace_back(transform(n, model->orientation));
 
 		triangle_idx = 0;
 	}

@@ -162,7 +162,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 
 	// backface culling
 	// z already inversed by viewmatrix (high Z = far)
-	if ( Cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
+	if ( cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 	{
 		model.pixel_shader->next_triangle();
 		return;

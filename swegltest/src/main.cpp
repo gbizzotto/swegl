@@ -358,8 +358,8 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 			static swegl::matrix44_t rot1 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_z(0.017); return r; }();
 			static swegl::matrix44_t rot2 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_y(0.04); return r; }();
 
-			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot1);
-			scene.point_source_lights[1].position = Transform(scene.point_source_lights[1].position, rot2);
+			scene.point_source_lights[0].position = transform(scene.point_source_lights[0].position, rot1);
+			scene.point_source_lights[1].position = transform(scene.point_source_lights[1].position, rot2);
 			scene.models[4].position = scene.point_source_lights[0].position;
 			scene.models[5].position = scene.point_source_lights[1].position;
 		}

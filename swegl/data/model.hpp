@@ -98,8 +98,8 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<strip.indices.size() ; i++, i0=i1, i1=i2)
 		{
 			i2 = strip.indices[i];
-			strip.normals.push_back((((i&0x1)==0) ? Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0])
-			                                      : Cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]))
+			strip.normals.push_back((((i&0x1)==0) ? cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0])
+			                                      : cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]))
 			                       );
 			strip.normals.back().normalize();
 		}
@@ -113,7 +113,7 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<fan.indices.size() ; i++, i1=i2)
 		{
 			i2 = fan.indices[i];
-			fan.normals.push_back(Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
+			fan.normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
 			fan.normals.back().normalize();
 		}
 	}
@@ -123,7 +123,7 @@ inline void calculate_normals(model_t & model)
 		int i0 = model.mesh.triangle_list.indices[i-2];
 		int i1 = model.mesh.triangle_list.indices[i-1];
 		int i2 = model.mesh.triangle_list.indices[i  ];
-		model.mesh.triangle_list.normals.push_back(Cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
+		model.mesh.triangle_list.normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
 		model.mesh.triangle_list.normals.back().normalize();
 	}
 }
@@ -215,9 +215,9 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 
 		for (unsigned int sm = 0; sm < precision; sm++)
 		{
-			vertices.push_back(Transform(Transform(vertex_t(0.0f, 0.0f, 0.0f), small), big));
-			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
-			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
+			vertices.push_back(transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big));
+			//normals.push_back((vertices.back() - transform(Vec3f(), big)).Normalize());
+			//vb.emplace_back(std::make_pair<>(transform(transform(Vec3f(), small), big),
 			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 			small.rotate_z(angle);
 		}
@@ -267,11 +267,11 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 
 		for (unsigned int sm = 0; sm <= precision; sm++)
 		{
-			auto v = Transform(vertex_t(0.0f, size, 0.0f),small);
-			auto v2 = Transform(v, big);
+			auto v = transform(vertex_t(0.0f, size, 0.0f),small);
+			auto v2 = transform(v, big);
 			vertices.push_back(v2);
-			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
-			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
+			//normals.push_back((vertices.back() - transform(Vec3f(), big)).Normalize());
+			//vb.emplace_back(std::make_pair<>(transform(transform(Vec3f(), small), big),
 			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 			small.rotate_z(angle/2);
 		}
