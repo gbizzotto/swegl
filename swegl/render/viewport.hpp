@@ -13,7 +13,7 @@ namespace swegl
 	public:
 		int m_x, m_y;
 		int m_w, m_h;
-		Matrix4x4 m_viewportmatrix;
+		matrix44_t m_viewportmatrix;
 		SDL_Surface *m_screen;
 
 		viewport_t(int x, int y, int w, int h, SDL_Surface *screen);

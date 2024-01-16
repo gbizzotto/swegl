@@ -10,7 +10,7 @@ namespace swegl
 class vertex_shader_t
 {	
 public:
-	Matrix4x4 vertice_transform_matrix;
+	matrix44_t vertice_transform_matrix;
 
 	virtual void shade(std::vector<vertex_t> & vertices,
 	                   std::vector<normal_t> & normals,
@@ -23,7 +23,7 @@ public:
 
 struct vertex_shader_standard : public vertex_shader_t
 {
-	const Matrix4x4 * viewportmatrix;
+	const matrix44_t * viewportmatrix;
 	virtual void shade(std::vector<vertex_t> & vertices,
 	                   std::vector<normal_t> & normals,
 	                   const model_t & model,

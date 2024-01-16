@@ -12,8 +12,8 @@ namespace swegl
 	public:
 		float m_xfov, m_yfov;
 		vertex_t m_center;
-		Matrix4x4 m_viewmatrix;
-		Matrix4x4 m_projectionmatrix;
+		matrix44_t m_viewmatrix;
+		matrix44_t m_projectionmatrix;
 
 		camera_t();
 		camera_t(float aspectratio);

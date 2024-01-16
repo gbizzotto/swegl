@@ -7,8 +7,8 @@ namespace swegl
 
 	camera_t::camera_t()
 		:m_center(0,0,0)
-		,m_viewmatrix(Matrix4x4::Identity)
-		,m_projectionmatrix(Matrix4x4::Identity)
+		,m_viewmatrix(matrix44_t::Identity)
+		,m_projectionmatrix(matrix44_t::Identity)
 	{
 		//this->setXFov(90);
 		//this->setYFov(60);
@@ -30,8 +30,8 @@ namespace swegl
 
 	camera_t::camera_t(float aspectratio)
 		:m_center(0,0,0)
-		,m_viewmatrix(Matrix4x4::Identity)
-		,m_projectionmatrix(Matrix4x4::Identity)
+		,m_viewmatrix(matrix44_t::Identity)
+		,m_projectionmatrix(matrix44_t::Identity)
 	{
 		//this->setXFov(90);
 		//this->setYFov(60);

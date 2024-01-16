@@ -49,7 +49,7 @@ struct model_t
 
 	vector_t forward;
 	vector_t up;
-	Matrix4x4 orientation;
+	matrix44_t orientation;
 	vertex_t position;
 
 	//std::shared_ptr<mesh> commons;
@@ -144,7 +144,7 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 			vertex_t(0.0f, size, 0.0f)
 			*/
 		};
-	result.orientation = Matrix4x4::Identity;
+	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.textures.push_back(texture);
 
@@ -173,7 +173,7 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 			vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f),
 			vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f)
 		};
-	result.orientation = Matrix4x4::Identity;
+	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.textures.push_back(texture);
 
@@ -197,7 +197,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.orientation = swegl::Matrix4x4::Identity;
+	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.textures.push_back(texture);
 
@@ -205,12 +205,12 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 	//auto & normals  = result.get_normals ();
 
 	float angle = (2 * 3.141592653589f) / precision;
-	Matrix4x4 big = Matrix4x4::Identity;
+	matrix44_t big = matrix44_t::Identity;
 	big.Translate(2.0f, 0.0f, 0.0f);
 
 	for (unsigned int bg = 0; bg < precision; bg++)
 	{
-		Matrix4x4 small = Matrix4x4::Identity;
+		matrix44_t small = matrix44_t::Identity;
 		small.Translate(0.8f, 0.0f, 0.0f);
 
 		for (unsigned int sm = 0; sm < precision; sm++)
@@ -250,7 +250,7 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.orientation = swegl::Matrix4x4::Identity;
+	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.textures.push_back(texture);
 
@@ -258,12 +258,12 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 	//auto & normals  = result.get_normals ();
 
 	float angle = (2 * 3.141592653589f) / precision;
-	Matrix4x4 big = Matrix4x4::Identity;
+	matrix44_t big = matrix44_t::Identity;
 	//big.Translate(0.0f, size, 0.0f);
 
 	for (unsigned int bg = 0; bg < precision; bg++)
 	{
-		Matrix4x4 small = Matrix4x4::Identity;
+		matrix44_t small = matrix44_t::Identity;
 
 		for (unsigned int sm = 0; sm <= precision; sm++)
 		{

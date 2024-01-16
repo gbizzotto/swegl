@@ -24,7 +24,7 @@ public:
 	const float & z() const { return matrix[0][2]; }
 };
 
-vertex_t Transform(const vertex_t &, const Matrix4x4 &);
+vertex_t Transform(const vertex_t &, const matrix44_t &);
 
 template<typename T>
 vertex_t operator+(const vertex_t & left, const T & right)
@@ -116,7 +116,7 @@ inline vector_t operator-(const vertex_t left, const vertex_t right)
 	                left.z() - right.z()};
 }
 normal_t Cross(const vector_t &, const vector_t &);
-normal_t Transform(const normal_t &, const Matrix4x4 &);
+normal_t Transform(const normal_t &, const matrix44_t &);
 
 template<typename O>
 O & operator<<(O & out, const vertex_t & v)

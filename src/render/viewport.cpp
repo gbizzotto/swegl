@@ -6,7 +6,7 @@ namespace swegl
 {
 
 	viewport_t::viewport_t(int x, int y, int w, int h, SDL_Surface *screen)
-		:m_viewportmatrix(Matrix4x4::Identity)
+		:m_viewportmatrix(matrix44_t::Identity)
 	{
 		this->m_x = x;
 		this->m_y = y;

@@ -10,12 +10,12 @@
 namespace swegl
 {
 
-	class Matrix4x4 : public freon::Matrix<float,4,4>
+	class matrix44_t : public freon::Matrix<float,4,4>
 	{
 	public:
-		Matrix4x4()
+		matrix44_t()
 		{}
-		Matrix4x4(const freon::Matrix<float,4,4> & other)
+		matrix44_t(const freon::Matrix<float,4,4> & other)
 			:freon::Matrix<float,4,4>(other)
 		{}
 		void RotateX(float a);
@@ -29,10 +29,10 @@ namespace swegl
 		static const freon::Matrix<float,4,4> & Identity;
 	};
 
-	//Matrix4x4 operator*(const Matrix4x4 & left, const Matrix4x4 & up);
+	//matrix44_t operator*(const matrix44_t & left, const matrix44_t & up);
 
 	template<typename O>
-	O & operator<<(O & out, const Matrix4x4 & m)
+	O & operator<<(O & out, const matrix44_t & m)
 	{
 		out << m[0][0] << ',' << m[0][1] << ',' << m[0][2] << "\n"
 			<< m[1][0] << ',' << m[1][1] << ',' << m[1][2] << "\n"

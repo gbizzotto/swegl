@@ -6,9 +6,9 @@
 namespace swegl
 {
 
-	const freon::Matrix<float,4,4> & Matrix4x4::Identity = freon::MatrixIdentity<float>::_4;
+	const freon::Matrix<float,4,4> & matrix44_t::Identity = freon::MatrixIdentity<float>::_4;
 
-	void Matrix4x4::RotateX(float a)
+	void matrix44_t::RotateX(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
@@ -27,7 +27,7 @@ namespace swegl
 		(*this)[2][3] = -sina*d7 + cosa*(*this)[2][3];
 	}
 
-	void Matrix4x4::RotateY(float a)
+	void matrix44_t::RotateY(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
@@ -46,7 +46,7 @@ namespace swegl
 		(*this)[2][3] = -sina*d3 + cosa*(*this)[2][3];
 	}
 
-	void Matrix4x4::RotateZ(float a)
+	void matrix44_t::RotateZ(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
@@ -65,7 +65,7 @@ namespace swegl
 		(*this)[1][3] = -sina*d3 + cosa*(*this)[1][3];
 	}
 
-	void Matrix4x4::SetRotateXY(float x, float y)
+	void matrix44_t::SetRotateXY(float x, float y)
 	{
 		float cosx = (float)cos(x);
 		float sinx = (float)sin(x);
@@ -83,16 +83,16 @@ namespace swegl
 		(*this)[2][2] =  cosx*cosy;
 	}
 
-	void Matrix4x4::Translate(float x, float y, float z)
+	void matrix44_t::Translate(float x, float y, float z)
 	{
 		(*this)[0][3] += x;
 		(*this)[1][3] += y;
 		(*this)[2][3] += z;
 	}
 
-	/*Matrix4x4 operator*(const Matrix4x4 & left, const Matrix4x4 & up)
+	/*matrix44_t operator*(const matrix44_t & left, const matrix44_t & up)
 	{
-		Matrix4x4 result;
+		matrix44_t result;
 		__m128 u0 = _mm_load_ps(&up[0][0]);
 		__m128 u1 = _mm_load_ps(&up[1][0]);
 		__m128 u2 = _mm_load_ps(&up[2][0]);
