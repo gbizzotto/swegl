@@ -61,15 +61,15 @@ namespace swegl
 
 	void camera_t::RotateX(float a)
 	{
-		this->m_viewmatrix.RotateX(-a);
+		this->m_viewmatrix.rotate_x(-a);
 	}
 	void camera_t::RotateY(float a)
 	{
-		this->m_viewmatrix.RotateY(-a);
+		this->m_viewmatrix.rotate_y(-a);
 	}
 	void camera_t::RotateZ(float a)
 	{
-		this->m_viewmatrix.RotateZ(-a);
+		this->m_viewmatrix.rotate_z(-a);
 	}
 
 	void camera_t::Translate(float x, float y, float z)

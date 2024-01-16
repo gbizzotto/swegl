@@ -8,7 +8,7 @@ namespace swegl
 
 	const freon::Matrix<float,4,4> & matrix44_t::Identity = freon::MatrixIdentity<float>::_4;
 
-	void matrix44_t::RotateX(float a)
+	void matrix44_t::rotate_x(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
@@ -27,7 +27,7 @@ namespace swegl
 		(*this)[2][3] = -sina*d7 + cosa*(*this)[2][3];
 	}
 
-	void matrix44_t::RotateY(float a)
+	void matrix44_t::rotate_y(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);
@@ -46,7 +46,7 @@ namespace swegl
 		(*this)[2][3] = -sina*d3 + cosa*(*this)[2][3];
 	}
 
-	void matrix44_t::RotateZ(float a)
+	void matrix44_t::rotate_z(float a)
 	{
 		// fast version : 16 mul instead of 64, and no object copy
 		float cosa = (float)cos(a);

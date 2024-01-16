@@ -219,10 +219,10 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
 			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
-			small.RotateZ(angle);
+			small.rotate_z(angle);
 		}
 
-		big.RotateY(angle);
+		big.rotate_y(angle);
 	}
 
 	for (unsigned int bg = 1; bg <= precision; bg++)
@@ -273,10 +273,10 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 			//normals.push_back((vertices.back() - Transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(Transform(Transform(Vec3f(), small), big),
 			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
-			small.RotateZ(angle/2);
+			small.rotate_z(angle/2);
 		}
 
-		big.RotateY(angle);
+		big.rotate_y(angle);
 	}
 
 	for (unsigned int bg = 1; bg <= precision; bg++)

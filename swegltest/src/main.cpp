@@ -45,8 +45,8 @@ public:
 		SDL_ShowCursor(0);
 
 		window = SDL_CreateWindow("swegl test",
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
+			10,
+			10,
 			SCR_WIDTH,
 			SCR_HEIGHT,
 			0);
@@ -151,7 +151,7 @@ swegl::scene_t build_scene()
 	tore.vertex_shader = vertex_shader_0;
 	tore.pixel_shader = pixel_shader_0;
 	tore.orientation = swegl::matrix44_t::Identity;
-	tore.orientation.RotateZ(0.5);
+	tore.orientation.rotate_z(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
 	//tore.SetBumpMap(bumpmap);
 	s.models.push_back(std::move(tore));
@@ -349,14 +349,14 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 
 		if (sdl.keys['t'])
 		{
-			scene.models[0].orientation.RotateY(0.02);
-			scene.models[1].orientation.RotateY(0.01);
-			scene.models[1].orientation.RotateX(0.001);
+			scene.models[0].orientation.rotate_x(0.02);
+			scene.models[1].orientation.rotate_y(0.01);
+			scene.models[1].orientation.rotate_z(0.001);
 		}
 		if (sdl.keys['g'])
 		{
-			static swegl::matrix44_t rot1 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.RotateZ(0.017); return r; }();
-			static swegl::matrix44_t rot2 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.RotateY(0.04); return r; }();
+			static swegl::matrix44_t rot1 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_z(0.017); return r; }();
+			static swegl::matrix44_t rot2 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_y(0.04); return r; }();
 
 			scene.point_source_lights[0].position = Transform(scene.point_source_lights[0].position, rot1);
 			scene.point_source_lights[1].position = Transform(scene.point_source_lights[1].position, rot2);
