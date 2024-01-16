@@ -72,7 +72,7 @@ namespace swegl
 		this->m_viewmatrix.rotate_z(-a);
 	}
 
-	void camera_t::Translate(float x, float y, float z)
+	void camera_t::translate(float x, float y, float z)
 	{
 		this->m_viewmatrix.translate(-x,-y,-z);
 

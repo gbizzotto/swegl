@@ -335,17 +335,17 @@ int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & s
 				camera.rotate_x(-cameraxrotation);
 
 		if (sdl.keys['i'])
-			camera.Translate(0.0f, 0.0f, multiplier * 0.004f);
+			camera.translate(0.0f, 0.0f, multiplier * 0.004f);
 		if (sdl.keys['k'])
-			camera.Translate(0.0f, 0.0f, multiplier * -0.004f);
+			camera.translate(0.0f, 0.0f, multiplier * -0.004f);
 		if (sdl.keys['l'])
-			camera.Translate(multiplier * 0.004f, 0.0f, 0.0f);
+			camera.translate(multiplier * 0.004f, 0.0f, 0.0f);
 		if (sdl.keys['j'])
-			camera.Translate(multiplier * -0.004f, 0.0f, 0.0f);
+			camera.translate(multiplier * -0.004f, 0.0f, 0.0f);
 		if (sdl.keys['o'])
-			camera.Translate(0.0f, multiplier * 0.004f, 0.0f);
+			camera.translate(0.0f, multiplier * 0.004f, 0.0f);
 		if (sdl.keys['u'])
-			camera.Translate(0.0f, multiplier * -0.004f, 0.0f);
+			camera.translate(0.0f, multiplier * -0.004f, 0.0f);
 
 		if (sdl.keys['t'])
 		{
