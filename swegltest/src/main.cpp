@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	SDLWrapper sdl;
 
 	swegl::scene_t scene = build_scene();
-	Font font("ascii.bmp");
+	font_t font("ascii.bmp");
 
 	//*
 	swegl::camera_t camera(1.0f * SCR_WIDTH/SCR_HEIGHT);

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "font.hpp"
 
-Font::Font(const char *filename)
+font_t::font_t(const char *filename)
 {
 	int dummy;
 
@@ -53,7 +53,7 @@ Font::Font(const char *filename)
 	}
 }
 
-void Font::Print(const char * str, const unsigned x_, unsigned y, SDL_Surface *surface)
+void font_t::Print(const char * str, const unsigned x_, unsigned y, SDL_Surface *surface)
 {
 	auto x = x_;
 	for (size_t c = 0; str[c] != 0; ++c)

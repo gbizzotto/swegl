@@ -3,7 +3,7 @@
 
 #include <SDL.h>
 
-class Font
+class font_t
 {
 	unsigned int file_size;
 	unsigned int data_offset;
@@ -15,6 +15,6 @@ class Font
 	unsigned char *data;
 
 public:
-	Font(const char * filename);
+	font_t(const char * filename);
 	void Print(const char * str, unsigned x, unsigned y, SDL_Surface *surface);
 };
