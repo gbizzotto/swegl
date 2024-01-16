@@ -48,7 +48,7 @@ namespace swegl
 			   sizeof(int)*(x1-x0));
 	}
 
-	void viewport_t::Clear()
+	void viewport_t::clear()
 	{
 		for (int j=m_y ; j<m_y+m_h ; j++)
 			memset(&((unsigned char*)m_screen->pixels)[(int) (j*m_screen->pitch)], 0, m_w*4);

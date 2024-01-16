@@ -28,7 +28,7 @@ namespace swegl
 			((unsigned int*)m_screen->pixels)[(int) ( y*m_screen->pitch/4 + x)] = shade;
 		}
 		void HLine(int x0, int x1, int y, unsigned char shade);
-		void Clear();
+		void clear();
 	};
 
 }

@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 		{
 			utttil::measurement m(mp);
 
-			viewport1.Clear();
+			viewport1.clear();
 
 			//std::stringstream ss;
 			//ss << camera.position();
