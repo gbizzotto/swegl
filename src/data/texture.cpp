@@ -44,11 +44,11 @@ namespace swegl
 		m_mipmapsCount = MIPMAPS_COUNT;
 
 		texel_count = width*height;
-		m_mipmaps = new Mipmap[MIPMAPS_COUNT];
-		if (m_mipmaps == NULL)
+		m_mipmaps = std::make_unique<mipmap_t[]>(MIPMAPS_COUNT);
+		if (m_mipmaps == nullptr)
 			return;
 		m_mipmaps[0].m_bitmap = new unsigned int[texel_count];
-		if (m_mipmaps[0].m_bitmap == NULL)
+		if (m_mipmaps[0].m_bitmap == nullptr)
 			return;
 		m_mipmaps[0].m_width = width;
 		m_mipmaps[0].m_height = height;
@@ -126,7 +126,7 @@ namespace swegl
 	 */
 	texture_t::texture_t(unsigned int rgb)
 	{
-		m_mipmaps = new Mipmap[1];
+		m_mipmaps = std::make_unique<mipmap_t[]>(1);
 		m_mipmaps[0].m_height = 1;
 		m_mipmaps[0].m_width = 1;
 		m_mipmaps[0].m_bitmap = new unsigned int[1];
@@ -136,7 +136,7 @@ namespace swegl
 	texture_t::texture_t(unsigned int * data, int w, int h)
 	{
 		m_mipmapsCount = 0;
-		m_mipmaps = new Mipmap[1];
+		m_mipmaps = std::make_unique<mipmap_t[]>(1);
 		m_mipmaps[0].m_bitmap = data;
 		m_mipmaps[0].m_width = w;
 		m_mipmaps[0].m_height = h;

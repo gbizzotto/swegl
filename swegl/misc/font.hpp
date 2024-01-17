@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <memory>
 #include <SDL.h>
 
 class font_t
@@ -12,7 +13,7 @@ class font_t
 	unsigned int height;
 	unsigned short bits_per_pixel;
 	unsigned int data_size;
-	unsigned char *data;
+	std::unique_ptr<unsigned char[]> data;
 
 public:
 	font_t(const char * filename);

@@ -44,8 +44,8 @@ struct mesh_t
 
 struct model_t
 {
-	vertex_shader_t * vertex_shader;
-	pixel_shader_t * pixel_shader;
+	std::shared_ptr<swegl::vertex_shader_t> vertex_shader;
+	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader;
 
 	vector_t forward;
 	vector_t up;

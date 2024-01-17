@@ -59,19 +59,19 @@ public:
 	scene_t & m_scene;
 	camera_t & m_camera;
 	viewport_t & m_viewport;
-	float *m_zbuffer;
-	inline renderer(scene_t & scene, camera_t & camera, viewport_t & viewport, float *zb)
+	std::unique_ptr<float[]> m_zbuffer;
+	inline renderer(scene_t & scene, camera_t & camera, viewport_t & viewport)
 		:m_scene(scene)
 		,m_camera(camera)
 		,m_viewport(viewport)
-		,m_zbuffer(zb)
+		,m_zbuffer(new float[viewport.m_w * viewport.m_h])
 	{}
 
 	inline void render(post_shader_t & post_shader)
 	{
 		//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
 
-		std::fill(m_zbuffer, m_zbuffer+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<decltype(m_zbuffer)>::type>::max());
+		std::fill(m_zbuffer.get(), m_zbuffer.get()+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
 
 		static std::vector<vertex_t> vertices;
 		static std::vector<normal_t> normals;
@@ -94,7 +94,7 @@ public:
 						             ,i  
 						             ,vertices
 						             ,strip.texture_mapping
-						             ,model, m_viewport, m_zbuffer);
+						             ,model, m_viewport, m_zbuffer.get());
 					else
 						fill_triangle(strip.indices
 						             ,i-2
@@ -102,7 +102,7 @@ public:
 						             ,i-1
 						             ,vertices
 						             ,strip.texture_mapping
-						             ,model, m_viewport, m_zbuffer);
+						             ,model, m_viewport, m_zbuffer.get());
 			}
 			// FANS
 			for (triangle_fan & fan : model.mesh.triangle_fans)
@@ -115,7 +115,7 @@ public:
 					             ,i  
 					             ,vertices
 						         ,fan.texture_mapping
-					             ,model, m_viewport, m_zbuffer);
+					             ,model, m_viewport, m_zbuffer.get());
 			}
 			// TRIs
 			model.pixel_shader->prepare_for_triangle_list(model.mesh.triangle_list);
@@ -126,10 +126,10 @@ public:
 				             ,i  
 				             ,vertices
 						     ,model.mesh.triangle_list.texture_mapping
-				             ,model, m_viewport, m_zbuffer);
+				             ,model, m_viewport, m_zbuffer.get());
 		}
 
-		post_shader.shade(m_viewport, m_zbuffer);
+		post_shader.shade(m_viewport, m_zbuffer.get());
 	}
 };
 

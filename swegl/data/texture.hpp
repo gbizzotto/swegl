@@ -1,24 +1,30 @@
 
 #pragma once
 
+#include <memory>
+
 namespace swegl
 {
 
 	#define MIPMAPS_COUNT 5
 
-	typedef struct
+	struct mipmap_t
 	{
-		unsigned int *m_bitmap;
+		unsigned int *m_bitmap = nullptr;
 		unsigned int m_width;
 		unsigned int m_height;
-	
-	}Mipmap;
+		~mipmap_t()
+		{
+			if (m_bitmap)
+				delete[] m_bitmap;
+		}
+	};
 
 	class texture_t
 	{
 	public:
 		int m_mipmapsCount;
-		Mipmap *m_mipmaps;
+		std::unique_ptr<mipmap_t[]> m_mipmaps;
 
 		texture_t(const char *filename);
 		texture_t(unsigned int rgb);

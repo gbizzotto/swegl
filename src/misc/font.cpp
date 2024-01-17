@@ -29,15 +29,12 @@ font_t::font_t(const char *filename)
 	dummy = fread(&dummy, 1, 4, fin); // palette size
 	dummy = fread(&dummy, 1, 4, fin); // number of important colors
 
-	unsigned char * buffer = new unsigned char[data_size];
+	std::unique_ptr<unsigned char[]> buffer(new unsigned char[data_size]);
 
-	if (data_size != fread(buffer, 1, data_size, fin))
-	{
-		delete buffer;
+	if (data_size != fread(buffer.get(), 1, data_size, fin))
 		return;
-	}
 
-	data = new unsigned char[16*16*256]; // 256 chars, 16*16 pixels
+	data = std::make_unique<unsigned char[]>(16*16*256); // 256 chars, 16*16 pixels
 
 	for (int ch=0 ; ch<256 ; ch++)
 	{
@@ -47,8 +44,8 @@ font_t::font_t(const char *filename)
 			int xch = ch%16;
 			int ypix = 15-(pix/16);
 			int xpix = pix%16;
-			data[ch*16*16 + pix] = buffer[(  (4096*ych)+(256*ypix)+(16*xch)+xpix  )
-			                              *this->bits_per_pixel/8];
+			data[ch*16*16 + pix] = buffer.get()[(  (4096*ych)+(256*ypix)+(16*xch)+xpix  )
+			                                       *this->bits_per_pixel/8];
 		}
 	}
 }

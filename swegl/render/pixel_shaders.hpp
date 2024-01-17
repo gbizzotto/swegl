@@ -333,9 +333,9 @@ public:
 		camera   = & c;
 		viewport = & vp;
 
-		tbitmap = m.mesh.textures[0]->m_mipmaps[0].m_bitmap;
-		twidth  = m.mesh.textures[0]->m_mipmaps[0].m_width;
-		theight = m.mesh.textures[0]->m_mipmaps[0].m_height;
+		tbitmap = m.mesh.textures[0]->m_mipmaps.get()[0].m_bitmap;
+		twidth  = m.mesh.textures[0]->m_mipmaps.get()[0].m_width;
+		theight = m.mesh.textures[0]->m_mipmaps.get()[0].m_height;
 	}
 
 	virtual void prepare_for_strip(const triangle_strip & strip) override

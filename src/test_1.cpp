@@ -1,6 +1,7 @@
 
 #include "headers.hpp"
 
+#include <memory>
 #include <stdlib.h>
 #include <sstream>
 
@@ -33,9 +34,8 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, -5.0}, 0.6});
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
-	swegl::vertex_shader_t * vertex_shader_0 = new swegl::vertex_shader_standard;
-	swegl::pixel_shader_t  * pixel_shader_0  = new swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>;
-
+	std::shared_ptr<swegl::vertex_shader_t> vertex_shader_0 = std::make_shared<swegl::vertex_shader_standard>();
+	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_0  = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>>();
 	//*
 	auto tore = swegl::make_tore(500, texture_grid);
 	tore.vertex_shader = vertex_shader_0;
@@ -271,8 +271,7 @@ int main()
 
 	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
 	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
-	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
-	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
+	swegl::renderer renderer(scene, camera, viewport1);
 	
 	utttil::measurement_point mp("frame");
 
