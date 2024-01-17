@@ -94,7 +94,7 @@ int main()
 	SDLWrapper sdl;
 
 	swegl::scene_t scene = build_scene();
-	font_t font("ascii.bmp");
+	font_t font("resources/ascii.bmp");
 
 	//*
 	swegl::camera_t camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
@@ -140,9 +140,9 @@ int main()
 
 swegl::scene_t build_scene()
 {
-	auto texture_dice     = std::make_shared<swegl::texture_t>("dice.bmp");
-	auto texture_grid     = std::make_shared<swegl::texture_t>("tex.bmp");
-	auto texture_mercator = std::make_shared<swegl::texture_t>("mercator.bmp");
+	auto texture_dice     = std::make_shared<swegl::texture_t>("resources/dice.bmp");
+	auto texture_grid     = std::make_shared<swegl::texture_t>("resources/tex.bmp");
+	auto texture_mercator = std::make_shared<swegl::texture_t>("resources/mercator.bmp");
 	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene_t s;
 
