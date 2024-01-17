@@ -55,6 +55,11 @@ struct sdl_t
 		SDL_Quit();
 	}
 
+	inline void update_frame()
+	{
+		SDL_UpdateWindowSurface(window);
+	}
+
 	inline SDL_Surface * make_surface()
 	{
 		return SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);

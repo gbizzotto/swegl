@@ -269,42 +269,32 @@ int main()
 	swegl::scene_t scene = build_scene();
 	font_t font("resources/ascii.bmp");
 
-	//*
 	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
 	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
 	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
 	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
-	//*/
 	
 	utttil::measurement_point mp("frame");
 
-	//swegl::post_shader_t depth_shader;
-	swegl::post_shader_depth_box depth_shader(5, 5);
+	// CHOOSE YOUR DESTINY
+	swegl::post_shader_t depth_shader;
+	//swegl::post_shader_depth_box depth_shader(5, 5);
 	
-	while (1)
+	for(;;)
 	{
 		{
 			utttil::measurement m(mp);
 
 			viewport1.clear();
 
-			//std::stringstream ss;
-			//ss << camera.position();
-			//font.Print(ss.str().c_str(), 10, 30, sdl.surface);
-
-			//std::stringstream ss2;
-			//ss2 << camera.m_viewmatrix;
-			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
-
 			renderer.render(depth_shader);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
-			if (int a=handle_keyboard_events(sdl, camera, scene) < 0)
-				return -a;
+			if (handle_keyboard_events(sdl, camera, scene) < 0)
+				break;
 
-			// Tell SDL to update the whole screen
-			SDL_UpdateWindowSurface(sdl.window);
+			sdl.update_frame();
 		}
 
 	}
