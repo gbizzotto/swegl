@@ -16,76 +16,6 @@
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>
 
-
-#if defined(_DEBUG) || defined(DEBUG)
-	void AssertFailed(char * cond, char * filename, int line);
-	#define ASSERT(cond) do { if (!(cond)) {AssertFailed(#cond, __FILE__, __LINE__);} } while(0)
-	extern unsigned int g_trianglesdrawn;
-	extern unsigned int g_pixelsdrawn;
-#else
-	#define ASSERT(cond)
-#endif
-
-
-#if defined(_DEBUG) || defined(DEBUG)
-	unsigned int g_trianglesdrawn;
-	unsigned int g_pixelsdrawn;
-#endif
-
-
-
-swegl::scene_t build_scene();
-int KeyboardWorks(swegl::sdl_t &, swegl::camera_t &, swegl::scene_t & scene);
-
-int main()
-{
-	swegl::sdl_t sdl(10, 1600, 800, 600, "test_t");
-
-	swegl::scene_t scene = build_scene();
-	font_t font("resources/ascii.bmp");
-
-	//*
-	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
-	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
-	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
-	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
-	//*/
-	
-	utttil::measurement_point mp("frame");
-
-	//swegl::post_shader_t depth_shader;
-	swegl::post_shader_depth_box depth_shader(5, 5);
-	
-	while (1)
-	{
-		{
-			utttil::measurement m(mp);
-
-			viewport1.clear();
-
-			//std::stringstream ss;
-			//ss << camera.position();
-			//font.Print(ss.str().c_str(), 10, 30, sdl.surface);
-
-			//std::stringstream ss2;
-			//ss2 << camera.m_viewmatrix;
-			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
-
-			renderer.render(depth_shader);
-
-			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
-
-			if (int a=KeyboardWorks(sdl, camera, scene) < 0)
-				return -a;
-
-			// Tell SDL to update the whole screen
-			SDL_UpdateWindowSurface(sdl.window);
-		}
-
-	}
-	return 0;
-}
-
 swegl::scene_t build_scene()
 {
 	auto texture_dice     = std::make_shared<swegl::texture_t>("resources/dice.bmp");
@@ -169,8 +99,7 @@ swegl::scene_t build_scene()
 	return s;
 }
 
-
-int KeyboardWorks(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
+int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;
@@ -330,5 +259,54 @@ int KeyboardWorks(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::scene_t &
 		keystick = SDL_GetTicks();
 	}
 
+	return 0;
+}
+
+int main()
+{
+	swegl::sdl_t sdl(10, 1600, 800, 600, "test_t");
+
+	swegl::scene_t scene = build_scene();
+	font_t font("resources/ascii.bmp");
+
+	//*
+	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
+	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
+	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
+	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
+	//*/
+	
+	utttil::measurement_point mp("frame");
+
+	//swegl::post_shader_t depth_shader;
+	swegl::post_shader_depth_box depth_shader(5, 5);
+	
+	while (1)
+	{
+		{
+			utttil::measurement m(mp);
+
+			viewport1.clear();
+
+			//std::stringstream ss;
+			//ss << camera.position();
+			//font.Print(ss.str().c_str(), 10, 30, sdl.surface);
+
+			//std::stringstream ss2;
+			//ss2 << camera.m_viewmatrix;
+			//font.Print(ss2.str().c_str(), 10, 70, sdl.surface);
+
+			renderer.render(depth_shader);
+
+			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
+
+			if (int a=handle_keyboard_events(sdl, camera, scene) < 0)
+				return -a;
+
+			// Tell SDL to update the whole screen
+			SDL_UpdateWindowSurface(sdl.window);
+		}
+
+	}
 	return 0;
 }
