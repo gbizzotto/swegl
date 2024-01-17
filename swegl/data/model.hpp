@@ -45,9 +45,6 @@ struct mesh_t
 
 struct model_t
 {
-	std::shared_ptr<swegl::vertex_shader_t> vertex_shader;
-	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader;
-
 	vector_t forward;
 	vector_t up;
 	matrix44_t orientation;
@@ -85,8 +82,8 @@ struct scene_t
 inline void calculate_normals(model_t & model)
 {
 	// model cant have curved surfaces
-	if (model.smooth)
-		return;
+	//if (model.smooth)
+	//	return;
 
 	const auto & vertices = model.mesh.vertices;
 
@@ -190,7 +187,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 {
 	model_t result;
 
-	result.smooth = false;
+	result.smooth = true;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
@@ -243,7 +240,7 @@ inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<t
 {
 	model_t result;
 
-	result.smooth = false;
+	result.smooth = true;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;

@@ -64,6 +64,15 @@ struct sdl_t
 	{
 		return SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);
 	}
+
+	inline void clear(int x, int y, int w, int h)
+	{
+		unsigned char * line_ptr = &((unsigned char*)surface->pixels)[(int) (y*surface->pitch) + x*surface->format->BytesPerPixel];
+		int clear_width = w * surface->format->BytesPerPixel;
+		int line_width = surface->pitch;
+		for (int j=y ; j<y+h ; j++, line_ptr+=line_width)
+			memset(line_ptr, 0, clear_width);
+	}
 };
 
 
