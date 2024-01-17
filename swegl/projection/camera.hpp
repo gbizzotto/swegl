@@ -16,7 +16,6 @@ namespace swegl
 		matrix44_t m_projectionmatrix;
 
 		camera_t();
-		camera_t(float aspectratio);
 		void rotate_x(float a);
 		void rotate_y(float a);
 		void rotate_z(float a);

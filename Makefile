@@ -1,5 +1,5 @@
 
-TYPE = debug
+TYPE = release
 
 OBJDIR_BASE = obj
 BINDIR_BASE = bin

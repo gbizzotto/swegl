@@ -262,15 +262,34 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 	return 0;
 }
 
+void test()
+{
+	swegl::viewport_t viewport1(100, 100, 700, 1500, nullptr);
+	swegl::vertex_t v1(0,0,0);
+	swegl::vertex_t v2(-1,0,0);
+	swegl::vertex_t v3(1,0,0);
+	swegl::vertex_t v4(0,-1,0);
+	swegl::vertex_t v5(0,1,0);
+
+	v1 = swegl::transform(v1, viewport1.m_viewportmatrix);
+	v2 = swegl::transform(v2, viewport1.m_viewportmatrix);
+	v3 = swegl::transform(v3, viewport1.m_viewportmatrix);
+	v4 = swegl::transform(v4, viewport1.m_viewportmatrix);
+	v5 = swegl::transform(v5, viewport1.m_viewportmatrix);
+}
+
 int main()
 {
+	test();
+
 	swegl::sdl_t sdl(10, 1600, 800, 600, "test_t");
 
 	swegl::scene_t scene = build_scene();
 	font_t font("resources/ascii.bmp");
 
-	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
-	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
+	swegl::camera_t camera/*(1.0f * sdl.w/sdl.h)*/;
+	swegl::viewport_t viewport1(100, 100, sdl.w-100, sdl.h-100, sdl.surface);
+	swegl::viewport_t viewport_mspfps(0, 0, 100, 100, sdl.surface);
 	swegl::renderer renderer(scene, camera, viewport1);
 	
 	utttil::measurement_point mp("frame");
@@ -285,6 +304,7 @@ int main()
 			utttil::measurement m(mp);
 
 			viewport1.clear();
+			viewport_mspfps.clear();
 
 			renderer.render(depth_shader);
 

@@ -147,8 +147,6 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	const vertex_t * v1 = &vertices[indices[i1]];
 	const vertex_t * v2 = &vertices[indices[i2]];
 
-	//ON_SCOPE_EXIT([&](){ model.pixel_shader->next_triangle(); });
-
 	// frustum clipping
 	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x       )
 		||(v0->y()  < vp.m_y        && v1->y()  < vp.m_y        && v2->y()  < vp.m_y       )
@@ -370,34 +368,39 @@ void fill_half_triangle(int y, int y_end,
 	{
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
 		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
-		interpolator_g<1> qpixel;
 
-		pixel_shader.prepare_for_scanline(side_left .interpolator.progress()
-		                                 ,side_right.interpolator.progress());
-
-		qpixel.InitSelf(side_right.x - side_left.x,
-		            side_left .interpolator.value(0),
-		            side_right.interpolator.value(0));
-		qpixel.DisplaceStartingPoint(x1 - side_left.x);
-
-		// fill_line
-		unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x1)];
-		float * zb = &zbuffer[(int) ( y*vp.m_w + x1)];
-		for ( ; x1 < x2 ; x1++ )
+		if (x1 < x2)
 		{
-			//int u, v;
+			interpolator_g<1> qpixel;
 
-			if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near culling
+			pixel_shader.prepare_for_scanline(side_left .interpolator.progress()
+			                                 ,side_right.interpolator.progress());
+
+			qpixel.InitSelf(side_right.x - side_left.x,
+			            side_left .interpolator.value(0),
+			            side_right.interpolator.value(0));
+			qpixel.DisplaceStartingPoint(x1 - side_left.x);
+
+			// fill_line
+			unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
+			float * zb = &zbuffer[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
+			//float * zb = &zbuffer[(int) ( (y)*vp.m_w + (x1))];
+			for ( ; x1 < x2 ; x1++ )
 			{
-				int color = pixel_shader.shade(qpixel.progress());
+				//int u, v;
 
-				*video = color;
-				*zb = qpixel.value(0);
+				if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near clipping
+				{
+					int color = pixel_shader.shade(qpixel.progress());
+
+					*video = color;
+					*zb = qpixel.value(0);
+				}
+				video++;
+				zb++;
+
+				qpixel.Step();
 			}
-			video++;
-			zb++;
-
-			qpixel.Step();
 		}
 
 		side_left .x += side_left .ratio;

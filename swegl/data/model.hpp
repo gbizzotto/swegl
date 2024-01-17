@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <swegl/projection/camera.hpp>
 #include <swegl/projection/vec2f.hpp>
 #include <swegl/projection/points.hpp>
 #include <swegl/projection/matrix44.hpp>
@@ -78,6 +79,8 @@ struct scene_t
 	float sun_intensity;
 
 	std::vector<point_source_light> point_source_lights;
+
+	camera_t camera;
 };
 
 
