@@ -18,25 +18,24 @@ using vertex_idx = std::uint32_t;
 struct triangle_strip
 {
 	std::vector<vertex_idx> indices;
-	std::vector<normal_t> normals;
 	std::vector<vec2f_t> texture_mapping;
 };
 struct triangle_fan
 {
 	std::vector<vertex_idx> indices;
-	std::vector<normal_t> normals;
 	std::vector<vec2f_t> texture_mapping;
 };
 struct triangle_list_t
 {
 	std::vector<vertex_idx> indices;
-	std::vector<normal_t> normals;
 	std::vector<vec2f_t> texture_mapping;
 };
 
 struct mesh_t
 {
 	std::vector<vertex_t> vertices;
+	std::vector<normal_t> face_normals;
+	std::vector<normal_t> vertex_normals;
 	std::vector<triangle_strip> triangle_strips;
 	std::vector<triangle_fan>   triangle_fans;
 	triangle_list_t             triangle_list;
@@ -96,10 +95,10 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<strip.indices.size() ; i++, i0=i1, i1=i2)
 		{
 			i2 = strip.indices[i];
-			strip.normals.push_back((((i&0x1)==0) ? cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0])
+			model.mesh.face_normals.push_back((((i&0x1)==0) ? cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0])
 			                                      : cross(vertices[i2]-vertices[i0], vertices[i1]-vertices[i0]))
 			                       );
-			strip.normals.back().normalize();
+			model.mesh.face_normals.back().normalize();
 		}
 	}
 	// Preca model.normals for fans
@@ -111,8 +110,8 @@ inline void calculate_normals(model_t & model)
 		for (unsigned int i=2 ; i<fan.indices.size() ; i++, i1=i2)
 		{
 			i2 = fan.indices[i];
-			fan.normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
-			fan.normals.back().normalize();
+			model.mesh.face_normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
+			model.mesh.face_normals.back().normalize();
 		}
 	}
 	// Preca model.normals for lose triangles
@@ -121,8 +120,8 @@ inline void calculate_normals(model_t & model)
 		int i0 = model.mesh.triangle_list.indices[i-2];
 		int i1 = model.mesh.triangle_list.indices[i-1];
 		int i2 = model.mesh.triangle_list.indices[i  ];
-		model.mesh.triangle_list.normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
-		model.mesh.triangle_list.normals.back().normalize();
+		model.mesh.face_normals.push_back(cross(vertices[i1]-vertices[i0], vertices[i2]-vertices[i0]));
+		model.mesh.face_normals.back().normalize();
 	}
 }
 
@@ -144,7 +143,7 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.mesh.triangle_list = triangle_list_t{{0,1,2}, {}, {vec2f_t{0.0f,0.0f}, vec2f_t{0.0f,1.0f}, vec2f_t{1.0f,0.0f}}};
+	result.mesh.triangle_list = triangle_list_t{{0,1,2}, {vec2f_t{0.0f,0.0f}, vec2f_t{0.0f,1.0f}, vec2f_t{1.0f,0.0f}}};
 
 	calculate_normals(result);
 
@@ -175,8 +174,8 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	//result.common->triangle_strips.push_back(triangle_strip{{0,1,3,2,7,6,4,5}, {{0.0,1.0},{0.5,1.0},{0.0,0.666},{0.5,0.666},{0.0,0.333},{0.5,0.333},{0.0,0.0},{0.5,0.0}}});
 	//result.common->triangle_strips.push_back(triangle_strip{{6,2,5,1,4,0,7,3}, {{0.5,1.0},{1.0,1.0},{0.5,0.666},{1.0,0.666},{0.5,0.333},{1.0,0.333},{0.5,0.0},{1.0,0.0}}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{2,1,5,6,7,3,0,1}, {}, {{0.5,0.333},{0.5,0.666},{0.0,0.666},{0.0,0.333},{0.0,0.0},{0.5,0.0},{1.0,0.0},{1.0,0.333}}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{4,7,6,5,1,0,3,7}, {}, {{0.5,0.666},{0.5,0.333},{1.0,0.333},{1.0,0.666},{1.0,1.0},{0.5,1.0},{0.0,1.0},{0.0,0.666}}});
+	result.mesh.triangle_fans.push_back(triangle_fan{{2,1,5,6,7,3,0,1}, {{0.5,0.333},{0.5,0.666},{0.0,0.666},{0.0,0.333},{0.0,0.0},{0.5,0.0},{1.0,0.0},{1.0,0.333}}});
+	result.mesh.triangle_fans.push_back(triangle_fan{{4,7,6,5,1,0,3,7}, {{0.5,0.666},{0.5,0.333},{1.0,0.333},{1.0,0.666},{1.0,1.0},{0.5,1.0},{0.0,1.0},{0.0,0.666}}});
 
 	calculate_normals(result);
 

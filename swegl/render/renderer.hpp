@@ -53,16 +53,26 @@ void fill_half_triangle(int y, int y_end,
                         pixel_shader_t & pixel_shader);
 
 
+struct transformed_scene_t
+{
+	scene_t * original;
+	std::vector<model_t> world_view;
+	std::vector<model_t> screen_view;
+};
+
 inline void render(scene_t & scene, viewport_t & viewport)
 {
 	//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
 
+	viewport.clear();
+
 	static std::vector<vertex_t> vertices;
-	static std::vector<normal_t> normals;
+	static std::vector<normal_t> face_normals;
+	static std::vector<normal_t> vertex_normals;
 
 	for (auto & model : scene.models)
 	{
-		viewport.m_vertex_shader->shade(vertices, normals, model, scene, viewport);
+		viewport.m_vertex_shader->shade(vertices, face_normals, vertex_normals, model, scene, viewport);
 
 		pixel_shader_t & pixel_shader = [&]() -> pixel_shader_t &
 			{
@@ -72,7 +82,7 @@ inline void render(scene_t & scene, viewport_t & viewport)
 					return *viewport.m_pixel_shader_sharp;
 			}();
 
-		pixel_shader.prepare_for_model(vertices, normals, model, scene, viewport);
+		pixel_shader.prepare_for_model(vertices, face_normals, vertex_normals, model, scene, viewport);
 
 		// STRIPS
 		for (triangle_strip & strip : model.mesh.triangle_strips)
@@ -135,6 +145,22 @@ inline void render(scene_t & scene, viewport_t & viewport)
 
 	viewport.m_post_shader->shade(viewport);
 }
+
+template<typename...T>
+void render(scene_t & scene, viewport_t & viewport, T&...t)
+{
+	render(scene, viewport);
+	render(scene, t...);
+}
+
+template<typename...T>
+void render(scene_t & scene, T&...t)
+{
+	// Transform scene with vertex shader ONCE
+
+	render(scene, t...);
+}
+
 
 void fill_triangle(std::vector<vertex_idx> & indices,
                    vertex_idx i0,

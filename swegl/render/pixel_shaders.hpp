@@ -15,7 +15,8 @@ namespace swegl
 struct pixel_shader_t
 {
 	virtual void prepare_for_model(std::vector<vertex_t> &,
-	                               std::vector<normal_t> &,
+	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                               const model_t &,
 	                               const scene_t &,
 	                               const viewport_t &) {}
@@ -46,16 +47,24 @@ struct pixel_shader_lights_flat : pixel_shader_t
 	float light;
 
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] std::vector<normal_t> & face_n,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
-		vertex_shader.shade(vertices, n, m, s, vp);
-		normals = &n;
+		vertex_shader.shade(vertices, face_n, vertex_n, m, s, vp);
+		normals = &face_n;
 		viewport = &vp;
+
+		normals->clear();
+		normals->reserve(m.mesh.face_normals.size());
+		for (const auto & n : m.mesh.face_normals)
+			normals->emplace_back(transform(n, model->orientation));
+
+		triangle_idx = 0;
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override
@@ -67,32 +76,14 @@ struct pixel_shader_lights_flat : pixel_shader_t
 		vertices.pop_back();
 	}
 
-	virtual void prepare_for_strip(const triangle_strip & strip) override
+	virtual void prepare_for_strip([[maybe_unused]] const triangle_strip & strip) override
 	{
-		normals->clear();
-		normals->reserve(strip.normals.size());
-		for (const auto & n : strip.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
-	virtual void prepare_for_fan(const triangle_fan & fan) override
+	virtual void prepare_for_fan([[maybe_unused]] const triangle_fan & fan) override
 	{
-		normals->clear();
-		normals->reserve(fan.normals.size());
-		for (const auto & n : fan.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
+	virtual void prepare_for_triangle_list([[maybe_unused]] const triangle_list_t & list) override
 	{
-		normals->clear();
-		normals->reserve(list.normals.size());
-		for (const auto & n : list.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
 	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
@@ -170,15 +161,23 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 	vector_t dir;
 
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] std::vector<normal_t> & face_n,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
-		vertex_shader.shade(vertices, n, m, s, vp);
-		normals = &n;
+		vertex_shader.shade(vertices, face_n, vertex_n, m, s, vp);
+		normals = &face_n;
+
+		normals->clear();
+		normals->reserve(m.mesh.face_normals.size());
+		for (const auto & n : m.mesh.face_normals)
+			normals->emplace_back(transform(n, model->orientation));
+
+		triangle_idx = 0;
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override
@@ -190,32 +189,14 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 		vertices.pop_back();
 	}
 
-	virtual void prepare_for_strip(const triangle_strip & strip) override
+	virtual void prepare_for_strip([[maybe_unused]] const triangle_strip & strip) override
 	{
-		normals->clear();
-		normals->reserve(strip.normals.size());
-		for (const auto & n : strip.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
-	virtual void prepare_for_fan(const triangle_fan & fan) override
+	virtual void prepare_for_fan([[maybe_unused]] const triangle_fan & fan) override
 	{
-		normals->clear();
-		normals->reserve(fan.normals.size());
-		for (const auto & n : fan.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
+	virtual void prepare_for_triangle_list([[maybe_unused]] const triangle_list_t & list) override
 	{
-		normals->clear();
-		normals->reserve(list.normals.size());
-		for (const auto & n : list.normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
 	}
 	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
@@ -313,7 +294,8 @@ struct pixel_shader_texture : pixel_shader_t
 	unsigned int theight;
 
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp) override
@@ -419,7 +401,8 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	float theight;
 
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp) override
@@ -533,13 +516,14 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 	T shader_texture;
 
 	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               std::vector<normal_t> & n,
+	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                               const model_t & m,
 	                               const scene_t & s,
 	                               const viewport_t & vp) override
 	{
-		shader_flat_light.prepare_for_model(v, n, m, s, vp);
-		shader_texture.prepare_for_model(v, n, m, s, vp);
+		shader_flat_light.prepare_for_model(v, face_normals, vertex_normals, m, s, vp);
+		shader_texture.prepare_for_model(v, face_normals, vertex_normals, m, s, vp);
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override

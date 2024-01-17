@@ -12,7 +12,8 @@ struct vertex_shader_t
 	matrix44_t vertice_transform_matrix;
 
 	virtual void shade(std::vector<vertex_t> & vertices,
-	                   std::vector<normal_t> & normals,
+	                   [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                   [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                   const model_t & model,
 	                   const scene_t & scene,
 	                   const viewport_t & viewport) = 0;
@@ -23,7 +24,8 @@ struct vertex_shader_standard : public vertex_shader_t
 {
 	const matrix44_t * viewportmatrix;
 	virtual void shade(std::vector<vertex_t> & vertices,
-	                   [[maybe_unused]] std::vector<normal_t> & normals,
+	                   [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                   [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                   [[maybe_unused]] const model_t & model,
 	                   [[maybe_unused]] const scene_t & scene,
 	                   [[maybe_unused]] const viewport_t & viewport) override
@@ -58,7 +60,8 @@ struct vertex_shader_standard : public vertex_shader_t
 struct vertex_shader_world : public vertex_shader_t
 {
 	virtual void shade(std::vector<vertex_t> & vertices,
-	                   [[maybe_unused]] std::vector<normal_t> & normals,
+	                   [[maybe_unused]] std::vector<normal_t> & face_normals,
+	                   [[maybe_unused]] std::vector<normal_t> & vertex_normals,
 	                   [[maybe_unused]] const model_t & model,
 	                   [[maybe_unused]] const scene_t & scene,
 	                   [[maybe_unused]] const viewport_t & viewport) override

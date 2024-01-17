@@ -277,13 +277,9 @@ int main()
 		{
 			utttil::measurement m(mp);
 
-			viewport1.clear();
-			viewport2.clear();
+			sdl.clear(0, 0, 100, 30);
 
-			sdl.clear(0, 0, 100, 30);			
-
-			swegl::render(scene, viewport1);
-			swegl::render(scene, viewport2);
+			swegl::render(scene, viewport1, viewport2);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
