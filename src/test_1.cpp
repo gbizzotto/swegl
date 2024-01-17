@@ -1,13 +1,14 @@
 
+#include "headers.hpp"
+
 #include <stdlib.h>
 #include <sstream>
-
-#include <SDL2/SDL.h>
 
 #include <utttil/perf.hpp>
 
 #include <swegl/swegl.hpp>
 #include <swegl/misc/font.hpp>
+#include <swegl/misc/sdl.hpp>
 
 #include <swegl/data/model.hpp>
 #include <swegl/render/renderer.hpp>
@@ -15,9 +16,6 @@
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>
 
-
-#define SCR_WIDTH 800
-#define SCR_HEIGHT 600
 
 #if defined(_DEBUG) || defined(DEBUG)
 	void AssertFailed(char * cond, char * filename, int line);
@@ -35,70 +33,20 @@
 #endif
 
 
-class SDLWrapper
-{
-public:
-	char keys[256];
-	SDL_Window *window;
-	SDL_Renderer *renderer;
-	SDL_Surface *surface;
-
-	SDLWrapper()
-		:keys{0}
-	{
-		// Initialize SDL's subsystems
-		if (SDL_Init(SDL_INIT_VIDEO) < 0)
-		{
-			fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
-			throw;
-		}
-
-		SDL_SetRelativeMouseMode(SDL_FALSE);
-		SDL_ShowCursor(0);
-
-		window = SDL_CreateWindow("swegl test",
-			10,
-			1500,
-			SCR_WIDTH,
-			SCR_HEIGHT,
-			0);
-		if (window == nullptr)
-			throw;
-
-		renderer = SDL_CreateRenderer(window, -1, 0);
-		if (renderer == nullptr)
-			throw;
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-		surface = SDL_GetWindowSurface(window);
-		//surface = SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
-		if (surface == nullptr)
-			throw;
-	}
-	~SDLWrapper()
-	{
-		SDL_Quit();
-	}
-
-	SDL_Surface * make_surface()
-	{
-		return SDL_CreateRGBSurface(0, SCR_WIDTH, SCR_HEIGHT, 32, 0, 0, 0, 0);
-	}
-};
 
 swegl::scene_t build_scene();
-int KeyboardWorks(SDLWrapper &, swegl::camera_t &, swegl::scene_t & scene);
+int KeyboardWorks(swegl::sdl_t &, swegl::camera_t &, swegl::scene_t & scene);
 
 int main()
 {
-	SDLWrapper sdl;
+	swegl::sdl_t sdl(10, 1600, 800, 600, "test_t");
 
 	swegl::scene_t scene = build_scene();
 	font_t font("resources/ascii.bmp");
 
 	//*
-	swegl::camera_t camera(1.0f * SCR_WIDTH/SCR_HEIGHT);
-	swegl::viewport_t viewport1(0, 0, SCR_WIDTH,SCR_HEIGHT, sdl.surface);
+	swegl::camera_t camera(1.0f * sdl.w/sdl.h);
+	swegl::viewport_t viewport1(0, 0, sdl.w, sdl.h, sdl.surface);
 	float * zbuffer = new float[viewport1.m_w*viewport1.m_h];
 	swegl::renderer renderer(scene, camera, viewport1, zbuffer);
 	//*/
@@ -222,7 +170,7 @@ swegl::scene_t build_scene()
 }
 
 
-int KeyboardWorks(SDLWrapper & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
+int KeyboardWorks(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;
