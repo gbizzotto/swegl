@@ -7,9 +7,8 @@
 namespace swegl
 {
 
-class vertex_shader_t
-{	
-public:
+struct vertex_shader_t
+{
 	matrix44_t vertice_transform_matrix;
 
 	virtual void shade(std::vector<vertex_t> & vertices,

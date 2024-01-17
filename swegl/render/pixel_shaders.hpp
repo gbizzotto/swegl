@@ -12,10 +12,8 @@
 namespace swegl
 {
 
-
-class pixel_shader_t
+struct pixel_shader_t
 {
-public:
 	virtual void prepare_for_model(std::vector<vertex_t> &,
 	                               std::vector<normal_t> &,
 	                               const model_t &,
@@ -35,7 +33,7 @@ public:
 	virtual int shade([[maybe_unused]] float progress) { return 0; }
 };
 
-class pixel_shader_lights_flat : public pixel_shader_t
+struct pixel_shader_lights_flat : pixel_shader_t
 {
 	vertex_shader_world vertex_shader;
 
@@ -48,7 +46,6 @@ class pixel_shader_lights_flat : public pixel_shader_t
 
 	float light;
 
-public:
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
@@ -156,7 +153,7 @@ public:
 	}
 };
 
-class pixel_shader_lights_semiflat : public pixel_shader_t
+struct pixel_shader_lights_semiflat : pixel_shader_t
 {
 	vertex_shader_world vertex_shader;
 
@@ -174,7 +171,6 @@ class pixel_shader_lights_semiflat : public pixel_shader_t
 	vertex_t v;
 	vector_t dir;
 
-public:
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
@@ -295,7 +291,7 @@ public:
 	}
 };
 
-class pixel_shader_texture : public pixel_shader_t
+struct pixel_shader_texture : pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
@@ -320,7 +316,6 @@ class pixel_shader_texture : public pixel_shader_t
 	unsigned int twidth;
 	unsigned int theight;
 
-public:
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
@@ -405,7 +400,7 @@ public:
 };
 
 
-class pixel_shader_texture_bilinear : public pixel_shader_t
+struct pixel_shader_texture_bilinear : pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
@@ -430,7 +425,6 @@ class pixel_shader_texture_bilinear : public pixel_shader_t
 	float twidth;
 	float theight;
 
-public:
 	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
@@ -542,7 +536,7 @@ public:
 
 
 template<typename L, typename T>
-class pixel_shader_light_and_texture : public pixel_shader_t
+struct pixel_shader_light_and_texture : pixel_shader_t
 {
 	L shader_flat_light;
 	T shader_texture;
