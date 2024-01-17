@@ -36,8 +36,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
                    std::vector<vertex_t> & vertices,
                    std::vector<vec2f_t> & texture_mapping,
                    model_t & model,
-                   viewport_t & vp,
-                   float * zbuffer);
+                   viewport_t & vp);
 void fill_triangle_2(const std::vector<vertex_idx> & indices,
                      vertex_idx i0,
                      vertex_idx i1,
@@ -45,42 +44,34 @@ void fill_triangle_2(const std::vector<vertex_idx> & indices,
                      std::vector<vertex_t> & vertices,
                      std::vector<vec2f_t> & texture_mapping,
                      model_t & model,
-                     viewport_t & vp,
-                     float * zbuffer);
+                     viewport_t & vp);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         viewport_t & vp,
-                        float * zbuffer,
                         pixel_shader_t & pixel_shader);
 
 class renderer
 {
 public:
 	scene_t & m_scene;
-	camera_t & m_camera;
 	viewport_t & m_viewport;
-	std::unique_ptr<float[]> m_zbuffer;
-	inline renderer(scene_t & scene, camera_t & camera, viewport_t & viewport)
+	inline renderer(scene_t & scene, viewport_t & viewport)
 		:m_scene(scene)
-		,m_camera(camera)
 		,m_viewport(viewport)
-		,m_zbuffer(new float[viewport.m_w * viewport.m_h])
 	{}
 
 	inline void render(post_shader_t & post_shader)
 	{
 		//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
 
-		std::fill(m_zbuffer.get(), m_zbuffer.get()+m_viewport.m_w*m_viewport.m_h, std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
-
 		static std::vector<vertex_t> vertices;
 		static std::vector<normal_t> normals;
 
 		for (auto & model : m_scene.models)
 		{
-			model.vertex_shader->shade(vertices, normals, model, m_scene, m_camera, m_viewport);
+			model.vertex_shader->shade(vertices, normals, model, m_scene, m_viewport);
 
-			model.pixel_shader->prepare_for_model(vertices, normals, model, m_scene, m_camera, m_viewport);
+			model.pixel_shader->prepare_for_model(vertices, normals, model, m_scene, m_viewport);
 
 			// STRIPS
 			for (triangle_strip & strip : model.mesh.triangle_strips)
@@ -94,7 +85,8 @@ public:
 						             ,i  
 						             ,vertices
 						             ,strip.texture_mapping
-						             ,model, m_viewport, m_zbuffer.get());
+						             ,model
+						             ,m_viewport);
 					else
 						fill_triangle(strip.indices
 						             ,i-2
@@ -102,7 +94,8 @@ public:
 						             ,i-1
 						             ,vertices
 						             ,strip.texture_mapping
-						             ,model, m_viewport, m_zbuffer.get());
+						             ,model
+						             ,m_viewport);
 			}
 			// FANS
 			for (triangle_fan & fan : model.mesh.triangle_fans)
@@ -115,7 +108,8 @@ public:
 					             ,i  
 					             ,vertices
 						         ,fan.texture_mapping
-					             ,model, m_viewport, m_zbuffer.get());
+					             ,model
+					             ,m_viewport);
 			}
 			// TRIs
 			model.pixel_shader->prepare_for_triangle_list(model.mesh.triangle_list);
@@ -126,10 +120,11 @@ public:
 				             ,i  
 				             ,vertices
 						     ,model.mesh.triangle_list.texture_mapping
-				             ,model, m_viewport, m_zbuffer.get());
+				             ,model
+				             ,m_viewport);
 		}
 
-		post_shader.shade(m_viewport, m_zbuffer.get());
+		post_shader.shade(m_viewport);
 	}
 };
 
@@ -140,8 +135,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
                    std::vector<vertex_t> & vertices,
                    std::vector<vec2f_t> & texture_mapping,
                    model_t & model,
-                   viewport_t & vp,
-                   float * zbuffer)
+                   viewport_t & vp)
 {
 	const vertex_t * v0 = &vertices[indices[i0]];
 	const vertex_t * v1 = &vertices[indices[i1]];
@@ -208,7 +202,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		vertices.push_back(model.vertex_shader->shade_one(new_vertex2));
 		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_2);
 
-		fill_triangle_2(indices, i0, new_ii1, new_ii2, vertices, texture_mapping, model, vp, zbuffer);
+		fill_triangle_2(indices, i0, new_ii1, new_ii2, vertices, texture_mapping, model, vp);
 		texture_mapping.pop_back();
 		texture_mapping.pop_back();
 		indices.pop_back();
@@ -240,8 +234,8 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		vertices.push_back(model.vertex_shader->shade_one(new_vertex2));
 		texture_mapping.push_back(texture_mapping[i1] + (texture_mapping[i2]-texture_mapping[i1])*cut_1);
 
-		fill_triangle_2(indices, i1,      i0, new_ii0, vertices, texture_mapping, model, vp, zbuffer);
-		fill_triangle_2(indices, i1, new_ii0, new_ii1, vertices, texture_mapping, model, vp, zbuffer);
+		fill_triangle_2(indices, i1,      i0, new_ii0, vertices, texture_mapping, model, vp);
+		fill_triangle_2(indices, i1, new_ii0, new_ii1, vertices, texture_mapping, model, vp);
 		texture_mapping.pop_back();
 		texture_mapping.pop_back();
 		indices.pop_back();
@@ -253,7 +247,7 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		return;
 	}
 
-	fill_triangle_2(indices, i0, i1, i2, vertices, texture_mapping, model, vp, zbuffer);
+	fill_triangle_2(indices, i0, i1, i2, vertices, texture_mapping, model, vp);
 	model.pixel_shader->next_triangle();
 }
 
@@ -264,8 +258,7 @@ void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
                      [[maybe_unused]] std::vector<vertex_t> & vertices,
                      [[maybe_unused]] std::vector<vec2f_t> & texture_mapping,
                      [[maybe_unused]] model_t & model,
-                     [[maybe_unused]] viewport_t & vp,
-                     [[maybe_unused]] float * zbuffer)
+                     [[maybe_unused]] viewport_t & vp)
 {
 	const vertex_t * v0 = &vertices[indices[i0]];
 	const vertex_t * v1 = &vertices[indices[i1]];
@@ -331,7 +324,7 @@ void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
 
 		model.pixel_shader->prepare_for_upper_triangle(long_line_on_right);
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, *model.pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, *model.pixel_shader);
 	}
 
 	// lower half of the triangle
@@ -354,14 +347,13 @@ void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
 
 		model.pixel_shader->prepare_for_lower_triangle(long_line_on_right);
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, zbuffer, *model.pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, *model.pixel_shader);
 	}
 }
 
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         viewport_t & vp,
-                        float * zbuffer,
                         pixel_shader_t & pixel_shader)
 {
 	for ( ; y < y_end ; y++)
@@ -383,7 +375,7 @@ void fill_half_triangle(int y, int y_end,
 
 			// fill_line
 			unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
-			float * zb = &zbuffer[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
+			float * zb = &vp.zbuffer()[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
 			//float * zb = &zbuffer[(int) ( (y)*vp.m_w + (x1))];
 			for ( ; x1 < x2 ; x1++ )
 			{

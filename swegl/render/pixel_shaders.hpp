@@ -18,7 +18,6 @@ struct pixel_shader_t
 	                               std::vector<normal_t> &,
 	                               const model_t &,
 	                               const scene_t &,
-	                               const camera_t &,
 	                               const viewport_t &) {}
 	virtual void push_back_vertex_temporary(vertex_t &) {}
 	virtual void pop_back_vertex_temporary() {}
@@ -39,10 +38,10 @@ struct pixel_shader_lights_flat : pixel_shader_t
 
 	const model_t * model;
 	const scene_t * scene;
+	const viewport_t * viewport;
 	std::vector<vertex_t> vertices;
 	std::vector<normal_t> * normals;
 	int triangle_idx;
-	const camera_t * camera;
 
 	float light;
 
@@ -50,14 +49,13 @@ struct pixel_shader_lights_flat : pixel_shader_t
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const camera_t & c,
 	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
-		vertex_shader.shade(vertices, n, m, s, c, vp);
+		vertex_shader.shade(vertices, n, m, s, vp);
 		normals = &n;
-		camera = &c;
+		viewport = &vp;
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override
@@ -107,7 +105,7 @@ struct pixel_shader_lights_flat : pixel_shader_t
 		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
 		//vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
 		//vertex_t camera_position = 
-		vector_t camera_vector = camera->position() - center_vertex;
+		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
 
 		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
@@ -175,12 +173,11 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const camera_t & c,
 	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
-		vertex_shader.shade(vertices, n, m, s, c, vp);
+		vertex_shader.shade(vertices, n, m, s, vp);
 		normals = &n;
 	}
 
@@ -295,7 +292,6 @@ struct pixel_shader_texture : pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
-	const camera_t * camera;
 	const viewport_t * viewport;
 
 	const std::vector<vec2f_t> * texture_mapping;
@@ -320,12 +316,10 @@ struct pixel_shader_texture : pixel_shader_t
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const camera_t & c,
 	                               [[maybe_unused]] const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
-		camera   = & c;
 		viewport = & vp;
 
 		tbitmap = m.mesh.textures[0]->m_mipmaps.get()[0].m_bitmap;
@@ -404,7 +398,6 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 {
 	const model_t * model;
 	const scene_t * scene;
-	const camera_t * camera;
 	const viewport_t * viewport;
 
 	const std::vector<vec2f_t> * texture_mapping;
@@ -429,12 +422,10 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	                               [[maybe_unused]] std::vector<normal_t> & n,
 	                               [[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const camera_t & c,
 	                               [[maybe_unused]] const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
-		camera   = & c;
 		viewport = & vp;
 
 		tbitmap = m.mesh.textures[0]->m_mipmaps[0].m_bitmap;
@@ -545,11 +536,10 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 	                               std::vector<normal_t> & n,
 	                               const model_t & m,
 	                               const scene_t & s,
-	                               const camera_t & c,
 	                               const viewport_t & vp) override
 	{
-		shader_flat_light.prepare_for_model(v, n, m, s, c, vp);
-		shader_texture.prepare_for_model(v, n, m, s, c, vp);
+		shader_flat_light.prepare_for_model(v, n, m, s, vp);
+		shader_texture.prepare_for_model(v, n, m, s, vp);
 	}
 
 	virtual void push_back_vertex_temporary(vertex_t & v) override

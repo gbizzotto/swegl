@@ -11,7 +11,7 @@ namespace swegl
 
 struct post_shader_t
 {
-	virtual void shade(viewport_t &, [[maybe_unused]] float *m_zbuffer) {}
+	virtual void shade(viewport_t &) {}
 };
 
 struct post_shader_depth_box : public post_shader_t
@@ -24,14 +24,14 @@ struct post_shader_depth_box : public post_shader_t
 		, focal_depth(depth)
 	{}
 
-	virtual void shade(viewport_t & vp, float * zb) override
+	virtual void shade(viewport_t & vp) override
 	{
 		pixel_colors * frame_buffer = (pixel_colors *) vp.m_screen->pixels;
 
 		for (int y=0 ; y<vp.m_h ; y++)
 			for (int x=0 ; x<vp.m_w ; x++)
 			{
-				float z = zb[y*vp.m_w + x];
+				float z = vp.zbuffer()[y*vp.m_w + x];
 				int blur = remap_clipped(0.0f, focal_depth, 0.0f, 5.0f, abs(focal_distance-z));
 				int b=0, g=0, r=0;
 				int count = 0;

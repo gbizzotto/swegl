@@ -79,8 +79,6 @@ struct scene_t
 	float sun_intensity;
 
 	std::vector<point_source_light> point_source_lights;
-
-	camera_t camera;
 };
 
 

@@ -287,16 +287,15 @@ int main()
 	swegl::scene_t scene = build_scene();
 	font_t font("resources/ascii.bmp");
 
-	swegl::camera_t camera/*(1.0f * sdl.w/sdl.h)*/;
-	swegl::viewport_t viewport1(100, 100, sdl.w-100, sdl.h-100, sdl.surface);
+	swegl::viewport_t viewport1(00, 00, sdl.w-00, sdl.h-00, sdl.surface);
 	swegl::viewport_t viewport_mspfps(0, 0, 100, 100, sdl.surface);
-	swegl::renderer renderer(scene, camera, viewport1);
+	swegl::renderer renderer(scene, viewport1);
 	
 	utttil::measurement_point mp("frame");
 
 	// CHOOSE YOUR DESTINY
-	swegl::post_shader_t depth_shader;
-	//swegl::post_shader_depth_box depth_shader(5, 5);
+	//swegl::post_shader_t depth_shader;
+	swegl::post_shader_depth_box depth_shader(5, 5);
 	
 	for(;;)
 	{
@@ -304,13 +303,13 @@ int main()
 			utttil::measurement m(mp);
 
 			viewport1.clear();
-			viewport_mspfps.clear();
+			//viewport_mspfps.clear();
 
 			renderer.render(depth_shader);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
-			if (handle_keyboard_events(sdl, camera, scene) < 0)
+			if (handle_keyboard_events(sdl, viewport1.camera(), scene) < 0)
 				break;
 
 			sdl.update_frame();

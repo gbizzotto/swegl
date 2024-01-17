@@ -11,6 +11,7 @@ namespace swegl
 		, m_w(w)
 		, m_h(h)
 		, m_screen(screen)
+		, m_zbuffer(new float[w * h])
 		, m_viewportmatrix(matrix44_t::Identity)
 	{
 		this->m_viewportmatrix[0][3] = x+w/2.0f;
@@ -34,6 +35,8 @@ namespace swegl
 		int line_width = m_screen->pitch;
 		for (int j=m_y ; j<m_y+m_h ; j++, line_ptr+=line_width)
 			memset(line_ptr, 0, clear_width);
+
+		std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
 	}
 
 }
