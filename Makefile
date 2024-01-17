@@ -13,10 +13,10 @@ DEPDIR := ..
 TESTDIR := tests
 
 CFLAGS_debug = -g -Wall -Wextra -fsanitize=address,leak
-CFLAGS_perf = -O3 -DNDEBUG -msse4 
-CFLAGS_release = -g -O3 -fno-omit-frame-pointer -DNDEBUG -msse4 
+CFLAGS_perf = -O3 -Wall -Wextra -DNDEBUG -msse4 
+CFLAGS_release = -g -O3 -Wall -Wextra -fno-omit-frame-pointer -DNDEBUG -msse4 
 EXTRA_CFLAGS = 
-CFLAGS = $(CFLAGS_$(TYPE)) $(EXTRA_CFLAGS) --std=c++17 -I$(DEPDIR)/freon -I$(DEPDIR)/utttil -I. -I$(SRCDIR)/ 
+CFLAGS = $(CFLAGS_$(TYPE)) $(EXTRA_CFLAGS) --std=c++2a -I$(DEPDIR)/freon -I$(DEPDIR)/utttil -I. -I$(SRCDIR)/ 
 
 LD=$(CXX)
 LDFLAGS = -L. `sdl2-config --cflags --libs`
@@ -40,14 +40,13 @@ all_tests = $(patsubst $(SRCDIR)/%.cpp,%,$(wildcard $(SRCDIR)/test_*.cpp))
 all_bins  = $(filter-out $(all_tests), $(patsubst $(SRCDIR)/%.cpp,%,$(wildcard $(SRCDIR)/*.cpp)))
 lib       = swegl.a
 
+all: $(all_bins) $(all_tests)
+
 release:
 	@$(MAKE) -s all TYPE=$@
-
 debug:
 	@$(MAKE) -s all TYPE=$@
 
-all: $(all_bins) $(all_tests)
-	
 thorough: 
 	$(eval COMPILERS=g++-latest g++-9.3 g++-8.4 clang++-latest clang++-8.0 clang++9.0)
 	$(foreach COMPILER,$(COMPILERS),$(MAKE) --no-print-directory CXX=$(COMPILER) EXTRA_CFLAGS='-Wall -Werror' TYPE=debug docker;)
