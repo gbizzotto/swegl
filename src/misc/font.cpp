@@ -12,22 +12,22 @@ font_t::font_t(const char *filename)
 	if (fin == NULL)
 		return;
 
-	fread(&dummy, 1, 2, fin); // magic number
-	fread(&this->file_size, 1, 4, fin);
-	fread(&dummy, 1, 2, fin); // RFU
-	fread(&dummy, 1, 2, fin); // RFU
-	fread(&this->data_offset, 1, 4, fin); 
-	fread(&dummy, 1, 4, fin); // header size
-	fread(&this->width, 1, 4, fin);
-	fread(&this->height, 1, 4, fin);
-	fread(&dummy, 1, 2, fin); // color planes
-	fread(&this->bits_per_pixel, 1, 2, fin);
-	fread(&dummy, 1, 4, fin); // compression mode
-	fread(&this->data_size, 1, 4, fin);
-	fread(&dummy, 1, 4, fin); // horizontal resolution
-	fread(&dummy, 1, 4, fin); // vertical resolution
-	fread(&dummy, 1, 4, fin); // palette size
-	fread(&dummy, 1, 4, fin); // number of important colors
+	dummy = fread(&dummy, 1, 2, fin); // magic number
+	dummy = fread(&this->file_size, 1, 4, fin);
+	dummy = fread(&dummy, 1, 2, fin); // RFU
+	dummy = fread(&dummy, 1, 2, fin); // RFU
+	dummy = fread(&this->data_offset, 1, 4, fin); 
+	dummy = fread(&dummy, 1, 4, fin); // header size
+	dummy = fread(&this->width, 1, 4, fin);
+	dummy = fread(&this->height, 1, 4, fin);
+	dummy = fread(&dummy, 1, 2, fin); // color planes
+	dummy = fread(&this->bits_per_pixel, 1, 2, fin);
+	dummy = fread(&dummy, 1, 4, fin); // compression mode
+	dummy = fread(&this->data_size, 1, 4, fin);
+	dummy = fread(&dummy, 1, 4, fin); // horizontal resolution
+	dummy = fread(&dummy, 1, 4, fin); // vertical resolution
+	dummy = fread(&dummy, 1, 4, fin); // palette size
+	dummy = fread(&dummy, 1, 4, fin); // number of important colors
 
 	unsigned char * buffer = new unsigned char[data_size];
 

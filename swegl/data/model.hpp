@@ -136,13 +136,8 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 	result.mesh.vertices = std::vector<vertex_t>
 		{
 			vertex_t(0.0f, 0.0f, 0.0f),
-			vertex_t(2.0f, 0.0f, 0.0f),
-			vertex_t(0.0f, 2.0f, 0.0f)
-			/*
-			vertex_t(0.0f, 0.0f, 0.0f),
 			vertex_t(size, 0.0f, 0.0f),
 			vertex_t(0.0f, size, 0.0f)
-			*/
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);

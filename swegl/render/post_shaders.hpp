@@ -11,7 +11,7 @@ namespace swegl
 
 struct post_shader_t
 {
-	virtual void shade(viewport_t & m_viewport, float *m_zbuffer) {}
+	virtual void shade(viewport_t &, [[maybe_unused]] float *m_zbuffer) {}
 };
 
 struct post_shader_depth_box : public post_shader_t

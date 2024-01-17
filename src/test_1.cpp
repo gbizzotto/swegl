@@ -58,7 +58,7 @@ public:
 
 		window = SDL_CreateWindow("swegl test",
 			10,
-			10,
+			1500,
 			SCR_WIDTH,
 			SCR_HEIGHT,
 			0);
@@ -89,7 +89,7 @@ public:
 swegl::scene_t build_scene();
 int KeyboardWorks(SDLWrapper &, swegl::camera_t &, swegl::scene_t & scene);
 
-int main(int argc, char *argv[])
+int main()
 {
 	SDLWrapper sdl;
 

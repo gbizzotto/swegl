@@ -16,23 +16,23 @@ namespace swegl
 class pixel_shader_t
 {
 public:
-	virtual void prepare_for_model(std::vector<vertex_t> & vertices,
-	                               std::vector<normal_t> & normals,
-	                               const model_t & model,
-	                               const scene_t & scene,
-	                               const camera_t & camera,
-	                               const viewport_t & viewport) {}
-	virtual void push_back_vertex_temporary(vertex_t & v) {}
+	virtual void prepare_for_model(std::vector<vertex_t> &,
+	                               std::vector<normal_t> &,
+	                               const model_t &,
+	                               const scene_t &,
+	                               const camera_t &,
+	                               const viewport_t &) {}
+	virtual void push_back_vertex_temporary(vertex_t &) {}
 	virtual void pop_back_vertex_temporary() {}
-	virtual void prepare_for_strip(const triangle_strip & strip) {}
-	virtual void prepare_for_fan  (const triangle_fan & fan) {}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) {}
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) {}
+	virtual void prepare_for_strip(const triangle_strip &) {}
+	virtual void prepare_for_fan  (const triangle_fan &) {}
+	virtual void prepare_for_triangle_list(const triangle_list_t &) {}
+	virtual void prepare_for_triangle(const std::vector<vertex_idx> &, vertex_idx, vertex_idx, vertex_idx) {}
 	virtual void next_triangle() {}
-	virtual void prepare_for_upper_triangle(bool long_line_on_right) {}
-	virtual void prepare_for_lower_triangle(bool long_line_on_right) {}
-	virtual void prepare_for_scanline(float progress_left, float progress_right) {}
-	virtual int shade(float progress) { return 0; }
+	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
+	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
+	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
+	virtual int shade([[maybe_unused]] float progress) { return 0; }
 };
 
 class pixel_shader_lights_flat : public pixel_shader_t
@@ -49,12 +49,12 @@ class pixel_shader_lights_flat : public pixel_shader_t
 	float light;
 
 public:
-	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               std::vector<normal_t> & n,
-	                               const model_t & m,
-	                               const scene_t & s,
-	                               const camera_t & c,
-	                               const viewport_t & vp)
+	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
+	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] const model_t & m,
+	                               [[maybe_unused]] const scene_t & s,
+	                               [[maybe_unused]] const camera_t & c,
+	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
@@ -146,7 +146,7 @@ public:
 		light = scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 		light *= 65536;
 	}
-	virtual int shade(float progress) override
+	virtual int shade([[maybe_unused]] float progress) override
 	{
 		return light;
 	}
@@ -175,12 +175,12 @@ class pixel_shader_lights_semiflat : public pixel_shader_t
 	vector_t dir;
 
 public:
-	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               std::vector<normal_t> & n,
-	                               const model_t & m,
-	                               const scene_t & s,
-	                               const camera_t & c,
-	                               const viewport_t & vp)
+	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
+	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] const model_t & m,
+	                               [[maybe_unused]] const scene_t & s,
+	                               [[maybe_unused]] const camera_t & c,
+	                               [[maybe_unused]] const viewport_t & vp)
 	{
 		model = &m;
 		scene = &s;
@@ -321,12 +321,12 @@ class pixel_shader_texture : public pixel_shader_t
 	unsigned int theight;
 
 public:
-	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               std::vector<normal_t> & n,
-	                               const model_t & m,
-	                               const scene_t & s,
-	                               const camera_t & c,
-	                               const viewport_t & vp) override
+	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
+	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] const model_t & m,
+	                               [[maybe_unused]] const scene_t & s,
+	                               [[maybe_unused]] const camera_t & c,
+	                               [[maybe_unused]] const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
@@ -351,7 +351,7 @@ public:
 		texture_mapping = &list.texture_mapping;
 	}
 
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle([[maybe_unused]] const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
 		t0 = (*texture_mapping)[i0];
 		t1 = (*texture_mapping)[i1];
@@ -431,12 +431,12 @@ class pixel_shader_texture_bilinear : public pixel_shader_t
 	float theight;
 
 public:
-	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               std::vector<normal_t> & n,
-	                               const model_t & m,
-	                               const scene_t & s,
-	                               const camera_t & c,
-	                               const viewport_t & vp) override
+	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
+	                               [[maybe_unused]] std::vector<normal_t> & n,
+	                               [[maybe_unused]] const model_t & m,
+	                               [[maybe_unused]] const scene_t & s,
+	                               [[maybe_unused]] const camera_t & c,
+	                               [[maybe_unused]] const viewport_t & vp) override
 	{
 		model    = & m;
 		scene    = & s;
@@ -461,7 +461,7 @@ public:
 		texture_mapping = &list.texture_mapping;
 	}
 
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle([[maybe_unused]] const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
 		t0 = (*texture_mapping)[i0];
 		t1 = (*texture_mapping)[i1];

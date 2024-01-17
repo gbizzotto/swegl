@@ -15,6 +15,7 @@ class vertex_t
 public:
 	inline vertex_t() : matrix() {}
 	inline vertex_t(float x, float y, float z) : matrix{x, y, z} {}
+	vertex_t & operator=(const vertex_t &) = default;
 
 	      float & x()       { return matrix[0][0]; }
 	const float & x() const { return matrix[0][0]; }

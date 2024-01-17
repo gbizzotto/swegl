@@ -24,22 +24,22 @@ namespace swegl
 		if (fin == NULL)
 			return;
 
-		fread(&dummy, 1, 2, fin); // magic number
-		fread(&file_size, 1, 4, fin);
-		fread(&dummy, 1, 2, fin); // RFU
-		fread(&dummy, 1, 2, fin); // RFU
-		fread(&data_offset, 1, 4, fin); 
-		fread(&dummy, 1, 4, fin); // header size
-		fread(&width, 1, 4, fin);
-		fread(&height, 1, 4, fin);
-		fread(&dummy, 1, 2, fin); // color planes
-		fread(&bits_per_pixel, 1, 2, fin);
-		fread(&dummy, 1, 4, fin); // compression mode
-		fread(&data_size, 1, 4, fin);
-		fread(&dummy, 1, 4, fin); // horizontal resolution
-		fread(&dummy, 1, 4, fin); // vertical resolution
-		fread(&dummy, 1, 4, fin); // palette size
-		fread(&dummy, 1, 4, fin); // number of important colors
+		dummy = fread(&dummy, 1, 2, fin); // magic number
+		dummy = fread(&file_size, 1, 4, fin);
+		dummy = fread(&dummy, 1, 2, fin); // RFU
+		dummy = fread(&dummy, 1, 2, fin); // RFU
+		dummy = fread(&data_offset, 1, 4, fin); 
+		dummy = fread(&dummy, 1, 4, fin); // header size
+		dummy = fread(&width, 1, 4, fin);
+		dummy = fread(&height, 1, 4, fin);
+		dummy = fread(&dummy, 1, 2, fin); // color planes
+		dummy = fread(&bits_per_pixel, 1, 2, fin);
+		dummy = fread(&dummy, 1, 4, fin); // compression mode
+		dummy = fread(&data_size, 1, 4, fin);
+		dummy = fread(&dummy, 1, 4, fin); // horizontal resolution
+		dummy = fread(&dummy, 1, 4, fin); // vertical resolution
+		dummy = fread(&dummy, 1, 4, fin); // palette size
+		dummy = fread(&dummy, 1, 4, fin); // number of important colors
 
 		m_mipmapsCount = MIPMAPS_COUNT;
 
@@ -61,12 +61,12 @@ namespace swegl
 			lineoffset -= width;
 			for (int i=0 ; i<width ; i++)
 			{
-				fread(&b, 1, 1, fin);
-				fread(&g, 1, 1, fin);
-				fread(&r, 1, 1, fin);
+				dummy = fread(&b, 1, 1, fin);
+				dummy = fread(&g, 1, 1, fin);
+				dummy = fread(&r, 1, 1, fin);
 				bitmap[lineoffset+i] = (r<<16)|(g<<8)|b;
 			}
-			fread(&dummy, 1, (width*3)%4, fin); // skipping padding bytes aligning lines on 32bits
+			dummy = fread(&dummy, 1, (width*3)%4, fin); // skipping padding bytes aligning lines on 32bits
 		}
 
 		//Calculating mipmaps	

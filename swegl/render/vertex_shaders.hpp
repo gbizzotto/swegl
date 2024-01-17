@@ -25,11 +25,11 @@ struct vertex_shader_standard : public vertex_shader_t
 {
 	const matrix44_t * viewportmatrix;
 	virtual void shade(std::vector<vertex_t> & vertices,
-	                   std::vector<normal_t> & normals,
-	                   const model_t & model,
-	                   const scene_t & scene,
-	                   const camera_t & camera,
-	                   const viewport_t & viewport) override
+	                   [[maybe_unused]] std::vector<normal_t> & normals,
+	                   [[maybe_unused]] const model_t & model,
+	                   [[maybe_unused]] const scene_t & scene,
+	                   [[maybe_unused]] const camera_t & camera,
+	                   [[maybe_unused]] const viewport_t & viewport) override
 	{
 		auto model_matrix = model.orientation;
 		model_matrix.translate(model.position.x(), model.position.y(), model.position.z());
@@ -61,11 +61,11 @@ struct vertex_shader_standard : public vertex_shader_t
 struct vertex_shader_world : public vertex_shader_t
 {
 	virtual void shade(std::vector<vertex_t> & vertices,
-	                   std::vector<normal_t> & normals,
-	                   const model_t & model,
-	                   const scene_t & scene,
-	                   const camera_t & camera,
-	                   const viewport_t & viewport) override
+	                   [[maybe_unused]] std::vector<normal_t> & normals,
+	                   [[maybe_unused]] const model_t & model,
+	                   [[maybe_unused]] const scene_t & scene,
+	                   [[maybe_unused]] const camera_t & camera,
+	                   [[maybe_unused]] const viewport_t & viewport) override
 	{
 		vertice_transform_matrix = model.orientation;
 		vertice_transform_matrix.translate(model.position.x(), model.position.y(), model.position.z());

@@ -259,15 +259,15 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	model.pixel_shader->next_triangle();
 }
 
-void fill_triangle_2(const std::vector<vertex_idx> & indices,
-                     vertex_idx i0,
-                     vertex_idx i1,
-                     vertex_idx i2,
-                     std::vector<vertex_t> & vertices,
-                     std::vector<vec2f_t> & texture_mapping,
-                     model_t & model,
-                     viewport_t & vp,
-                     float * zbuffer)
+void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
+                     [[maybe_unused]] vertex_idx i0,
+                     [[maybe_unused]] vertex_idx i1,
+                     [[maybe_unused]] vertex_idx i2,
+                     [[maybe_unused]] std::vector<vertex_t> & vertices,
+                     [[maybe_unused]] std::vector<vec2f_t> & texture_mapping,
+                     [[maybe_unused]] model_t & model,
+                     [[maybe_unused]] viewport_t & vp,
+                     [[maybe_unused]] float * zbuffer)
 {
 	const vertex_t * v0 = &vertices[indices[i0]];
 	const vertex_t * v1 = &vertices[indices[i1]];

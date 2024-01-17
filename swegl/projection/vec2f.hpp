@@ -12,6 +12,7 @@ namespace swegl
 		vec2f_t();
 		vec2f_t(float x, float y);
 		vec2f_t(const vec2f_t & other);
+		vec2f_t & operator=(const vec2f_t &) = default;
 
 		vec2f_t operator/(const vec2f_t & other) const;
 	};
