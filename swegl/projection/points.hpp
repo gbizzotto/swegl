@@ -107,7 +107,15 @@ class normal_t : public vector_t
 {
 public:
 	inline normal_t() : vector_t() {}
+	inline normal_t(const vector_t && v) : vector_t(v) {}
 	inline normal_t(float x, float y, float z): vector_t(x, y, z) {}
+	inline normal_t & operator=(const vector_t & v)
+	{
+		x() = v.x();
+		y() = v.y();
+		z() = v.z();
+		return *this;
+	}
 };
 
 inline vector_t operator-(const vertex_t left, const vertex_t right)
@@ -118,6 +126,20 @@ inline vector_t operator-(const vertex_t left, const vertex_t right)
 }
 normal_t cross(const vector_t &, const vector_t &);
 normal_t transform(const normal_t &, const matrix44_t &);
+
+inline normal_t operator+(const normal_t & left, const normal_t & right)
+{
+	return normal_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
+}
+inline normal_t operator-(const normal_t & left, const normal_t & right)
+{
+	return normal_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
+}
+template<typename T>
+normal_t operator*(const normal_t & left, const T & right)
+{
+	return normal_t(left.x()*right, left.y()*right, left.z()*right);
+}
 
 template<typename O>
 O & operator<<(O & out, const vertex_t & v)

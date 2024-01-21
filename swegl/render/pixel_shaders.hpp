@@ -14,19 +14,19 @@ namespace swegl
 
 struct pixel_shader_t
 {
-	virtual void prepare_for_model(std::vector<vertex_t> &,
-	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
-	                               const model_t &,
-	                               const scene_t &,
-	                               const viewport_t &) {}
-	virtual void push_back_vertex_temporary(vertex_t &) {}
-	virtual void pop_back_vertex_temporary() {}
-	virtual void prepare_for_strip(const triangle_strip &) {}
-	virtual void prepare_for_fan  (const triangle_fan &) {}
-	virtual void prepare_for_triangle_list(const triangle_list_t &) {}
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> &, vertex_idx, vertex_idx, vertex_idx) {}
-	virtual void next_triangle() {}
+	const model_t * model;
+	const scene_t * scene;
+	const viewport_t * viewport;
+
+	virtual void prepare_for_model(const model_t & m,
+	                               const scene_t & s,
+	                               const viewport_t & vp)
+	{
+		model = &m;
+		scene = &s;
+		viewport = &vp;
+	}
+	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
@@ -35,65 +35,19 @@ struct pixel_shader_t
 
 struct pixel_shader_lights_flat : pixel_shader_t
 {
-	vertex_shader_world vertex_shader;
-
-	const model_t * model;
-	const scene_t * scene;
-	const viewport_t * viewport;
-	std::vector<vertex_t> vertices;
-	std::vector<normal_t> * normals;
-	int triangle_idx;
+	vertex_shader_t vertex_shader;
 
 	float light;
 
-	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & face_n,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_n,
-	                               [[maybe_unused]] const model_t & m,
-	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const viewport_t & vp)
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		model = &m;
-		scene = &s;
-		vertex_shader.shade(vertices, face_n, vertex_n, m, s, vp);
-		normals = &face_n;
-		viewport = &vp;
-
-		normals->clear();
-		normals->reserve(m.mesh.face_normals.size());
-		for (const auto & n : m.mesh.face_normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
-	}
-
-	virtual void push_back_vertex_temporary(vertex_t & v) override
-	{
-		vertices.push_back(vertex_shader.shade_one(v));
-	}
-	virtual void pop_back_vertex_temporary() override
-	{
-		vertices.pop_back();
-	}
-
-	virtual void prepare_for_strip([[maybe_unused]] const triangle_strip & strip) override
-	{
-	}
-	virtual void prepare_for_fan([[maybe_unused]] const triangle_fan & fan) override
-	{
-	}
-	virtual void prepare_for_triangle_list([[maybe_unused]] const triangle_list_t & list) override
-	{
-	}
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
-	{
-		float face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
+		float face_sun_intensity = - model->mesh.vertices_world[i0].normal.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
 		else
 			face_sun_intensity *= scene->sun_intensity;
 
-		vertex_t center_vertex = (vertices[indices[i0]] + vertices[indices[i1]] + vertices[indices[i2]]) / 3;
+		vertex_t center_vertex = (model->mesh.vertices_world[i0].v + model->mesh.vertices_world[i1].v + model->mesh.vertices_world[i2].v) / 3;
 		//vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
 		//vertex_t camera_position = 
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
@@ -106,7 +60,7 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				float light_distance_squared = light_direction.len_squared();
 				float diffuse = psl.intensity / light_distance_squared;
 				light_direction.normalize();
-				vector_t & normal = (*normals)[triangle_idx];
+				const vector_t & normal = model->mesh.vertices_world[i0].normal;
 				float alignment = -normal.dot(light_direction);
 				if (alignment < 0.0f)
 					return total;
@@ -136,75 +90,27 @@ struct pixel_shader_lights_flat : pixel_shader_t
 	{
 		return light;
 	}
-	virtual void next_triangle() override
-	{
-		triangle_idx++;
-	}
 };
 
 struct pixel_shader_lights_semiflat : pixel_shader_t
 {
-	vertex_shader_world vertex_shader;
-
-	const model_t * model;
-	const scene_t * scene;
-	std::vector<vertex_t> vertices;
-	std::vector<normal_t> * normals;
-	int triangle_idx;
-
 	float face_sun_intensity;
 
+	normal_t n0;
 	vertex_t v0, v1, v2;
 	vertex_t vleft, vright;
 	vector_t vleftdir, vrightdir;
 	vertex_t v;
 	vector_t dir;
 
-	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & face_n,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_n,
-	                               [[maybe_unused]] const model_t & m,
-	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const viewport_t & vp)
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		model = &m;
-		scene = &s;
-		vertex_shader.shade(vertices, face_n, vertex_n, m, s, vp);
-		normals = &face_n;
+		n0 = model->mesh.vertices_viewport[i0].normal;
+		v0 = model->mesh.vertices_viewport[i0].v;
+		v1 = model->mesh.vertices_viewport[i1].v;
+		v2 = model->mesh.vertices_viewport[i2].v;
 
-		normals->clear();
-		normals->reserve(m.mesh.face_normals.size());
-		for (const auto & n : m.mesh.face_normals)
-			normals->emplace_back(transform(n, model->orientation));
-
-		triangle_idx = 0;
-	}
-
-	virtual void push_back_vertex_temporary(vertex_t & v) override
-	{
-		vertices.push_back(vertex_shader.shade_one(v));
-	}
-	virtual void pop_back_vertex_temporary() override
-	{
-		vertices.pop_back();
-	}
-
-	virtual void prepare_for_strip([[maybe_unused]] const triangle_strip & strip) override
-	{
-	}
-	virtual void prepare_for_fan([[maybe_unused]] const triangle_fan & fan) override
-	{
-	}
-	virtual void prepare_for_triangle_list([[maybe_unused]] const triangle_list_t & list) override
-	{
-	}
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
-	{
-		v0 = vertices[indices[i0]];
-		v1 = vertices[indices[i1]];
-		v2 = vertices[indices[i2]];
-
-		face_sun_intensity = -(*normals)[triangle_idx].dot(scene->sun_direction);
+		face_sun_intensity = - n0.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
 		else
@@ -255,7 +161,7 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 				if (intensity < 0.05)
 					return total;
 				light_direction.normalize();
-				float alignment = -(*normals)[triangle_idx].dot(light_direction);
+				float alignment = - n0.dot(light_direction);
 				if (alignment < 0.0f)
 					return total;
 				return total + alignment * intensity;
@@ -263,20 +169,10 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 
 		return 65536 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
 	}
-	virtual void next_triangle() override
-	{
-		triangle_idx++;
-	}
 };
 
 struct pixel_shader_texture : pixel_shader_t
 {
-	const model_t * model;
-	const scene_t * scene;
-	const viewport_t * viewport;
-
-	const std::vector<vec2f_t> * texture_mapping;
-
 	vec2f_t t0;
 	vec2f_t t1;
 	vec2f_t t2;
@@ -293,40 +189,24 @@ struct pixel_shader_texture : pixel_shader_t
 	unsigned int twidth;
 	unsigned int theight;
 
-	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
-	                               [[maybe_unused]] const model_t & m,
+	virtual void prepare_for_model([[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp) override
 	{
-		model    = & m;
-		scene    = & s;
-		viewport = & vp;
+		pixel_shader_t::prepare_for_model(m, s, vp);
+
+		// TODO: select LOD / mipmap according to distance from camera
 
 		tbitmap = m.mesh.textures[0]->m_mipmaps.get()[0].m_bitmap;
 		twidth  = m.mesh.textures[0]->m_mipmaps.get()[0].m_width;
 		theight = m.mesh.textures[0]->m_mipmaps.get()[0].m_height;
 	}
 
-	virtual void prepare_for_strip(const triangle_strip & strip) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		texture_mapping = &strip.texture_mapping;
-	}
-	virtual void prepare_for_fan(const triangle_fan & fan) override
-	{
-		texture_mapping = &fan.texture_mapping;
-	}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
-	{
-		texture_mapping = &list.texture_mapping;
-	}
-
-	virtual void prepare_for_triangle([[maybe_unused]] const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
-	{
-		t0 = (*texture_mapping)[i0];
-		t1 = (*texture_mapping)[i1];
-		t2 = (*texture_mapping)[i2];
+		t0 = model->mesh.vertices[i0].tex_coords;
+		t1 = model->mesh.vertices[i1].tex_coords;
+		t2 = model->mesh.vertices[i2].tex_coords;
 
 		t0[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
 		t0[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
@@ -378,12 +258,6 @@ struct pixel_shader_texture : pixel_shader_t
 
 struct pixel_shader_texture_bilinear : pixel_shader_t
 {
-	const model_t * model;
-	const scene_t * scene;
-	const viewport_t * viewport;
-
-	const std::vector<vec2f_t> * texture_mapping;
-
 	vec2f_t t0;
 	vec2f_t t1;
 	vec2f_t t2;
@@ -400,40 +274,22 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	float twidth;
 	float theight;
 
-	virtual void prepare_for_model([[maybe_unused]] std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
-	                               [[maybe_unused]] const model_t & m,
+	virtual void prepare_for_model([[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
 	                               [[maybe_unused]] const viewport_t & vp) override
 	{
-		model    = & m;
-		scene    = & s;
-		viewport = & vp;
+		pixel_shader_t::prepare_for_model(m, s, vp);
 
 		tbitmap = m.mesh.textures[0]->m_mipmaps[0].m_bitmap;
 		twidth  = m.mesh.textures[0]->m_mipmaps[0].m_width;
 		theight = m.mesh.textures[0]->m_mipmaps[0].m_height;
 	}
 
-	virtual void prepare_for_strip(const triangle_strip & strip) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		texture_mapping = &strip.texture_mapping;
-	}
-	virtual void prepare_for_fan(const triangle_fan & fan) override
-	{
-		texture_mapping = &fan.texture_mapping;
-	}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
-	{
-		texture_mapping = &list.texture_mapping;
-	}
-
-	virtual void prepare_for_triangle([[maybe_unused]] const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
-	{
-		t0 = (*texture_mapping)[i0];
-		t1 = (*texture_mapping)[i1];
-		t2 = (*texture_mapping)[i2];
+		t0 = model->mesh.vertices[i0].tex_coords;
+		t1 = model->mesh.vertices[i1].tex_coords;
+		t2 = model->mesh.vertices[i2].tex_coords;
 
 		t0[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
 		t0[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
@@ -515,53 +371,18 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 	L shader_flat_light;
 	T shader_texture;
 
-	virtual void prepare_for_model(std::vector<vertex_t> & v,
-	                               [[maybe_unused]] std::vector<normal_t> & face_normals,
-	                               [[maybe_unused]] std::vector<normal_t> & vertex_normals,
-	                               const model_t & m,
+	virtual void prepare_for_model(const model_t & m,
 	                               const scene_t & s,
 	                               const viewport_t & vp) override
 	{
-		shader_flat_light.prepare_for_model(v, face_normals, vertex_normals, m, s, vp);
-		shader_texture.prepare_for_model(v, face_normals, vertex_normals, m, s, vp);
+		shader_flat_light.prepare_for_model(m, s, vp);
+		shader_texture.prepare_for_model(m, s, vp);
 	}
 
-	virtual void push_back_vertex_temporary(vertex_t & v) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		shader_flat_light.push_back_vertex_temporary(v);
-		shader_texture.push_back_vertex_temporary(v);
-	}
-	virtual void pop_back_vertex_temporary() override
-	{
-		shader_flat_light.pop_back_vertex_temporary();
-		shader_texture.pop_back_vertex_temporary();
-	}
-
-	virtual void prepare_for_strip(const triangle_strip & strip) override
-	{
-		shader_flat_light.prepare_for_strip(strip);
-		shader_texture.prepare_for_strip(strip);
-	}
-	virtual void prepare_for_fan(const triangle_fan & fan) override
-	{
-		shader_flat_light.prepare_for_fan(fan);
-		shader_texture.prepare_for_fan(fan);
-	}
-	virtual void prepare_for_triangle_list(const triangle_list_t & list) override
-	{
-		shader_flat_light.prepare_for_triangle_list(list);
-		shader_texture.prepare_for_triangle_list(list);
-	}
-
-	virtual void prepare_for_triangle(const std::vector<vertex_idx> & indices, vertex_idx i0, vertex_idx i1, vertex_idx i2) override
-	{
-		shader_flat_light.prepare_for_triangle(indices, i0, i1, i2);
-		shader_texture.prepare_for_triangle(indices, i0, i1, i2);
-	}
-	virtual void next_triangle() override
-	{
-		shader_flat_light.next_triangle();
-		shader_texture.next_triangle();
+		shader_flat_light.prepare_for_triangle(i0, i1, i2);
+		shader_texture.prepare_for_triangle(i0, i1, i2);
 	}
 
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override

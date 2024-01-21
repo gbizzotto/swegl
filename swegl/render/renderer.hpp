@@ -29,21 +29,15 @@ struct line_side
 
 void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
 
-void fill_triangle(std::vector<vertex_idx> & indices,
-                   vertex_idx i0,
+void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   std::vector<vertex_t> & vertices,
-                   std::vector<vec2f_t> & texture_mapping,
                    model_t & model,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader);
-void fill_triangle_2(const std::vector<vertex_idx> & indices,
-                     vertex_idx i0,
+void fill_triangle_2(vertex_idx i0,
                      vertex_idx i1,
                      vertex_idx i2,
-                     std::vector<vertex_t> & vertices,
-                     std::vector<vec2f_t> & texture_mapping,
                      model_t & model,
                      viewport_t & vp,
                      pixel_shader_t & pixel_shader);
@@ -60,53 +54,35 @@ struct transformed_scene_t
 	std::vector<model_t> screen_view;
 };
 
-inline void render(scene_t & scene, viewport_t & viewport)
+inline void _render(scene_t & scene, viewport_t & viewport)
 {
 	//auto basic_vertice_transform_matrix = m_camera.m_projectionmatrix * m_camera.m_viewmatrix;
 
 	viewport.clear();
 
-	static std::vector<vertex_t> vertices;
-	static std::vector<normal_t> face_normals;
-	static std::vector<normal_t> vertex_normals;
-
 	for (auto & model : scene.models)
 	{
-		viewport.m_vertex_shader->shade(vertices, face_normals, vertex_normals, model, scene, viewport);
+		vertex_shader_t::world_to_viewport(scene, viewport);
 
-		pixel_shader_t & pixel_shader = [&]() -> pixel_shader_t &
-			{
-				if (model.smooth)
-					return *viewport.m_pixel_shader_smooth;
-				else
-					return *viewport.m_pixel_shader_sharp;
-			}();
-
-		pixel_shader.prepare_for_model(vertices, face_normals, vertex_normals, model, scene, viewport);
+		pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
+		pixel_shader.prepare_for_model(model, scene, viewport);
 
 		// STRIPS
 		for (triangle_strip & strip : model.mesh.triangle_strips)
 		{
-			pixel_shader.prepare_for_strip(strip);
 			for (unsigned int i=2 ; i<strip.indices.size() ; i++)
 				if ((i&0x1)==0)
-					fill_triangle(strip.indices
-					             ,i-2
-					             ,i-1
-					             ,i  
-					             ,vertices
-					             ,strip.texture_mapping
+					fill_triangle(strip.indices[i-2]
+					             ,strip.indices[i-1]
+					             ,strip.indices[i  ]
 					             ,model
 					             ,viewport
 					             ,pixel_shader
 					             );
 				else
-					fill_triangle(strip.indices
-					             ,i-2
-					             ,i  
-					             ,i-1
-					             ,vertices
-					             ,strip.texture_mapping
+					fill_triangle(strip.indices[i-2]
+					             ,strip.indices[i  ]
+					             ,strip.indices[i-1]
 					             ,model
 					             ,viewport
 					             ,pixel_shader
@@ -115,28 +91,20 @@ inline void render(scene_t & scene, viewport_t & viewport)
 		// FANS
 		for (triangle_fan & fan : model.mesh.triangle_fans)
 		{
-			pixel_shader.prepare_for_fan(fan);
 			for (unsigned int i=2 ; i<fan.indices.size() ; i++)
-				fill_triangle(fan.indices
-				             ,0  
-				             ,i-1
-				             ,i  
-				             ,vertices
-				             ,fan.texture_mapping
+				fill_triangle(fan.indices[0  ]
+				             ,fan.indices[i-1]
+				             ,fan.indices[i  ]
 				             ,model
 				             ,viewport
 				             ,pixel_shader
 				             );
 		}
 		// TRIs
-		pixel_shader.prepare_for_triangle_list(model.mesh.triangle_list);
 		for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-			fill_triangle(model.mesh.triangle_list.indices
-			             ,i-2
+			fill_triangle(i-2
 			             ,i-1
 			             ,i  
-			             ,vertices
-			             ,model.mesh.triangle_list.texture_mapping
 			             ,model
 			             ,viewport
 			             ,pixel_shader
@@ -147,34 +115,32 @@ inline void render(scene_t & scene, viewport_t & viewport)
 }
 
 template<typename...T>
-void render(scene_t & scene, viewport_t & viewport, T&...t)
+void _render(scene_t & scene, viewport_t & viewport, T&...t)
 {
-	render(scene, viewport);
-	render(scene, t...);
+	_render(scene, viewport);
+	_render(scene, t...);
 }
 
 template<typename...T>
 void render(scene_t & scene, T&...t)
 {
-	// Transform scene with vertex shader ONCE
+	// Transform scene into world coordinates with vertex shader ONCE for all viewports
+	vertex_shader_t::original_to_world(scene);
 
-	render(scene, t...);
+	_render(scene, t...);
 }
 
 
-void fill_triangle(std::vector<vertex_idx> & indices,
-                   vertex_idx i0,
+void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   std::vector<vertex_t> & vertices,
-                   std::vector<vec2f_t> & texture_mapping,
                    model_t & model,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader)
 {
-	const vertex_t * v0 = &vertices[indices[i0]];
-	const vertex_t * v1 = &vertices[indices[i1]];
-	const vertex_t * v2 = &vertices[indices[i2]];
+	const vertex_t * v0 = &model.mesh.vertices_viewport[i0].v;
+	const vertex_t * v1 = &model.mesh.vertices_viewport[i1].v;
+	const vertex_t * v2 = &model.mesh.vertices_viewport[i2].v;
 
 	// frustum clipping
 	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x       )
@@ -183,7 +149,6 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 		||(v0->y() >= vp.m_y+vp.m_h && v1->y() >= vp.m_y+vp.m_h && v2->y() >= vp.m_y+vp.m_h)
 	   )
 	{
-		pixel_shader.next_triangle();
 		return;
 	}
 
@@ -191,7 +156,6 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	// z already inversed by viewmatrix (high Z = far)
 	if ( cross((*v1-*v0),(*v2-*v0)).z() >= 0 )
 	{
-		pixel_shader.next_triangle();
 		return;
 	}
 
@@ -212,93 +176,70 @@ void fill_triangle(std::vector<vertex_idx> & indices,
 	}
 
 	if (v0->z() < 0.001) // no vertex in front of the camera
-	{
-		pixel_shader.next_triangle();
 		return; // Z-near clipping
-	}
 
 	if (v1->z() < 0.001) // only v0 in front of the camera
 	{
 		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
-		vertex_idx new_i1 = vertices.size();
-		vertex_idx new_ii1 = indices.size();
-		indices.push_back(new_i1);
-		vertex_t new_vertex1 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i1]]-model.mesh.vertices[indices[i0]])*cut_1;
-		pixel_shader.push_back_vertex_temporary(new_vertex1);
-		vertices.push_back(vp.m_vertex_shader->shade_one(new_vertex1));
-		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i1]-texture_mapping[i0])*cut_1);
+		vertex_t new_vertex_1 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i1].v         -model.mesh.vertices_world[i0].v         )*cut_1;
+		vec2f_t  new_tex_1    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i1].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
+		normal_t new_normal_1 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i1].normal    -model.mesh.vertices_world[i0].normal    )*cut_1;
+		model.mesh.vertices_world.push_back({new_vertex_1,  new_tex_1, new_normal_1});
+		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_1, vp), new_tex_1, new_normal_1});
 
 		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		vertex_idx new_i2 = vertices.size();
-		vertex_idx new_ii2 = indices.size();
-		indices.push_back(new_i2);
-		vertex_t new_vertex2 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_2;
-		pixel_shader.push_back_vertex_temporary(new_vertex2);
-		vertices.push_back(vp.m_vertex_shader->shade_one(new_vertex2));
-		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_2);
+		vertex_t new_vertex_2 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i2].v         -model.mesh.vertices_world[i0].v         )*cut_2;
+		vec2f_t  new_tex_2    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i2].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
+		normal_t new_normal_2 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i2].normal    -model.mesh.vertices_world[i0].normal    )*cut_2;
+		model.mesh.vertices_world.push_back({new_vertex_2,  new_tex_2, new_normal_2});
+		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_2, vp), new_tex_2, new_normal_2});
 
-		fill_triangle_2(indices, i0, new_ii1, new_ii2, vertices, texture_mapping, model, vp, pixel_shader);
-		texture_mapping.pop_back();
-		texture_mapping.pop_back();
-		indices.pop_back();
-		indices.pop_back();
-		pixel_shader.pop_back_vertex_temporary();
-		pixel_shader.pop_back_vertex_temporary();
-
-		pixel_shader.next_triangle();
+		fill_triangle_2(i0, model.mesh.vertices_world.size()-2, model.mesh.vertices_world.size()-1, model, vp, pixel_shader);
+		model.mesh.vertices_world.pop_back();
+		model.mesh.vertices_world.pop_back();
+		model.mesh.vertices_viewport.pop_back();
+		model.mesh.vertices_viewport.pop_back();
 		return;
 	}
 
 	if (v2->z() < 0.001) // only v2 is in the back of the camera
 	{
 		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		vertex_idx new_i0 = vertices.size();
-		vertex_idx new_ii0 = indices.size();
-		indices.push_back(new_i0);
-		vertex_t new_vertex1 = model.mesh.vertices[indices[i0]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i0]])*cut_0;
-		pixel_shader.push_back_vertex_temporary(new_vertex1);
-		vertices.push_back(vp.m_vertex_shader->shade_one(new_vertex1));
-		texture_mapping.push_back(texture_mapping[i0] + (texture_mapping[i2]-texture_mapping[i0])*cut_0);
-
-		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
-		vertex_idx new_i1 = vertices.size();
-		vertex_idx new_ii1 = indices.size();
-		indices.push_back(new_i1);
-		vertex_t new_vertex2 = model.mesh.vertices[indices[i1]] + (model.mesh.vertices[indices[i2]]-model.mesh.vertices[indices[i1]])*cut_1;
-		pixel_shader.push_back_vertex_temporary(new_vertex2);
-		vertices.push_back(vp.m_vertex_shader->shade_one(new_vertex2));
-		texture_mapping.push_back(texture_mapping[i1] + (texture_mapping[i2]-texture_mapping[i1])*cut_1);
-
-		fill_triangle_2(indices, i1,      i0, new_ii0, vertices, texture_mapping, model, vp, pixel_shader);
-		fill_triangle_2(indices, i1, new_ii0, new_ii1, vertices, texture_mapping, model, vp, pixel_shader);
-		texture_mapping.pop_back();
-		texture_mapping.pop_back();
-		indices.pop_back();
-		indices.pop_back();
-		pixel_shader.pop_back_vertex_temporary();
-		pixel_shader.pop_back_vertex_temporary();
+		vertex_t new_vertex_1 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i1].v         -model.mesh.vertices_world[i0].v         )*cut_0;
+		vec2f_t  new_tex_1    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i1].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_0;
+		normal_t new_normal_1 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i1].normal    -model.mesh.vertices_world[i0].normal    )*cut_0;
+		model.mesh.vertices_world.push_back({new_vertex_1,  new_tex_1, new_normal_1});
+		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_1, vp), new_tex_1, new_normal_1});
 		
-		pixel_shader.next_triangle();
+		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
+		vertex_t new_vertex_2 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i2].v         -model.mesh.vertices_world[i0].v         )*cut_1;
+		vec2f_t  new_tex_2    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i2].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
+		normal_t new_normal_2 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i2].normal    -model.mesh.vertices_world[i0].normal    )*cut_1;
+		model.mesh.vertices_world.push_back({new_vertex_2,  new_tex_2, new_normal_2});
+		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_2, vp), new_tex_2, new_normal_2});
+
+		fill_triangle_2(i1,                                 i0, model.mesh.vertices_world.size()-2, model, vp, pixel_shader);
+		fill_triangle_2(i1, model.mesh.vertices_world.size()-2, model.mesh.vertices_world.size()-1, model, vp, pixel_shader);
+		model.mesh.vertices_world.pop_back();
+		model.mesh.vertices_world.pop_back();
+		model.mesh.vertices_viewport.pop_back();
+		model.mesh.vertices_viewport.pop_back();
 		return;
 	}
 
-	fill_triangle_2(indices, i0, i1, i2, vertices, texture_mapping, model, vp, pixel_shader);
-	pixel_shader.next_triangle();
+	fill_triangle_2(i0, i1, i2, model, vp, pixel_shader);
 }
 
-void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
-                     [[maybe_unused]] vertex_idx i0,
+void fill_triangle_2([[maybe_unused]] vertex_idx i0,
                      [[maybe_unused]] vertex_idx i1,
                      [[maybe_unused]] vertex_idx i2,
-                     [[maybe_unused]] std::vector<vertex_t> & vertices,
-                     [[maybe_unused]] std::vector<vec2f_t> & texture_mapping,
                      [[maybe_unused]] model_t & model,
                      [[maybe_unused]] viewport_t & vp,
                      [[maybe_unused]] pixel_shader_t & pixel_shader)
 {
-	const vertex_t * v0 = &vertices[indices[i0]];
-	const vertex_t * v1 = &vertices[indices[i1]];
-	const vertex_t * v2 = &vertices[indices[i2]];
+	const vertex_t * v0 = &model.mesh.vertices_viewport[i0].v;
+	const vertex_t * v1 = &model.mesh.vertices_viewport[i1].v;
+	const vertex_t * v2 = &model.mesh.vertices_viewport[i2].v;
 
 	// Sort points by screen Y ASC
 	if (v1->y() < v0->y()) {
@@ -338,7 +279,7 @@ void fill_triangle_2([[maybe_unused]] const std::vector<vertex_idx> & indices,
 
 	int y, y_end; // scanlines upper and lower bound of whole triangle
 
-	pixel_shader.prepare_for_triangle(indices, i0, i1, i2);
+	pixel_shader.prepare_for_triangle(i0, i1, i2);
 
 	// upper half of the triangle
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
