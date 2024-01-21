@@ -30,7 +30,7 @@ struct pixel_shader_t
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
-	virtual int shade([[maybe_unused]] float progress) { return 0; }
+	virtual int shade([[maybe_unused]] float progress) { return pixel_colors(128,128,128).to_int(); }
 };
 
 struct pixel_shader_lights_flat : pixel_shader_t

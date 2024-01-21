@@ -35,7 +35,7 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
 	//*
-	auto tore = swegl::make_tore(500, texture_grid);
+	auto tore = swegl::make_tore(100, texture_grid);
 	tore.orientation = swegl::matrix44_t::Identity;
 	tore.orientation.rotate_z(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
@@ -52,7 +52,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(500, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
 	//c->SetBumpMap(bumpmap);
@@ -258,11 +258,11 @@ int main()
 
 	std::shared_ptr<swegl::vertex_shader_t> vertex_shader_0    = std::make_shared<swegl::vertex_shader_standard>();
 	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_full  = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>>();
-	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_basic = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture>>();
+	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_basic = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_t>>();
 	std::shared_ptr<swegl::post_shader_t>   post_shader_null   = std::make_shared<swegl::post_shader_t>();
 	std::shared_ptr<swegl::post_shader_t>   post_shader_DOF    = std::make_shared<swegl::post_shader_depth_box>(5, 5);
 
-	swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, vertex_shader_0, pixel_shader_full , pixel_shader_full , post_shader_DOF );
+	swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, vertex_shader_0, pixel_shader_full , pixel_shader_full , post_shader_null );
 	swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, vertex_shader_0, pixel_shader_basic, pixel_shader_basic, post_shader_null);
 	//swegl::renderer renderer(scene, viewport1);
 	//swegl::renderer renderer2(scene, viewport2);
