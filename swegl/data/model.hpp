@@ -224,7 +224,7 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 
 	return result;	
 }
-/*
+
 inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;
@@ -241,43 +241,55 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 
 	float angle = (2 * 3.141592653589f) / precision;
 	matrix44_t big = matrix44_t::Identity;
+	matrix44_t big_normal = matrix44_t::Identity;
 	big.translate(2.0f, 0.0f, 0.0f);
 
-	for (unsigned int bg = 0; bg < precision; bg++)
+	for (unsigned int bg = 0; bg <= precision; bg++)
 	{
 		matrix44_t small = matrix44_t::Identity;
+		matrix44_t small_normal = matrix44_t::Identity;
 		small.translate(0.8f, 0.0f, 0.0f);
 
-		for (unsigned int sm = 0; sm < precision; sm++)
+		for (unsigned int sm = 0; sm <= precision; sm++)
 		{
-			vertices.push_back(transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big));
+			vertices.push_back(mesh_vertex_t{transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big)
+			                                ,vec2f_t(1.0*bg/precision, 1.0*sm/precision)
+			                                ,transform(transform(normal_t(1.0f, 0.0f, 0.0f), small_normal), big_normal)
+				                            }
+			                  );
 			//normals.push_back((vertices.back() - transform(Vec3f(), big)).Normalize());
 			//vb.emplace_back(std::make_pair<>(transform(transform(Vec3f(), small), big),
 			//                                 vec2f_t(texture->m_mipmaps[0].m_width*(float)bg / precision, texture->m_mipmaps[0].m_height*(float)sm / precision)));
 			small.rotate_z(angle);
+			small_normal.rotate_z(angle);
 		}
 
 		big.rotate_y(angle);
+		big_normal.rotate_y(angle);
 	}
 
-	for (unsigned int bg = 1; bg <= precision; bg++)
+	for (unsigned int bg = 0; bg < precision; bg++)
 	{
 		result.mesh.triangle_strips.emplace_back();
 		auto & strip = result.mesh.triangle_strips.back();
-		for (unsigned int sm = 0; sm <= precision; sm++)
+		strip.indices.push_back((bg+1)*(precision+1));
+		strip.indices.push_back((bg  )*(precision+1));
+		for (unsigned int sm = 0; sm < precision; sm++)
 		{
-			strip.indices.push_back((bg%precision  )*precision + (sm%precision));
-			strip.indices.push_back((bg-1          )*precision + (sm%precision));
-			strip.texture_mapping.emplace_back((float)(bg  ) / precision, (float)(sm) / precision);
-			strip.texture_mapping.emplace_back((float)(bg-1) / precision, (float)(sm) / precision);
+			strip.indices.push_back((bg+1)*(precision+1) + (sm+1));
+			strip.indices.push_back((bg  )*(precision+1) + (sm+1));
 		}
+		int a=0;
 	}
 
-	calculate_normals(result);
+	result.mesh.vertices_world = result.mesh.vertices; // make a full copy
+	result.mesh.vertices_world.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	result.mesh.vertices_viewport = result.mesh.vertices; // make a full copy
+	result.mesh.vertices_viewport.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
 
 	return result;
 }
-
+/*
 inline model_t make_sphere(unsigned int precision, float size, std::shared_ptr<texture_t> & texture)
 {
 	model_t result;

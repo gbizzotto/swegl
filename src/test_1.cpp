@@ -34,13 +34,13 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, -5.0}, 0.6});
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
-	/*
+	//*
 	auto tore = swegl::make_tore(100, texture_grid);
 	tore.orientation = swegl::matrix44_t::Identity;
 	tore.orientation.rotate_z(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
 	//tore.SetBumpMap(bumpmap);
-	s.models.push_back(std::move(tore));
+	s.models.emplace_back(std::move(tore));
 	//*/
 
 	//*
@@ -48,7 +48,7 @@ swegl::scene_t build_scene()
 	cube.orientation = swegl::matrix44_t::Identity;
 	cube.position = swegl::vertex_t(0.0f, 0.0f, -5.0f);
 	//c->SetBumpMap(bumpmap);
-	s.models.push_back(std::move(cube));
+	s.models.emplace_back(std::move(cube));
 	//*/
 
 	/*
@@ -56,14 +56,14 @@ swegl::scene_t build_scene()
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
 	//c->SetBumpMap(bumpmap);
-	s.models.push_back(std::move(sphere));
+	s.models.emplace_back(std::move(sphere));
 	//*/
 
 	//*
 	auto tri = swegl::make_tri(1, texture_dice);
 	tri.orientation = swegl::matrix44_t::Identity;
 	tri.position = swegl::vertex_t(1.0f, 1.0f, -5.1f);
-	s.models.push_back(std::move(tri));
+	s.models.emplace_back(std::move(tri));
 	//*/
 
 	//*
@@ -71,7 +71,7 @@ swegl::scene_t build_scene()
 	cube2.orientation = swegl::matrix44_t::Identity;
 	cube2.position = s.point_source_lights[0].position;
 	//c->SetBumpMap(bumpmap);
-	s.models.push_back(std::move(cube2));
+	s.models.emplace_back(std::move(cube2));
 	//*/
 	
 	//*
@@ -79,7 +79,7 @@ swegl::scene_t build_scene()
 	cube3.orientation = swegl::matrix44_t::Identity;
 	cube3.position = s.point_source_lights[1].position;
 	//c->SetBumpMap(bumpmap);
-	s.models.push_back(std::move(cube3));
+	s.models.emplace_back(std::move(cube3));
 	//*/
 
 	return s;
@@ -231,7 +231,7 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 		if (sdl.keys['g'])
 		{
 			static swegl::matrix44_t rot1 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_z(0.017); return r; }();
-			static swegl::matrix44_t rot2 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_y(0.04); return r; }();
+			static swegl::matrix44_t rot2 = []() { swegl::matrix44_t r = swegl::matrix44_t::Identity; r.rotate_y(0.040); return r; }();
 
 			scene.point_source_lights[0].position = transform(scene.point_source_lights[0].position, rot1);
 			scene.point_source_lights[1].position = transform(scene.point_source_lights[1].position, rot2);
