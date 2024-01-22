@@ -18,7 +18,7 @@ struct vertex_shader_t
 			for (size_t i=0 ; i<model.mesh.vertices.size() ; i++)
 			{
 				model.mesh.vertices_world[i].v       = transform(model.mesh.vertices[i].v     , original_to_world_matrix);
-				model.mesh.vertices_world[i].normal  = transform(model.mesh.vertices[i].normal, model.orientation       );
+				model.mesh.vertices_world[i].normal  = rotate   (model.mesh.vertices[i].normal, model.orientation       );
 			}
 		}
 	}
@@ -35,7 +35,7 @@ struct vertex_shader_t
 					model.mesh.vertices_viewport[i].v.x() /= fabs(model.mesh.vertices_viewport[i].v.z());
 					model.mesh.vertices_viewport[i].v.y() /= fabs(model.mesh.vertices_viewport[i].v.z());
 				}
-				model.mesh.vertices_viewport[i].v = transform(model.mesh.vertices_viewport[i].v, viewport.m_viewportmatrix);
+				model.mesh.vertices_viewport[i].v = viewport.transform(model.mesh.vertices_viewport[i].v);
 			}
 		}
 	}
@@ -48,7 +48,7 @@ struct vertex_shader_t
 			result.x() /= fabs(result.z());
 			result.y() /= fabs(result.z());
 		}
-		return transform(result, viewport.m_viewportmatrix);
+		return viewport.transform(result);
 	}
 };
 

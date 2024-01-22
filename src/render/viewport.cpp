@@ -1,6 +1,7 @@
 
 #include <memory.h>
 #include <swegl/render/viewport.hpp>
+#include <swegl/projection/points.hpp>
 
 namespace swegl
 {
@@ -43,6 +44,14 @@ namespace swegl
 			memset(line_ptr, 0, clear_width);
 
 		std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
+	}
+
+	vertex_t viewport_t::transform(const vertex_t & v) const
+	{
+		const auto & m = m_viewportmatrix;
+		return vertex_t(m[0][0]*v.x()                                 + m[0][3],
+		                                m[1][1]*v.y()                 + m[1][3],
+		                                                        v.z()          );
 	}
 
 }

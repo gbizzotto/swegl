@@ -39,6 +39,7 @@ namespace swegl
 		const camera_t & camera() const { return m_camera; }
 
 		void clear();
+		vertex_t transform(const vertex_t & v) const;
 	};
 
 }

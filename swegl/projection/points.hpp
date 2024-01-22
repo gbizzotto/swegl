@@ -139,6 +139,7 @@ inline vector_t operator-(const vertex_t left, const vertex_t right)
 }
 normal_t cross(const vector_t &, const vector_t &);
 normal_t transform(const normal_t &, const matrix44_t &);
+normal_t rotate   (const normal_t &, const matrix44_t &);
 
 inline normal_t operator+(const normal_t & left, const normal_t & right)
 {
