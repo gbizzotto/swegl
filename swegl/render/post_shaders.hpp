@@ -5,6 +5,7 @@
 
 #include <swegl/render/colors.hpp>
 #include <swegl/misc/lerp.hpp>
+#include <swegl/misc/range.hpp>
 
 namespace swegl
 {
@@ -13,6 +14,7 @@ struct post_shader_t
 {
 	virtual void shade(viewport_t &) {}
 };
+
 
 struct post_shader_depth_box : public post_shader_t
 {
@@ -28,6 +30,8 @@ struct post_shader_depth_box : public post_shader_t
 	{
 		pixel_colors * frame_buffer = (pixel_colors *) vp.m_screen->pixels;
 
+		//range r(0, vp.m_h);
+		//__gnu_parallel::for_each(r.begin(), r.end(), [&](int y)
 		for (int y=0 ; y<vp.m_h ; y++)
 			for (int x=0 ; x<vp.m_w ; x++)
 			{
@@ -50,6 +54,7 @@ struct post_shader_depth_box : public post_shader_t
 				if (count)
 					frame_buffer[(y+vp.m_y)*vp.m_screen->pitch/4 + x+vp.m_x] = pixel_colors(b/count,g/count,r/count);
 			}
+		//    );
 	}
 };
 

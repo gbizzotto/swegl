@@ -9,6 +9,10 @@
 #include "swegl/render/vertex_shaders.hpp"
 #include "swegl/render/colors.hpp"
 
+#ifndef _GLIBCXX_PARALLEL
+#define __gnu_parallel std
+#endif
+
 namespace swegl
 {
 
@@ -51,8 +55,9 @@ struct pixel_shader_lights_flat : pixel_shader_t
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
 
-		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
-			[&](float total, const auto & psl)
+		float dynamic_lights_intensity = 0.0f;
+		__gnu_parallel::for_each(scene->point_source_lights.begin(), scene->point_source_lights.end(),
+			[&](const auto & psl)
 			{
 				vector_t light_direction = center_vertex - psl.position;
 				float light_distance_squared = light_direction.len_squared();
@@ -62,7 +67,7 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				//const vector_t normal = (model->mesh.vertices_world[i0].normal + model->mesh.vertices_world[i1].normal + model->mesh.vertices_world[i2].normal).normalize();
 				float alignment = -normal.dot(light_direction);
 				if (alignment < 0.0f)
-					return total;
+					return;
 				diffuse *= alignment;
 
 				// specular
@@ -74,11 +79,11 @@ struct pixel_shader_lights_flat : pixel_shader_t
 					specular = pow(specular, p);
 					specular = specular * p / 2; // make the integral[0,1] of specular 0.5 again so that no extra light is generated
 					// should multiply by overall albedo, too so that some light is absorbed
-					return total + diffuse + specular / light_distance_squared;
+					dynamic_lights_intensity += diffuse + specular / light_distance_squared;
 				}
 				else
 				{
-					return total + diffuse;
+					dynamic_lights_intensity += diffuse;
 				}
 			});
 
@@ -152,18 +157,20 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 	virtual int shade(float progress) override
 	{
 		vertex_t center_vertex = v + dir*progress;
-		float dynamic_lights_intensity = std::accumulate(scene->point_source_lights.begin(), scene->point_source_lights.end(), 0.0f,
-			[&](float total, const auto & psl)
+		
+		float dynamic_lights_intensity = 0.0f;
+		__gnu_parallel::for_each(scene->point_source_lights.begin(), scene->point_source_lights.end(),
+			[&](const auto & psl)
 			{
 				vector_t light_direction = center_vertex - psl.position;
 				float intensity = psl.intensity / light_direction.len_squared();
 				if (intensity < 0.05)
-					return total;
+					return;
 				light_direction.normalize();
 				float alignment = - n0.dot(light_direction);
 				if (alignment < 0.0f)
-					return total;
-				return total + alignment * intensity;
+					return;
+				dynamic_lights_intensity += alignment * intensity;
 			});
 
 		return 65536 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;

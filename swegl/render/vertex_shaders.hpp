@@ -4,6 +4,10 @@
 #include "swegl/data/model.hpp"
 #include "swegl/projection/points.hpp"
 
+#ifndef _GLIBCXX_PARALLEL
+#define __gnu_parallel std
+#endif
+
 namespace swegl
 {
 
@@ -15,12 +19,13 @@ struct vertex_shader_t
 		{
 			matrix44_t original_to_world_matrix = model.orientation;
 			original_to_world_matrix.translate(model.position.x(), model.position.y(), model.position.z());
-			for (size_t i=0 ; i<model.mesh.vertices.size() ; i++)
-			{
-				model.mesh.vertices[i].v_world       = transform(model.mesh.vertices[i].v     , original_to_world_matrix);
-				model.mesh.vertices[i].normal_world  = rotate   (model.mesh.vertices[i].normal, model.orientation       );
-			}
+			__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+				{
+					mv.v_world      = transform(mv.v     , original_to_world_matrix);
+					mv.normal_world = rotate   (mv.normal, model.orientation       );
+				});
 		}
+		
 	}
 	static inline void world_to_viewport(scene_t & scene, const viewport_t & viewport)
 	{
