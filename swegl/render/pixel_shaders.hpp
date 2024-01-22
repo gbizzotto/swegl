@@ -207,12 +207,12 @@ struct pixel_shader_texture : pixel_shader_t
 		t1 = model->mesh.vertices[i1].tex_coords;
 		t2 = model->mesh.vertices[i2].tex_coords;
 
-		t0[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t0[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t1[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t1[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t2[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t2[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t0.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t0.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t1.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t1.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t2.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t2.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
 
 		side_long_t_dir = t2 - t0;
 	}
@@ -248,8 +248,8 @@ struct pixel_shader_texture : pixel_shader_t
 	virtual int shade(float progress) override
 	{
 		vec2f_t t = t_left + t_dir * progress;
-		int u = (int)t[0][0] % twidth;
-		int v = (int)t[0][1] % theight;
+		int u = (int)t.x() % twidth;
+		int v = (int)t.y() % theight;
 		return tbitmap[v*twidth + u];
 	}
 };
@@ -286,16 +286,16 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		t0 = model->mesh.vertices[i0].tex_coords;
-		t1 = model->mesh.vertices[i1].tex_coords;
-		t2 = model->mesh.vertices[i2].tex_coords;
+		t0 = model->mesh.vertices_viewport[i0].tex_coords;
+		t1 = model->mesh.vertices_viewport[i1].tex_coords;
+		t2 = model->mesh.vertices_viewport[i2].tex_coords;
 
-		t0[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t0[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t1[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t1[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t2[0][0] *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t2[0][1] *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t0.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t0.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t1.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t1.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t2.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
+		t2.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
 
 		side_long_t_dir = t2 - t0;
 	}
@@ -334,8 +334,8 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 
 		vec2f_t t = t_left + t_dir * progress;
 
-		float v = t[0][0];
-		float u = t[0][1];
+		float v = t.x();
+		float u = t.y();
 		float u1 = u-0.5;
 		float u2 = u+0.5;
 		float v1 = v-0.5;
