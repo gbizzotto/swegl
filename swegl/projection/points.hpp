@@ -10,19 +10,23 @@ namespace swegl
 
 class vertex_t
 {
-	freon::Matrix<float,1,3> matrix;
+	float _x, _y, _z;
 
 public:
-	inline vertex_t() : matrix() {}
-	inline vertex_t(float x, float y, float z) : matrix{x, y, z} {}
+	vertex_t() = default;
+	inline vertex_t(float x, float y, float z)
+		: _x(x)
+		, _y(y)
+		, _z(z)
+	{}
 	vertex_t & operator=(const vertex_t &) = default;
 
-	      float & x()       { return matrix[0][0]; }
-	const float & x() const { return matrix[0][0]; }
-	      float & y()       { return matrix[0][1]; }
-	const float & y() const { return matrix[0][1]; }
-	      float & z()       { return matrix[0][2]; }
-	const float & z() const { return matrix[0][2]; }
+	      float & x()       { return _x; }
+	const float & x() const { return _x; }
+	      float & y()       { return _y; }
+	const float & y() const { return _y; }
+	      float & z()       { return _z; }
+	const float & z() const { return _z; }
 };
 
 vertex_t transform(const vertex_t &, const matrix44_t &);
@@ -45,18 +49,23 @@ vertex_t operator/(const vertex_t & left, const T & right)
 
 class vector_t
 {
-	freon::Matrix<float,1,3> matrix;
+	float _x, _y, _z;	
 
 public:
-	inline vector_t() : matrix() {}
-	inline vector_t(float x, float y, float z) : matrix{x, y, z} {}
+	vector_t() = default;
+	inline vector_t(float x, float y, float z)
+		: _x(x)
+		, _y(y)
+		, _z(z)
+	{}
+	vector_t & operator=(const vector_t &) = default;
 
-	      float & x()       { return matrix[0][0]; }
-	const float & x() const { return matrix[0][0]; }
-	      float & y()       { return matrix[0][1]; }
-	const float & y() const { return matrix[0][1]; }
-	      float & z()       { return matrix[0][2]; }
-	const float & z() const { return matrix[0][2]; }
+	      float & x()       { return _x; }
+	const float & x() const { return _x; }
+	      float & y()       { return _y; }
+	const float & y() const { return _y; }
+	      float & z()       { return _z; }
+	const float & z() const { return _z; }
 
 	float len() const
 	{
@@ -70,9 +79,9 @@ public:
 	inline vector_t & normalize()
 	{
 		float l = len();
-		x() /= l;
-		y() /= l;
-		z() /= l;
+		_x /= l;
+		_y /= l;
+		_z /= l;
 		return *this;
 	}
 	inline float dot(const vector_t & other) const
