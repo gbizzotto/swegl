@@ -1,5 +1,6 @@
 
 #include <memory.h>
+#include <xmmintrin.h>
 #include <math.h>
 #include <swegl/projection/matrix44.hpp>
 
@@ -90,13 +91,27 @@ namespace swegl
 		(*this)[2][3] += z;
 	}
 
-	/*matrix44_t operator*(const matrix44_t & left, const matrix44_t & up)
+	/*
+	matrix44_t operator*(const matrix44_t & left, const matrix44_t & up)
+	{
+		matrix44_t result;
+		for (unsigned int j = 0; j<3; j++)
+			for (unsigned int i = 0; i<3; i++)
+				result[j][i] = left[j][0] * up[0][i] + left[j][1] * up[1][i] + left[j][2] * up[2][i];
+		result[0][3] += left[0][3];
+		result[1][3] += left[1][3];
+		result[2][3] += left[2][3];
+		result[3][3] = 1;
+		return result;
+	}
+
+	matrix44_t operator*(const matrix44_t & left, const matrix44_t & up)
 	{
 		matrix44_t result;
 		__m128 u0 = _mm_load_ps(&up[0][0]);
 		__m128 u1 = _mm_load_ps(&up[1][0]);
 		__m128 u2 = _mm_load_ps(&up[2][0]);
-		__m128 u3 = _mm_load_ps(&up[3][0]);
+		//__m128 u3 = _mm_load_ps(&up[3][0]);
 
 		__m128 _f = _mm_load1_ps(&left[0][0]);
 		__m128 r = _mm_mul_ps(_f, u0);
@@ -107,8 +122,8 @@ namespace swegl
 		t = _mm_mul_ps(_f, u2);
 		r = _mm_add_ps(r, t);
 		_f = _mm_load1_ps(&left[0][3]);
-		t = _mm_mul_ps(_f, u3);
-		r = _mm_add_ps(r, t);
+		//t = _mm_mul_ps(_f, u3);
+		//r = _mm_add_ps(r, t);
 		_mm_store_ps(result[0], r);
 
 		_f = _mm_load1_ps(&left[1][0]);
@@ -120,8 +135,8 @@ namespace swegl
 		t = _mm_mul_ps(_f, u2);
 		r = _mm_add_ps(r, t);
 		_f = _mm_load1_ps(&left[1][3]);
-		t = _mm_mul_ps(_f, u3);
-		r = _mm_add_ps(r, t);
+		//t = _mm_mul_ps(_f, u3);
+		//r = _mm_add_ps(r, t);
 		_mm_store_ps(result[1], r);
 
 		_f = _mm_load1_ps(&left[2][0]);
@@ -133,24 +148,30 @@ namespace swegl
 		t = _mm_mul_ps(_f, u2);
 		r = _mm_add_ps(r, t);
 		_f = _mm_load1_ps(&left[2][3]);
-		t = _mm_mul_ps(_f, u3);
-		r = _mm_add_ps(r, t);
+		//t = _mm_mul_ps(_f, u3);
+		//r = _mm_add_ps(r, t);
 		_mm_store_ps(result[2], r);
 
-		_f = _mm_load1_ps(&left[3][0]);
-		r = _mm_mul_ps(_f, u0);
-		_f = _mm_load1_ps(&left[3][1]);
-		t = _mm_mul_ps(_f, u1);
-		r = _mm_add_ps(r, t);
-		_f = _mm_load1_ps(&left[3][2]);
-		t = _mm_mul_ps(_f, u2);
-		r = _mm_add_ps(r, t);
-		_f = _mm_load1_ps(&left[3][3]);
-		t = _mm_mul_ps(_f, u3);
-		r = _mm_add_ps(r, t);
-		_mm_store_ps(result[3], r);
+		//_f = _mm_load1_ps(&left[3][0]);
+		//r = _mm_mul_ps(_f, u0);
+		//_f = _mm_load1_ps(&left[3][1]);
+		//t = _mm_mul_ps(_f, u1);
+		//r = _mm_add_ps(r, t);
+		//_f = _mm_load1_ps(&left[3][2]);
+		//t = _mm_mul_ps(_f, u2);
+		//r = _mm_add_ps(r, t);
+		//_f = _mm_load1_ps(&left[3][3]);
+		//t = _mm_mul_ps(_f, u3);
+		//r = _mm_add_ps(r, t);
+		//_mm_store_ps(result[3], r);
+		
+		result[0][3] += left[0][3];
+		result[1][3] += left[1][3];
+		result[2][3] += left[2][3];
+		result[3][3]  = 1;
 
 		return result;
-	}*/
+	}
+	*/
 
 }
