@@ -340,11 +340,9 @@ void fill_half_triangle(int y, int y_end,
 
 		if (x1 < x2)
 		{
-			interpolator_g<1> qpixel;
-
 			pixel_shader.prepare_for_scanline(side_left .interpolator.progress()
 			                                 ,side_right.interpolator.progress());
-
+			interpolator_g<1> qpixel;
 			qpixel.InitSelf(side_right.x - side_left.x,
 			            side_left .interpolator.value(0),
 			            side_right.interpolator.value(0));
@@ -353,11 +351,8 @@ void fill_half_triangle(int y, int y_end,
 			// fill_line
 			unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
 			float * zb = &vp.zbuffer()[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
-			//float * zb = &zbuffer[(int) ( (y)*vp.m_w + (x1))];
 			for ( ; x1 < x2 ; x1++ )
 			{
-				//int u, v;
-
 				if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near clipping
 				{
 					int color = pixel_shader.shade(qpixel.progress());
@@ -367,11 +362,9 @@ void fill_half_triangle(int y, int y_end,
 				}
 				video++;
 				zb++;
-
 				qpixel.Step();
 			}
 		}
-
 		side_left .x += side_left .ratio;
 		side_right.x += side_right.ratio;
 		side_left .interpolator.Step();
