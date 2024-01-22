@@ -108,12 +108,16 @@ class normal_t : public vector_t
 public:
 	inline normal_t() : vector_t() {}
 	inline normal_t(const vector_t && v) : vector_t(v) {}
-	inline normal_t(float x, float y, float z): vector_t(x, y, z) {}
+	inline normal_t(float x, float y, float z): vector_t(x, y, z)
+	{
+		normalize();
+	}
 	inline normal_t & operator=(const vector_t & v)
 	{
 		x() = v.x();
 		y() = v.y();
 		z() = v.z();
+		normalize();
 		return *this;
 	}
 };

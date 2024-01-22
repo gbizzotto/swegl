@@ -48,8 +48,6 @@ struct pixel_shader_lights_flat : pixel_shader_t
 			face_sun_intensity *= scene->sun_intensity;
 
 		vertex_t center_vertex = (model->mesh.vertices_world[i0].v + model->mesh.vertices_world[i1].v + model->mesh.vertices_world[i2].v) / 3;
-		//vertex_t camera_position = vertex_t(-camera->m_viewmatrix[0][3], -camera->m_viewmatrix[1][3], -camera->m_viewmatrix[2][3]);
-		//vertex_t camera_position = 
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
 
@@ -60,7 +58,8 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				float light_distance_squared = light_direction.len_squared();
 				float diffuse = psl.intensity / light_distance_squared;
 				light_direction.normalize();
-				const vector_t & normal = model->mesh.vertices_world[i0].normal;
+				const vector_t & normal = model->mesh.vertices_world[i2].normal;
+				//const vector_t normal = (model->mesh.vertices_world[i0].normal + model->mesh.vertices_world[i1].normal + model->mesh.vertices_world[i2].normal).normalize();
 				float alignment = -normal.dot(light_direction);
 				if (alignment < 0.0f)
 					return total;

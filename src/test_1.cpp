@@ -51,7 +51,7 @@ swegl::scene_t build_scene()
 	s.models.emplace_back(std::move(cube));
 	//*/
 
-	/*
+	//*
 	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
@@ -235,8 +235,8 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 
 			scene.point_source_lights[0].position = transform(scene.point_source_lights[0].position, rot1);
 			scene.point_source_lights[1].position = transform(scene.point_source_lights[1].position, rot2);
-			scene.models[2].position = scene.point_source_lights[0].position;
-			scene.models[3].position = scene.point_source_lights[1].position;
+			scene.models[4].position = scene.point_source_lights[0].position;
+			scene.models[5].position = scene.point_source_lights[1].position;
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])
