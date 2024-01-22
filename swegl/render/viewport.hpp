@@ -7,6 +7,7 @@
 
 #include <swegl/projection/matrix44.hpp>
 #include <swegl/projection/camera.hpp>
+#include <swegl/data/model.hpp>
 
 namespace swegl
 {
@@ -40,6 +41,7 @@ namespace swegl
 
 		void clear();
 		vertex_t transform(const vertex_t & v) const;
+		void     transform(mesh_vertex_t & v) const;
 	};
 
 }

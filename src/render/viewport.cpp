@@ -54,4 +54,13 @@ namespace swegl
 		                                                        v.z()          );
 	}
 
+	void viewport_t::transform(mesh_vertex_t & mv) const
+	{
+		const auto & m = m_viewportmatrix;
+		mv.v_viewport.x() = m[0][0]*mv.v_viewport.x() + m[0][3];
+		mv.v_viewport.y() = m[1][1]*mv.v_viewport.y() + m[1][3];
+		mv.v_viewport.z() =         mv.v_viewport.z()          ;
+
+	}
+
 }

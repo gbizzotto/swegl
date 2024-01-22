@@ -41,13 +41,13 @@ struct pixel_shader_lights_flat : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		float face_sun_intensity = - model->mesh.vertices_world[i0].normal.dot(scene->sun_direction);
+		float face_sun_intensity = - model->mesh.vertices[i0].normal_world.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
 		else
 			face_sun_intensity *= scene->sun_intensity;
 
-		vertex_t center_vertex = (model->mesh.vertices_world[i0].v + model->mesh.vertices_world[i1].v + model->mesh.vertices_world[i2].v) / 3;
+		vertex_t center_vertex = (model->mesh.vertices[i0].v_world + model->mesh.vertices[i1].v_world + model->mesh.vertices[i2].v_world) / 3;
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
 
@@ -58,7 +58,7 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				float light_distance_squared = light_direction.len_squared();
 				float diffuse = psl.intensity / light_distance_squared;
 				light_direction.normalize();
-				const vector_t & normal = model->mesh.vertices_world[i2].normal;
+				const vector_t & normal = model->mesh.vertices[i2].normal_world;
 				//const vector_t normal = (model->mesh.vertices_world[i0].normal + model->mesh.vertices_world[i1].normal + model->mesh.vertices_world[i2].normal).normalize();
 				float alignment = -normal.dot(light_direction);
 				if (alignment < 0.0f)
@@ -104,10 +104,10 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		n0 = model->mesh.vertices_viewport[i0].normal;
-		v0 = model->mesh.vertices_viewport[i0].v;
-		v1 = model->mesh.vertices_viewport[i1].v;
-		v2 = model->mesh.vertices_viewport[i2].v;
+		n0 = model->mesh.vertices[i0].normal_world;
+		v0 = model->mesh.vertices[i0].v_viewport;
+		v1 = model->mesh.vertices[i1].v_viewport;
+		v2 = model->mesh.vertices[i2].v_viewport;
 
 		face_sun_intensity = - n0.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
@@ -286,9 +286,9 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		t0 = model->mesh.vertices_viewport[i0].tex_coords;
-		t1 = model->mesh.vertices_viewport[i1].tex_coords;
-		t2 = model->mesh.vertices_viewport[i2].tex_coords;
+		t0 = model->mesh.vertices[i0].tex_coords;
+		t1 = model->mesh.vertices[i1].tex_coords;
+		t2 = model->mesh.vertices[i2].tex_coords;
 
 		t0.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
 		t0.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;

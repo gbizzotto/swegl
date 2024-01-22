@@ -31,15 +31,16 @@ struct triangle_list_t
 struct mesh_vertex_t
 {
 	vertex_t v;
+	vertex_t v_world;    // after transformations into world coordinates
+	vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
 	vec2f_t tex_coords;
 	normal_t normal;
+	normal_t normal_world;
 };
 
 struct mesh_t
 {
-	std::vector<mesh_vertex_t> vertices;
-	std::vector<mesh_vertex_t> vertices_world;    // mesh_vertices after transformations into world coordinates
-	std::vector<mesh_vertex_t> vertices_viewport; // mesh_vertices after transformations into viewport coordinates (pixel x,y + z depth
+	std::vector<mesh_vertex_t>  vertices;
 	std::vector<triangle_strip> triangle_strips;
 	std::vector<triangle_fan>   triangle_fans;
 	triangle_list_t             triangle_list;
@@ -139,9 +140,9 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 
 	result.mesh.vertices = std::vector<mesh_vertex_t>
 		{
-			mesh_vertex_t{vertex_t{0.0f, 0.0f, 0.0f}, vec2f_t{0.0f,0.0f}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t{size, 0.0f, 0.0f}, vec2f_t{0.0f,1.0f}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t{0.0f, size, 0.0f}, vec2f_t{1.0f,0.0f}, normal_t(0,0,0)}
+			mesh_vertex_t{vertex_t{0.0f, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,0.0f}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t{size, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,1.0f}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t{0.0f, size, 0.0f}, {}, {}, vec2f_t{1.0f,0.0f}, normal_t(0,0,0), {}}
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
@@ -154,11 +155,8 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 
 	calculate_face_normals(result);
 
-	result.mesh.vertices_world = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_world.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
-	result.mesh.vertices_viewport = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_viewport.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
-
+	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	
 	return result;	
 }
 
@@ -169,35 +167,35 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 	result.mesh.vertices = std::vector<mesh_vertex_t>
 		{
 			// 0 fan (top face): value 1
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{0.0,0.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{0.5,0.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{0.0,0.333}, normal_t(0,0,0)},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(0,0,0), {}},
 			// 1 fan (front face): value 2
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{0.5,0.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{1.0,0.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{1.0,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{0.5,0.333}, normal_t(0,0,0)},
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
 			// 2 fan (right face): value 4
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{0.0,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{0.0,0.667}, normal_t(0,0,0)},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(0,0,0), {}},
 			// 3 fan (back face): value 6
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{1.0,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{1.0,1.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{0.5,1.0  }, normal_t(0,0,0)},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,1.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,0,0), {}},
 			// 4 fan (left face): value 3
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{1.0,0.333}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), vec2f_t{1.0,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.667}, normal_t(0,0,0)},
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
 			// 6 fan (bottom face): value 5
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{0.0,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), vec2f_t{0.5,0.667}, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{0.5,1.0  }, normal_t(0,0,0)},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), vec2f_t{0.0,1.0  }, normal_t(0,0,0)}
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,0,0), {}},
+			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,1.0  }, normal_t(0,0,0), {}}
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
@@ -217,10 +215,7 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 
 	calculate_face_normals(result);
 
-	result.mesh.vertices_world = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_world.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
-	result.mesh.vertices_viewport = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_viewport.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
 
 	return result;	
 }
@@ -251,8 +246,11 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 		for (unsigned int sm = 0; sm <= precision; sm++)
 		{
 			vertices.push_back(mesh_vertex_t{transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big)
+			                                ,{}
+			                                ,{}
 			                                ,vec2f_t(1.0*bg/precision, 1.0*sm/precision)
 			                                ,transform(transform(normal_t(1.0f, 0.0f, 0.0f), small_normal), big_normal)
+			                                ,{}
 				                            }
 			                  );
 			small.rotate_z(angle);
@@ -275,10 +273,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 		}
 	}
 
-	result.mesh.vertices_world = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_world.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
-	result.mesh.vertices_viewport = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_viewport.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
 
 	return result;
 }
@@ -306,8 +301,11 @@ inline model_t make_sphere(unsigned int precision, float radius, std::shared_ptr
 		{
 			vertex_t v = transform(transform(vertex_t(0.0f, radius, 0.0f),small), big);
 			vertices.push_back(mesh_vertex_t{v
+			                                ,{}
+			                                ,{}
 			                                ,vec2f_t(1.0*sm/precision, 1.0*bg/precision)
 			                                ,normal_t(v.x(), v.y(), v.z())
+			                                ,{}
 			                                }
 			                  );
 			small.rotate_z(angle/2);
@@ -328,10 +326,7 @@ inline model_t make_sphere(unsigned int precision, float radius, std::shared_ptr
 		}
 	}
 
-	result.mesh.vertices_world = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_world.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
-	result.mesh.vertices_viewport = result.mesh.vertices; // make a full copy
-	result.mesh.vertices_viewport.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
 
 	return result;
 }

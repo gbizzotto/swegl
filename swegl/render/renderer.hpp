@@ -138,9 +138,9 @@ void fill_triangle(vertex_idx i0,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader)
 {
-	const vertex_t * v0 = &model.mesh.vertices_viewport[i0].v;
-	const vertex_t * v1 = &model.mesh.vertices_viewport[i1].v;
-	const vertex_t * v2 = &model.mesh.vertices_viewport[i2].v;
+	const vertex_t * v0 = &model.mesh.vertices[i0].v_viewport;
+	const vertex_t * v1 = &model.mesh.vertices[i1].v_viewport;
+	const vertex_t * v2 = &model.mesh.vertices[i2].v_viewport;
 
 	// frustum clipping
 	if (  (v0->x()  < vp.m_x        && v1->x()  < vp.m_x        && v2->x()  < vp.m_x       )
@@ -181,49 +181,45 @@ void fill_triangle(vertex_idx i0,
 	if (v1->z() < 0.001) // only v0 in front of the camera
 	{
 		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
-		vertex_t new_vertex_1 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i1].v         -model.mesh.vertices_world[i0].v         )*cut_1;
-		vec2f_t  new_tex_1    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i1].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
-		normal_t new_normal_1 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i1].normal    -model.mesh.vertices_world[i0].normal    )*cut_1;
-		model.mesh.vertices_world.push_back({new_vertex_1,  new_tex_1, new_normal_1});
-		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_1, vp), new_tex_1, new_normal_1});
+		mesh_vertex_t & new_vertex_1 = model.mesh.vertices.emplace_back();
+		new_vertex_1.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i1].v_world     -model.mesh.vertices[i0].v_world     )*cut_1;
+		new_vertex_1.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i1].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_1;
+		new_vertex_1.normal_world = model.mesh.vertices[i0].normal_world + (model.mesh.vertices[i1].normal_world-model.mesh.vertices[i0].normal_world)*cut_1;
+		vertex_shader_t::world_to_viewport(new_vertex_1, vp);
 
 		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		vertex_t new_vertex_2 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i2].v         -model.mesh.vertices_world[i0].v         )*cut_2;
-		vec2f_t  new_tex_2    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i2].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
-		normal_t new_normal_2 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i2].normal    -model.mesh.vertices_world[i0].normal    )*cut_2;
-		model.mesh.vertices_world.push_back({new_vertex_2,  new_tex_2, new_normal_2});
-		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_2, vp), new_tex_2, new_normal_2});
+		mesh_vertex_t & new_vertex_2 = model.mesh.vertices.emplace_back();
+		new_vertex_2.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i2].v_world     -model.mesh.vertices[i0].v_world     )*cut_2;
+		new_vertex_2.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i2].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_2;
+		new_vertex_2.normal_world = model.mesh.vertices[i0].normal_world + (model.mesh.vertices[i2].normal_world-model.mesh.vertices[i0].normal_world)*cut_2;
+		vertex_shader_t::world_to_viewport(new_vertex_2, vp);
 
-		fill_triangle_2(i0, model.mesh.vertices_world.size()-2, model.mesh.vertices_world.size()-1, model, vp, pixel_shader);
-		model.mesh.vertices_world.pop_back();
-		model.mesh.vertices_world.pop_back();
-		model.mesh.vertices_viewport.pop_back();
-		model.mesh.vertices_viewport.pop_back();
+		fill_triangle_2(i0, model.mesh.vertices.size()-2, model.mesh.vertices.size()-1, model, vp, pixel_shader);
+		model.mesh.vertices.pop_back();
+		model.mesh.vertices.pop_back();
 		return;
 	}
 
 	if (v2->z() < 0.001) // only v2 is in the back of the camera
 	{
 		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		vertex_t new_vertex_1 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i1].v         -model.mesh.vertices_world[i0].v         )*cut_0;
-		vec2f_t  new_tex_1    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i1].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_0;
-		normal_t new_normal_1 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i1].normal    -model.mesh.vertices_world[i0].normal    )*cut_0;
-		model.mesh.vertices_world.push_back({new_vertex_1,  new_tex_1, new_normal_1});
-		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_1, vp), new_tex_1, new_normal_1});
-		
-		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
-		vertex_t new_vertex_2 = model.mesh.vertices_world[i0].v          + (model.mesh.vertices_world[i2].v         -model.mesh.vertices_world[i0].v         )*cut_1;
-		vec2f_t  new_tex_2    = model.mesh.vertices_world[i0].tex_coords + (model.mesh.vertices_world[i2].tex_coords-model.mesh.vertices_world[i0].tex_coords)*cut_1;
-		normal_t new_normal_2 = model.mesh.vertices_world[i0].normal     + (model.mesh.vertices_world[i2].normal    -model.mesh.vertices_world[i0].normal    )*cut_1;
-		model.mesh.vertices_world.push_back({new_vertex_2,  new_tex_2, new_normal_2});
-		model.mesh.vertices_viewport.push_back({vertex_shader_t::world_to_viewport(new_vertex_2, vp), new_tex_2, new_normal_2});
+		mesh_vertex_t & new_vertex_1 = model.mesh.vertices.emplace_back();
+		new_vertex_1.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i1].v_world     -model.mesh.vertices[i0].v_world     )*cut_0;
+		new_vertex_1.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i1].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_0;
+		new_vertex_1.normal_world = model.mesh.vertices[i0].normal_world + (model.mesh.vertices[i1].normal_world-model.mesh.vertices[i0].normal_world)*cut_0;
+		vertex_shader_t::world_to_viewport(new_vertex_1, vp);
 
-		fill_triangle_2(i1,                                 i0, model.mesh.vertices_world.size()-2, model, vp, pixel_shader);
-		fill_triangle_2(i1, model.mesh.vertices_world.size()-2, model.mesh.vertices_world.size()-1, model, vp, pixel_shader);
-		model.mesh.vertices_world.pop_back();
-		model.mesh.vertices_world.pop_back();
-		model.mesh.vertices_viewport.pop_back();
-		model.mesh.vertices_viewport.pop_back();
+		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
+		mesh_vertex_t & new_vertex_2 = model.mesh.vertices.emplace_back();
+		new_vertex_2.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i2].v_world     -model.mesh.vertices[i0].v_world     )*cut_1;
+		new_vertex_2.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i2].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_1;
+		new_vertex_2.normal_world = model.mesh.vertices[i0].normal_world + (model.mesh.vertices[i2].normal_world-model.mesh.vertices[i0].normal_world)*cut_1;
+		vertex_shader_t::world_to_viewport(new_vertex_2, vp);
+
+		fill_triangle_2(i1,                           i0, model.mesh.vertices.size()-2, model, vp, pixel_shader);
+		fill_triangle_2(i1, model.mesh.vertices.size()-2, model.mesh.vertices.size()-1, model, vp, pixel_shader);
+		model.mesh.vertices.pop_back();
+		model.mesh.vertices.pop_back();
 		return;
 	}
 
@@ -237,9 +233,9 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
                      [[maybe_unused]] viewport_t & vp,
                      [[maybe_unused]] pixel_shader_t & pixel_shader)
 {
-	const vertex_t * v0 = &model.mesh.vertices_viewport[i0].v;
-	const vertex_t * v1 = &model.mesh.vertices_viewport[i1].v;
-	const vertex_t * v2 = &model.mesh.vertices_viewport[i2].v;
+	const vertex_t * v0 = &model.mesh.vertices[i0].v_viewport;
+	const vertex_t * v1 = &model.mesh.vertices[i1].v_viewport;
+	const vertex_t * v2 = &model.mesh.vertices[i2].v_viewport;
 
 	// Sort points by screen Y ASC
 	if (v1->y() < v0->y()) {

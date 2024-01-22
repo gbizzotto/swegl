@@ -17,8 +17,8 @@ struct vertex_shader_t
 			original_to_world_matrix.translate(model.position.x(), model.position.y(), model.position.z());
 			for (size_t i=0 ; i<model.mesh.vertices.size() ; i++)
 			{
-				model.mesh.vertices_world[i].v       = transform(model.mesh.vertices[i].v     , original_to_world_matrix);
-				model.mesh.vertices_world[i].normal  = rotate   (model.mesh.vertices[i].normal, model.orientation       );
+				model.mesh.vertices[i].v_world       = transform(model.mesh.vertices[i].v     , original_to_world_matrix);
+				model.mesh.vertices[i].normal_world  = rotate   (model.mesh.vertices[i].normal, model.orientation       );
 			}
 		}
 	}
@@ -29,26 +29,26 @@ struct vertex_shader_t
 		{
 			for (size_t i=0 ; i<model.mesh.vertices.size() ; i++)
 			{
-				model.mesh.vertices_viewport[i].v = transform(model.mesh.vertices_world[i].v, world_to_viewport_matrix);
-				if (model.mesh.vertices_viewport[i].v.z() != 0)
+				model.mesh.vertices[i].v_viewport = transform(model.mesh.vertices[i].v_world, world_to_viewport_matrix);
+				if (model.mesh.vertices[i].v_viewport.z() != 0)
 				{
-					model.mesh.vertices_viewport[i].v.x() /= fabs(model.mesh.vertices_viewport[i].v.z());
-					model.mesh.vertices_viewport[i].v.y() /= fabs(model.mesh.vertices_viewport[i].v.z());
+					model.mesh.vertices[i].v_viewport.x() /= fabs(model.mesh.vertices[i].v_viewport.z());
+					model.mesh.vertices[i].v_viewport.y() /= fabs(model.mesh.vertices[i].v_viewport.z());
 				}
-				model.mesh.vertices_viewport[i].v = viewport.transform(model.mesh.vertices_viewport[i].v);
+				viewport.transform(model.mesh.vertices[i]);
 			}
 		}
 	}
-	static inline vertex_t world_to_viewport(const vertex_t & v, const viewport_t & viewport)
+	static inline void world_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
 	{
 		matrix44_t world_to_viewport_matrix = viewport.camera().m_projectionmatrix * viewport.camera().m_viewmatrix;
-		auto result = transform(v, world_to_viewport_matrix);
-		if (result.z() != 0)
+		mv.v_viewport = transform(mv.v_world, world_to_viewport_matrix);
+		if (mv.v_viewport.z() != 0)
 		{
-			result.x() /= fabs(result.z());
-			result.y() /= fabs(result.z());
+			mv.v_viewport.x() /= fabs(mv.v_viewport.z());
+			mv.v_viewport.y() /= fabs(mv.v_viewport.z());
 		}
-		return viewport.transform(result);
+		viewport.transform(mv);
 	}
 };
 
