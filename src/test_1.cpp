@@ -262,12 +262,15 @@ int main()
 	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_full  = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>>();
 	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_basic = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_t>>();
 	std::shared_ptr<swegl::post_shader_t>   post_shader_null   = std::make_shared<swegl::post_shader_t>();
-	std::shared_ptr<swegl::post_shader_t>   post_shader_DOF    = std::make_shared<swegl::post_shader_depth_box>(5, 5);
+	//std::shared_ptr<swegl::post_shader_t>   post_shader_DOF    = std::make_shared<swegl::post_shader_depth_box>(5, 5);
 
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, post_shader_DOF);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full);
+	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
+	viewport.set_post_shader(post_shader_DOF);
+
 	
 	utttil::measurement_point mp("frame");
 	for(;;)

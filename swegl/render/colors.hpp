@@ -12,6 +12,7 @@ struct pixel_colors
 		struct { unsigned char b,g,r,a; } o;
 		v4i v;
 	};
+	pixel_colors() = default;
 	inline pixel_colors(unsigned char b, unsigned char g, unsigned char r)
 		: o{b,g,r,0}
 	{}

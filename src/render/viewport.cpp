@@ -9,7 +9,6 @@ namespace swegl
 	viewport_t::viewport_t(int x, int y, int w, int h
 	                      ,SDL_Surface *screen
 	                      ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
-	                      ,std::shared_ptr<swegl::  post_shader_t> & post_shader
 	                      )
 		: m_x(x)
 		, m_y(y)
@@ -19,7 +18,6 @@ namespace swegl
 		, m_zbuffer(new float[w * h])
 		, m_viewportmatrix(matrix44_t::Identity)
 		, m_pixel_shader(pixel_shader)
-		, m_post_shader(post_shader)
 	{
 		this->m_viewportmatrix[0][3] = x+w/2.0f;
 		this->m_viewportmatrix[1][3] = y+h/2.0f;
@@ -49,9 +47,9 @@ namespace swegl
 	vertex_t viewport_t::transform(const vertex_t & v) const
 	{
 		const auto & m = m_viewportmatrix;
-		return vertex_t(m[0][0]*v.x()                                 + m[0][3],
-		                                m[1][1]*v.y()                 + m[1][3],
-		                                                        v.z()          );
+		return vertex_t(m[0][0]*v.x() + m[0][3],
+		                m[1][1]*v.y() + m[1][3],
+		                        v.z()          );
 	}
 
 	void viewport_t::transform(mesh_vertex_t & mv) const

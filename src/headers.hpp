@@ -6,5 +6,6 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <thread>
 
 #include <SDL2/SDL.h>

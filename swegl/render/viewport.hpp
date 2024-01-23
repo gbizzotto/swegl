@@ -18,20 +18,22 @@ namespace swegl
 
 	struct viewport_t
 	{
-		int                      m_x, m_y;
-		int                      m_w, m_h;
-		SDL_Surface             *m_screen;
-		std::unique_ptr<float[]> m_zbuffer;
-		matrix44_t               m_viewportmatrix;
-		camera_t                 m_camera;
-		std::shared_ptr<swegl:: pixel_shader_t> m_pixel_shader ;
-		std::shared_ptr<swegl::  post_shader_t> m_post_shader  ;
+		int                                     m_x, m_y        ;
+		int                                     m_w, m_h        ;
+		SDL_Surface                            *m_screen        ;
+		std::unique_ptr<float[]>                m_zbuffer       ;
+		matrix44_t                              m_viewportmatrix;
+		camera_t                                m_camera        ;
+		std::shared_ptr<swegl::pixel_shader_t>  m_pixel_shader  ;
+		post_shader_t                          *m_post_shader   ;
 
 		viewport_t(int x, int y, int w, int h
 		          ,SDL_Surface *screen
 		          ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
-		          ,std::shared_ptr<swegl::  post_shader_t> & post_shader
 		          );
+
+		inline void set_post_shader(post_shader_t & post_shader) { m_post_shader = & post_shader; }
+
 
 		      float * zbuffer()       { return m_zbuffer.get(); }
 		const float * zbuffer() const { return m_zbuffer.get(); }
