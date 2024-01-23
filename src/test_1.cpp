@@ -254,7 +254,7 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 
 int main()
 {
-	swegl::sdl_t sdl(10, 1600, 800, 600, "test_t");
+	swegl::sdl_t sdl(10, 1600, 800, 600, "test_1");
 
 	swegl::scene_t scene = build_scene();
 	font_t font("resources/ascii.bmp");
@@ -270,7 +270,7 @@ int main()
 	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full);
 	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
 	swegl::post_shader_t post_shader_null;
-	viewport.set_post_shader(post_shader_null);
+	viewport.set_post_shader(post_shader_DOF);
 
 	
 	utttil::measurement_point mp("frame");
