@@ -17,16 +17,11 @@ namespace swegl
 		, m_screen(screen)
 		, m_zbuffer(new float[w * h])
 		, m_viewportmatrix(matrix44_t::Identity)
+		, m_camera(1.0*w/h)
 		, m_pixel_shader(pixel_shader)
 	{
 		this->m_viewportmatrix[0][3] = x+w/2.0f;
 		this->m_viewportmatrix[1][3] = y+h/2.0f;
-
-		if (w>h)
-			h = w;
-		if (w<h)
-			w = h;
-
 		this->m_viewportmatrix[0][0] =  w/2.0f;
 		this->m_viewportmatrix[1][1] = -h/2.0f;
 		this->m_viewportmatrix[2][2] = 1.0f;
