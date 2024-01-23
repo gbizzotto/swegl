@@ -49,23 +49,26 @@ struct post_shader_depth_box : public post_shader_t
 		for (int y=y_begin ; y<y_end ; y++)
 			for (int x=0 ; x<vp.m_w ; x++)
 			{
-				//__builtin_prefetch(&frame_buffer[(std::max(0,y-5)+vp.m_y)*vp.m_screen->pitch/4 + std::max(0,x-5)+vp.m_x]);
 				int radius = vp.zbuffer()[y*vp.m_w + x];
-				int b=0, g=0, r=0;
-				int count = 0;
 				if (radius == 0)
 					temp_buffer[y*vp.m_w + x] = frame_buffer[y*vp.m_screen->pitch/4 + x];
 				else
 				{
+					int b=0, g=0, r=0;
+					int count = 0;
 					for (int j=std::max(0,y-radius) ; j<std::min(vp.m_h,y+radius) ; j++)
 					{
 						for (int i=std::max(0,x-radius) ; i<std::min(vp.m_w,x+radius) ; i++)
 						{
-							count++;
-							pixel_colors & p = frame_buffer[(j+vp.m_y)*vp.m_screen->pitch/4 + i+vp.m_x];
-							b += p.o.b;
-							g += p.o.g;
-							r += p.o.r;
+							bool focused = vp.zbuffer()[j*vp.m_w + i] == 0;
+							if (! focused)
+							{
+								count++;
+								pixel_colors & p = frame_buffer[(j+vp.m_y)*vp.m_screen->pitch/4 + i+vp.m_x];
+								b += p.o.b;
+								g += p.o.g;
+								r += p.o.r;
+							}
 						}
 					}
 					if (count)
