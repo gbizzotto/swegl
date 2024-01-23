@@ -8,7 +8,6 @@
 
 #include <swegl/render/colors.hpp>
 #include <swegl/misc/lerp.hpp>
-#include <swegl/misc/range.hpp>
 
 namespace swegl
 {
