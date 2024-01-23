@@ -36,6 +36,7 @@ struct mesh_vertex_t
 	vec2f_t tex_coords;
 	normal_t normal;
 	normal_t normal_world;
+	bool yes = false;
 };
 
 struct mesh_t

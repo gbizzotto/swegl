@@ -21,38 +21,52 @@ struct vertex_shader_t
 			original_to_world_matrix.translate(model.position.x(), model.position.y(), model.position.z());
 			__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
 				{
-					mv.v_world      = transform(mv.v     , original_to_world_matrix);
-					mv.normal_world = rotate   (mv.normal, model.orientation       );
+					mv.v_world = transform(mv.v, original_to_world_matrix);
 				});
 		}
-		
 	}
-	static inline void world_to_viewport(scene_t & scene, const viewport_t & viewport)
+	static inline void world_to_camera_or_frustum(scene_t & scene, const viewport_t & viewport)
 	{
-		matrix44_t world_to_viewport_matrix = viewport.camera().m_projectionmatrix * viewport.camera().m_viewmatrix;
 		for (auto & model : scene.models)
 		{
-			for (size_t i=0 ; i<model.mesh.vertices.size() ; i++)
-			{
-				model.mesh.vertices[i].v_viewport = transform(model.mesh.vertices[i].v_world, world_to_viewport_matrix);
-				if (model.mesh.vertices[i].v_viewport.z() != 0)
+			__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
 				{
-					model.mesh.vertices[i].v_viewport.x() /= fabs(model.mesh.vertices[i].v_viewport.z());
-					model.mesh.vertices[i].v_viewport.y() /= fabs(model.mesh.vertices[i].v_viewport.z());
-				}
-				viewport.transform(model.mesh.vertices[i]);
-			}
+					mv.yes = false;
+					mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
+					//if (mv.v_viewport.z() >= 0.001)
+						camera_to_frustum(mv, model, viewport);
+				});
 		}
 	}
-	static inline void world_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
+
+	static inline void world_to_viewport(mesh_vertex_t & mv, const model_t & model, const viewport_t & viewport)
 	{
-		matrix44_t world_to_viewport_matrix = viewport.camera().m_projectionmatrix * viewport.camera().m_viewmatrix;
-		mv.v_viewport = transform(mv.v_world, world_to_viewport_matrix);
+		mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
+		camera_to_frustum(mv, model, viewport);
+		frustum_to_viewport(mv, viewport);
+	}
+
+	static inline void camera_to_frustum(mesh_vertex_t & mv, const model_t & model, const viewport_t & viewport)
+	{
+		mv.normal_world = rotate(mv.normal, model.orientation);
+
+		mv.v_viewport = transform(mv.v_viewport, viewport.camera().m_projectionmatrix);
 		if (mv.v_viewport.z() != 0)
 		{
 			mv.v_viewport.x() /= fabs(mv.v_viewport.z());
 			mv.v_viewport.y() /= fabs(mv.v_viewport.z());
 		}
+	}
+	static inline void frustum_to_viewport(model_t & model, const viewport_t & viewport)
+	{
+		__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+			{
+				if (mv.yes)
+					viewport.transform(mv);
+			});
+	}
+	static inline void frustum_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
+	{
 		viewport.transform(mv);
 	}
 };

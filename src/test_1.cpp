@@ -82,6 +82,9 @@ swegl::scene_t build_scene()
 	s.models.emplace_back(std::move(cube3));
 	//*/
 
+	for (auto & model : s.models)
+		model.mesh.vertices.reserve(model.mesh.vertices.size()+2);
+
 	return s;
 }
 

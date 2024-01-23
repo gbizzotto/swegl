@@ -21,12 +21,12 @@ public:
 	{}
 	vertex_t & operator=(const vertex_t &) = default;
 
-	      float & x()       { return _x; }
-	const float & x() const { return _x; }
-	      float & y()       { return _y; }
-	const float & y() const { return _y; }
-	      float & z()       { return _z; }
-	const float & z() const { return _z; }
+	float & x()       { return _x; }
+	float   x() const { return _x; }
+	float & y()       { return _y; }
+	float   y() const { return _y; }
+	float & z()       { return _z; }
+	float   z() const { return _z; }
 };
 
 vertex_t transform(const vertex_t &, const matrix44_t &);
@@ -60,12 +60,12 @@ public:
 	{}
 	vector_t & operator=(const vector_t &) = default;
 
-	      float & x()       { return _x; }
-	const float & x() const { return _x; }
-	      float & y()       { return _y; }
-	const float & y() const { return _y; }
-	      float & z()       { return _z; }
-	const float & z() const { return _z; }
+	float & x()       { return _x; }
+	float   x() const { return _x; }
+	float & y()       { return _y; }
+	float   y() const { return _y; }
+	float & z()       { return _z; }
+	float   z() const { return _z; }
 
 	float len() const
 	{
@@ -89,6 +89,14 @@ public:
 		return x()*other.x() + y()*other.y() + z()*other.z();
 	}
 };
+
+inline bool operator==(const vector_t & left, const vector_t & right)
+{
+	return left.x() == right.x()
+		&& left.y() == right.y()
+		&& left.z() == right.z()
+		;
+}
 
 template<typename T>
 vector_t operator*(const vector_t & left, const T & right)
@@ -171,5 +179,6 @@ O & operator<<(O & out, const normal_t & v)
 {
 	return out << '{' << v.x() << ',' << v.y() << ',' << v.z() << '}';
 }
+
 
 } // namespace
