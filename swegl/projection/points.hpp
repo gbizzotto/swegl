@@ -79,9 +79,12 @@ public:
 	inline vector_t & normalize()
 	{
 		float l = len();
-		_x /= l;
-		_y /= l;
-		_z /= l;
+		if (l != 0)
+		{
+			_x /= l;
+			_y /= l;
+			_z /= l;
+		}
 		return *this;
 	}
 	inline float dot(const vector_t & other) const

@@ -96,29 +96,30 @@ struct pixel_shader_lights_flat : pixel_shader_t
 	}
 };
 
-struct pixel_shader_lights_semiflat : pixel_shader_t
+struct pixel_shader_lights_phong : pixel_shader_t
 {
 	float face_sun_intensity;
 
-	normal_t n0;
 	vertex_t v0, v1, v2;
 	vertex_t vleft, vright;
 	vector_t vleftdir, vrightdir;
 	vertex_t v;
-	vector_t dir;
+	vector_t vdir;
+
+	vector_t n0, n1, n2;
+	vector_t nleft, nright;
+	vector_t nleftdir, nrightdir;
+	vector_t n;
+	vector_t ndir;
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		n0 = model->mesh.vertices[i0].normal_world;
-		v0 = model->mesh.vertices[i0].v_viewport;
-		v1 = model->mesh.vertices[i1].v_viewport;
-		v2 = model->mesh.vertices[i2].v_viewport;
-
-		face_sun_intensity = - n0.dot(scene->sun_direction);
-		if (face_sun_intensity < 0.0f)
-			face_sun_intensity = 0.0f;
-		else
-			face_sun_intensity *= scene->sun_intensity;
+		n0 = (vector_t)model->mesh.vertices[i0].normal_world;
+		n1 = (vector_t)model->mesh.vertices[i1].normal_world;
+		n2 = (vector_t)model->mesh.vertices[i2].normal_world;
+		v0 = model->mesh.vertices[i0].v_world;
+		v1 = model->mesh.vertices[i1].v_world;
+		v2 = model->mesh.vertices[i2].v_world;
 	}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
@@ -131,6 +132,15 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 			vleftdir = v2-v0;
 			vrightdir = v1-v0;
 		}
+		nleft = n0;
+		nright = n0;
+		if (long_line_on_right) {
+			nleftdir = n1-n0;
+			nrightdir = n2-n0;
+		} else {
+			nleftdir = n2-n0;
+			nrightdir = n1-n0;
+		}
 	}
 	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
 	{
@@ -140,24 +150,41 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 			vrightdir = v2-v0;
 			vleft = v1;
 			vleftdir = v2-v1;
+			nright = n0;
+			nrightdir = n2-n0;
+			nleft = n1;
+			nleftdir = n2-n1;
 		}
 		else
 		{
 			vleft = v0;
 			vleftdir = v2-v0;
 			vright = v1;
-			vrightdir = v2-v1;	
+			vrightdir = v2-v1;
+			nleft = n0;
+			nleftdir = n2-n0;
+			nright = n1;
+			nrightdir = n2-n1;
 		}
 	}
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override
 	{
 		v = vleft + vleftdir*progress_left;
-		dir = vright + vrightdir*progress_right - v;
+		vdir = vright + vrightdir*progress_right - v;
+		n = nleft + nleftdir*progress_left;
+		ndir = nright + nrightdir*progress_right - n;
 	}
 	virtual int shade(float progress) override
 	{
-		vertex_t center_vertex = v + dir*progress;
+		vertex_t center_vertex = v + vdir*progress;
+		normal_t normal        = n + ndir*progress;
 		
+		float face_sun_intensity = - normal.dot(scene->sun_direction);
+		if (face_sun_intensity < 0.0f)
+			face_sun_intensity = 0.0f;
+		else
+			face_sun_intensity *= scene->sun_intensity;
+
 		float dynamic_lights_intensity = 0.0f;
 		__gnu_parallel::for_each(scene->point_source_lights.begin(), scene->point_source_lights.end(),
 			[&](const auto & psl)
@@ -167,13 +194,13 @@ struct pixel_shader_lights_semiflat : pixel_shader_t
 				if (intensity < 0.05)
 					return;
 				light_direction.normalize();
-				float alignment = - n0.dot(light_direction);
+				float alignment = - normal.dot(light_direction);
 				if (alignment < 0.0f)
 					return;
 				dynamic_lights_intensity += alignment * intensity;
 			});
 
-		return 65536 * scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity;
+		return 65536 * (scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity);
 	}
 };
 
