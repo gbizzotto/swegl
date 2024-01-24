@@ -122,12 +122,19 @@ inline vector_t operator+(const vector_t & left, const vector_t & right)
 {
 	return vector_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
 }
+inline vector_t operator-(const vector_t & right)
+{
+	return vector_t(-right.x(), -right.y(), -right.z());
+}
 
 class normal_t : public vector_t
 {
 public:
 	inline normal_t() : vector_t() {}
-	inline normal_t(const vector_t && v) : vector_t(v) {}
+	inline normal_t(const vector_t && v) : vector_t(v)
+	{
+		normalize();
+	}
 	inline normal_t(float x, float y, float z): vector_t(x, y, z)
 	{
 		normalize();
@@ -152,18 +159,17 @@ normal_t cross(const vector_t &, const vector_t &);
 normal_t transform(const normal_t &, const matrix44_t &);
 normal_t rotate   (const normal_t &, const matrix44_t &);
 
-inline normal_t operator+(const normal_t & left, const normal_t & right)
+inline vector_t operator+(const normal_t & left, const vector_t & right)
 {
-	return normal_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
+	return vector_t(left.x()+right.x(), left.y()+right.y(), left.z()+right.z());
 }
-inline normal_t operator-(const normal_t & left, const normal_t & right)
+inline vector_t operator-(const normal_t & left, const normal_t & right)
 {
-	return normal_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
+	return vector_t(left.x()-right.x(), left.y()-right.y(), left.z()-right.z());
 }
-template<typename T>
-normal_t operator*(const normal_t & left, const T & right)
+inline normal_t operator-(const normal_t & right)
 {
-	return normal_t(left.x()*right, left.y()*right, left.z()*right);
+	return normal_t(-right.x(), -right.y(), -right.z());
 }
 
 template<typename O>

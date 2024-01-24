@@ -45,7 +45,14 @@ struct pixel_shader_lights_flat : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		float face_sun_intensity = - model->mesh.vertices[i0].normal_world.dot(scene->sun_direction);
+		vector_t normal_viewport = cross(model->mesh.vertices[i1].v_viewport - model->mesh.vertices[i0].v_viewport
+		                                ,model->mesh.vertices[i2].v_viewport - model->mesh.vertices[i0].v_viewport);
+		normal_t normal_world(cross(model->mesh.vertices[i1].v_world - model->mesh.vertices[i0].v_world
+		                           ,model->mesh.vertices[i2].v_world - model->mesh.vertices[i0].v_world));
+		if (normal_viewport.z() > 0)
+			normal_world = -normal_world;
+
+		float face_sun_intensity = - normal_world.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
 		else
@@ -63,15 +70,13 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				float light_distance_squared = light_direction.len_squared();
 				float diffuse = psl.intensity / light_distance_squared;
 				light_direction.normalize();
-				const vector_t & normal = model->mesh.vertices[i2].normal_world;
-				//const vector_t normal = (model->mesh.vertices_world[i0].normal + model->mesh.vertices_world[i1].normal + model->mesh.vertices_world[i2].normal).normalize();
-				float alignment = -normal.dot(light_direction);
+				float alignment = -normal_world.dot(light_direction);
 				if (alignment < 0.0f)
 					return;
 				diffuse *= alignment;
 
 				// specular
-				vector_t reflection = light_direction + normal * alignment * 2;
+				vector_t reflection = light_direction + normal_world * (alignment * 2);
 				float specular = reflection.dot(camera_vector);
 				if (specular > 0)
 				{
