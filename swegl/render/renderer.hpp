@@ -102,7 +102,11 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		}
 		// TRIs
 		for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-			if (do_triangle(model, i-2,i-1,i))
+			if (do_triangle(model
+			               ,model.mesh.triangle_list.indices[i-2]
+			               ,model.mesh.triangle_list.indices[i-1]
+			               ,model.mesh.triangle_list.indices[i  ])
+			    )
 			{
 				model.mesh.vertices[model.mesh.triangle_list.indices[i-2]].yes = true;
 				model.mesh.vertices[model.mesh.triangle_list.indices[i-1]].yes = true;
@@ -147,9 +151,9 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		}
 		// TRIs
 		for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-			fill_triangle(i-2
-			             ,i-1
-			             ,i  
+			fill_triangle(model.mesh.triangle_list.indices[i-2]
+			             ,model.mesh.triangle_list.indices[i-1]
+			             ,model.mesh.triangle_list.indices[i  ]
 			             ,model
 			             ,viewport
 			             ,pixel_shader
