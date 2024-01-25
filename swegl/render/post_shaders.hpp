@@ -71,7 +71,7 @@ struct post_shader_depth_box : public post_shader_t
 						}
 					}
 					if (count)
-						temp_buffer[y*vp.m_w + x] = pixel_colors(b/count,g/count,r/count);
+						temp_buffer[y*vp.m_w + x] = pixel_colors(b/count,g/count,r/count,255);
 				}
 			}
 	};

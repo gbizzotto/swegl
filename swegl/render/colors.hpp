@@ -13,8 +13,8 @@ struct pixel_colors
 		v4i v;
 	};
 	pixel_colors() = default;
-	inline pixel_colors(unsigned char b, unsigned char g, unsigned char r)
-		: o{b,g,r,0}
+	inline pixel_colors(unsigned char b, unsigned char g, unsigned char r, unsigned char a)
+		: o{b,g,r,a}
 	{}
 	inline pixel_colors(v4i v)
 		: v(v)

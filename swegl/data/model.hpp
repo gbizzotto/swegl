@@ -6,6 +6,7 @@
 #include <swegl/projection/points.hpp>
 #include <swegl/projection/matrix44.hpp>
 #include <swegl/data/texture.hpp>
+#include <swegl/render/colors.hpp>
 
 namespace swegl
 {
@@ -46,6 +47,7 @@ struct mesh_t
 	std::vector<triangle_fan>   triangle_fans;
 	triangle_list_t             triangle_list;
 	std::vector<std::shared_ptr<texture_t>> textures;
+	int material_id;
 };
 
 struct model_t
@@ -71,6 +73,13 @@ struct point_source_light
 	float intensity;
 };
 
+struct material_t
+{
+	pixel_colors color;
+	float metallic;
+	float roughness;
+};
+
 struct scene_t
 {
 	std::vector<model_t> models;
@@ -81,6 +90,8 @@ struct scene_t
 	float sun_intensity;
 
 	std::vector<point_source_light> point_source_lights;
+
+	std::vector<material_t> materials;
 };
 
 

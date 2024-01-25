@@ -21,6 +21,7 @@ struct pixel_shader_t
 	const model_t * model;
 	const scene_t * scene;
 	const viewport_t * viewport;
+	pixel_colors color;
 
 	virtual void prepare_for_model(const model_t & m,
 	                               const scene_t & s,
@@ -29,12 +30,17 @@ struct pixel_shader_t
 		model = &m;
 		scene = &s;
 		viewport = &vp;
+
+		if (s.materials.size() > 0)
+			color = s.materials[m.mesh.material_id].color;
+		else
+			color = pixel_colors{128,128,128,255};
 	}
 	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
-	virtual int shade([[maybe_unused]] float progress) { return pixel_colors(128,128,128).to_int(); }
+	virtual int shade([[maybe_unused]] float progress) { return color.to_int(); }
 };
 
 struct pixel_shader_lights_flat : pixel_shader_t

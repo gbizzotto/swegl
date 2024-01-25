@@ -144,6 +144,32 @@ swegl::scene_t load_scene(std::string filename)
 
 	nlohmann::json j = nlohmann::json::parse(chunks[0].data, chunks[0].data + chunks[0].length);
 
+	if (j.contains("materials"))
+	{
+		result.materials.reserve(j["materials"].size());
+		for (auto & material : j["materials"])
+		{
+			if ( ! material.contains("pbrMetallicRoughness"))
+				continue;
+			pixel_colors color{255,255,255,255};
+			float metallic = 1.0;
+			float roughness = 1.0;
+			if (material["pbrMetallicRoughness"].contains("baseColorFactor"))
+			{
+				color = pixel_colors{(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][2].template get<float>()) // g // b
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][1].template get<float>()) // g
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][0].template get<float>()) // r
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][3].template get<float>()) // a
+			                        };
+			}
+			if (material["pbrMetallicRoughness"].contains("metallicFactor"))
+				metallic = material["pbrMetallicRoughness"]["metallicFactor"].template get<float>();
+			if (material["pbrMetallicRoughness"].contains("roughnessFactor"))
+				roughness = material["pbrMetallicRoughness"]["roughnessFactor"].template get<float>();
+			result.materials.push_back(material_t{color, metallic, roughness});
+		}
+	}
+
 	std::vector<view_t<char>> buffers;
 	for (auto & buffer : j["buffers"])
 		buffers.emplace_back(view_t<char>{chunks[1].data, chunks[1].data + buffer["byteLength"].template get<int>()});
@@ -167,6 +193,7 @@ swegl::scene_t load_scene(std::string filename)
 		model_t & model = result.models.emplace_back();
 		model.orientation = matrix44_t::Identity;
 		model.position = {0,0,0};
+		model.mesh.material_id = mesh["primitives"][0]["material"].template get<int>();
 
 		accessor_t & accessor_vertices = accessors[mesh["primitives"][0]["attributes"]["POSITION"].template get<int>()];
 		accessor_t & accessor_normals  = accessors[mesh["primitives"][0]["attributes"]["NORMAL"  ].template get<int>()];
