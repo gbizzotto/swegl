@@ -6,6 +6,7 @@
 namespace swegl
 {
 
-texture_t read_png_file(char *filename);
+texture_t read_png_file(char *filename, int offset=0);
+texture_t read_png_file(FILE *fp);
 
 } // namespace

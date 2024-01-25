@@ -9,14 +9,11 @@
 namespace swegl
 {
 
-texture_t read_png_file(char *filename)
+texture_t read_png_file(FILE *fp)
 {
 	int width, height;
 	png_byte color_type;
 	png_byte bit_depth;
-	//png_bytep *row_pointers = NULL;
-
-	FILE *fp = fopen(filename, "rb");
 
 	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png)
@@ -89,6 +86,13 @@ texture_t read_png_file(char *filename)
 		}
 	}
 	return texture_t(texture_data, width, height);
+}
+
+texture_t read_png_file(char *filename, int offset)
+{
+	FILE *fp = fopen(filename, "rb");
+	fseek(fp, offset, SEEK_SET);
+	return read_png_file(fp);
 }
 
 } // namespace

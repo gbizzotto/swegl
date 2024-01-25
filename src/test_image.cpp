@@ -9,7 +9,16 @@ int main(int argc, char *argv[])
 {
 	swegl::sdl_t sdl(10, 1600, 800, 600, "test_1");
 
-	swegl::texture_t texture = swegl::read_png_file(argv[1]);
+	if (argc == 1)
+		return 1;
+
+	swegl::texture_t texture = [&]()
+		{
+			if (argc == 2)
+				return swegl::read_png_file(argv[1]);
+			else
+				 return swegl::read_png_file(argv[1], std::stoi(argv[2]));
+		}();
 	if (texture.m_mipmapsCount == 0)
 		return 1;
 
