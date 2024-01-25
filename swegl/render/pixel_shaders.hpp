@@ -34,7 +34,7 @@ struct pixel_shader_t
 		if (s.materials.size() > 0)
 			color = s.materials[m.mesh.material_id].color;
 		else
-			color = pixel_colors{128,128,128,255};
+			color = pixel_colors(128,128,128,255);
 	}
 	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
@@ -229,9 +229,11 @@ struct pixel_shader_texture : pixel_shader_t
 	vec2f_t t_left;
 	vec2f_t t_dir;
 
+	unsigned int default_bitmap = pixel_colors(128,128,128,255).to_int();
 	unsigned int *tbitmap;
 	unsigned int twidth;
 	unsigned int theight;
+
 
 	virtual void prepare_for_model([[maybe_unused]] const model_t & m,
 	                               [[maybe_unused]] const scene_t & s,
@@ -241,9 +243,19 @@ struct pixel_shader_texture : pixel_shader_t
 
 		// TODO: select LOD / mipmap according to distance from camera
 
-		tbitmap = m.mesh.textures[0]->m_mipmaps.get()[0].m_bitmap;
-		twidth  = m.mesh.textures[0]->m_mipmaps.get()[0].m_width;
-		theight = m.mesh.textures[0]->m_mipmaps.get()[0].m_height;
+		int texture_id = s.materials[m.mesh.material_id].texture_idx;
+		if (texture_id == -1)
+		{
+			tbitmap = &default_bitmap;
+			twidth  = 1;
+			theight = 1;
+		}
+		else
+		{
+			tbitmap = s.images[texture_id].m_mipmaps.get()[0].m_bitmap;
+			twidth  = s.images[texture_id].m_mipmaps.get()[0].m_width;
+			theight = s.images[texture_id].m_mipmaps.get()[0].m_height;
+		}
 	}
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
@@ -252,12 +264,12 @@ struct pixel_shader_texture : pixel_shader_t
 		t1 = model->mesh.vertices[i1].tex_coords;
 		t2 = model->mesh.vertices[i2].tex_coords;
 
-		t0.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t0.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t1.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t1.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t2.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t2.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t0.x() *= twidth;
+		t0.y() *= theight;
+		t1.x() *= twidth;
+		t1.y() *= theight;
+		t2.x() *= twidth;
+		t2.y() *= theight;
 
 		side_long_t_dir = t2 - t0;
 	}
@@ -314,6 +326,7 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	vec2f_t t_left;
 	vec2f_t t_dir;
 
+	unsigned int default_bitmap = pixel_colors(128,128,128,255).to_int();
 	unsigned int *tbitmap;
 	float twidth;
 	float theight;
@@ -324,9 +337,19 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	{
 		pixel_shader_t::prepare_for_model(m, s, vp);
 
-		tbitmap = m.mesh.textures[0]->m_mipmaps[0].m_bitmap;
-		twidth  = m.mesh.textures[0]->m_mipmaps[0].m_width;
-		theight = m.mesh.textures[0]->m_mipmaps[0].m_height;
+		int texture_id = s.materials[m.mesh.material_id].texture_idx;
+		if (texture_id == -1)
+		{
+			tbitmap = &default_bitmap;
+			twidth  = 1;
+			theight = 1;
+		}
+		else
+		{
+			tbitmap = s.images[texture_id].m_mipmaps.get()[0].m_bitmap;
+			twidth  = s.images[texture_id].m_mipmaps.get()[0].m_width;
+			theight = s.images[texture_id].m_mipmaps.get()[0].m_height;
+		}
 	}
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
@@ -335,12 +358,12 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 		t1 = model->mesh.vertices[i1].tex_coords;
 		t2 = model->mesh.vertices[i2].tex_coords;
 
-		t0.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t0.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t1.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t1.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
-		t2.x() *= model->mesh.textures[0]->m_mipmaps[0].m_width;
-		t2.y() *= model->mesh.textures[0]->m_mipmaps[0].m_height;
+		t0.x() *= twidth;
+		t0.y() *= theight;
+		t1.x() *= twidth;
+		t1.y() *= theight;
+		t2.x() *= twidth;
+		t2.y() *= theight;
 
 		side_long_t_dir = t2 - t0;
 	}

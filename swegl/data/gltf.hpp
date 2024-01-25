@@ -8,6 +8,7 @@
 #include <swegl/misc/file.hpp>
 #include <swegl/data/model.hpp>
 #include <swegl/misc/json.hpp>
+#include <swegl/misc/image.hpp>
 
 
 namespace swegl
@@ -144,31 +145,6 @@ swegl::scene_t load_scene(std::string filename)
 
 	nlohmann::json j = nlohmann::json::parse(chunks[0].data, chunks[0].data + chunks[0].length);
 
-	if (j.contains("materials"))
-	{
-		result.materials.reserve(j["materials"].size());
-		for (auto & material : j["materials"])
-		{
-			if ( ! material.contains("pbrMetallicRoughness"))
-				continue;
-			pixel_colors color{255,255,255,255};
-			float metallic = 1.0;
-			float roughness = 1.0;
-			if (material["pbrMetallicRoughness"].contains("baseColorFactor"))
-			{
-				color = pixel_colors{(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][2].template get<float>()) // g // b
-			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][1].template get<float>()) // g
-			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][0].template get<float>()) // r
-			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][3].template get<float>()) // a
-			                        };
-			}
-			if (material["pbrMetallicRoughness"].contains("metallicFactor"))
-				metallic = material["pbrMetallicRoughness"]["metallicFactor"].template get<float>();
-			if (material["pbrMetallicRoughness"].contains("roughnessFactor"))
-				roughness = material["pbrMetallicRoughness"]["roughnessFactor"].template get<float>();
-			result.materials.push_back(material_t{color, metallic, roughness});
-		}
-	}
 
 	std::vector<view_t<char>> buffers;
 	for (auto & buffer : j["buffers"])
@@ -187,6 +163,53 @@ swegl::scene_t load_scene(std::string filename)
 	for (auto & accessor : j["accessors"])
 		accessors.push_back(accessor_t(buffer_views, accessor));
 
+	if (j.contains("images"))
+	{
+		for (auto & image : j["images"])
+		{
+			if (image["mimeType"] == "image/png")
+			{
+				auto & buffer_view = buffer_views[image["bufferView"].template get<int>()];
+				int file_offset = &buffer_view.data[0] - glb_data.get();
+				texture_t image = read_png_file(filename.c_str(), file_offset);
+				result.images.emplace_back(std::move(image));
+			}
+		}
+	}
+
+	if (j.contains("materials"))
+	{
+		result.materials.reserve(j["materials"].size());
+		for (auto & material : j["materials"])
+		{
+			if ( ! material.contains("pbrMetallicRoughness"))
+				continue;
+			pixel_colors color{255,255,255,255};
+			float metallic = 1.0;
+			float roughness = 1.0;
+			int img_idx = -1;
+			if (material["pbrMetallicRoughness"].contains("baseColorFactor"))
+			{
+				color = pixel_colors{(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][2].template get<float>()) // g // b
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][1].template get<float>()) // g
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][0].template get<float>()) // r
+			                        ,(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][3].template get<float>()) // a
+			                        };
+			}
+			if (material["pbrMetallicRoughness"].contains("baseColorTexture"))
+			{
+				int texture_idx = material["pbrMetallicRoughness"]["baseColorTexture"]["index"].template get<int>();
+				img_idx = j["textures"][texture_idx]["source"].template get<int>();
+			}
+			if (material["pbrMetallicRoughness"].contains("metallicFactor"))
+				metallic = material["pbrMetallicRoughness"]["metallicFactor"].template get<float>();
+			if (material["pbrMetallicRoughness"].contains("roughnessFactor"))
+				roughness = material["pbrMetallicRoughness"]["roughnessFactor"].template get<float>();
+			result.materials.push_back(material_t{color, metallic, roughness, img_idx});
+		}
+	}
+
+
 	auto & meshes = j["meshes"];
 	for (auto & mesh : meshes)
 	{
@@ -196,7 +219,6 @@ swegl::scene_t load_scene(std::string filename)
 		model.mesh.material_id = mesh["primitives"][0]["material"].template get<int>();
 
 		accessor_t & accessor_vertices = accessors[mesh["primitives"][0]["attributes"]["POSITION"].template get<int>()];
-		accessor_t & accessor_normals  = accessors[mesh["primitives"][0]["attributes"]["NORMAL"  ].template get<int>()];
 		accessor_t & accessor_indices  = accessors[mesh["primitives"][0]["indices"   ]            .template get<int>()];
 
 		model.mesh.vertices.resize(accessor_vertices.count + 2);
@@ -208,13 +230,28 @@ swegl::scene_t load_scene(std::string filename)
 			vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.buffer_view.byte_stride];
 			vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.buffer_view.byte_stride];
 		}
-		for (int i=0 ; i<accessor_normals.count ; i++)
+		if (mesh["primitives"][0]["attributes"].contains("NORMAL"))
 		{
-			auto & vertex = model.mesh.vertices[i];
-			vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
-			vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
-			vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+			accessor_t & accessor_normals  = accessors[mesh["primitives"][0]["attributes"]["NORMAL"  ].template get<int>()];
+			for (int i=0 ; i<accessor_normals.count ; i++)
+			{
+				auto & vertex = model.mesh.vertices[i];
+				vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
+				vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
+				vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+			}
 		}
+		if (mesh["primitives"][0]["attributes"].contains("TEXCOORD_0"))
+		{
+			accessor_t & accessor_texcoords = accessors[mesh["primitives"][0]["attributes"]["TEXCOORD_0"].template get<int>()];
+			for (int i=0 ; i<accessor_texcoords.count ; i++)
+			{
+				auto & vertex = model.mesh.vertices[i];
+				vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.buffer_view.byte_stride];
+				vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.buffer_view.byte_stride];				
+			}
+		}
+
 		model.mesh.triangle_list.indices.reserve(accessor_indices.count);
 		for (int i=0 ; i<accessor_indices.count ; i++)
 		{

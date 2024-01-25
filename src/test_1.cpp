@@ -22,11 +22,15 @@
 
 swegl::scene_t build_scene()
 {
-	auto texture_dice     = std::make_shared<swegl::texture_t>("resources/dice.bmp");
-	auto texture_grid     = std::make_shared<swegl::texture_t>("resources/tex.bmp");
-	auto texture_mercator = std::make_shared<swegl::texture_t>("resources/mercator.bmp");
-	//swegl::Texture *bumpmap = new swegl::Texture("bumpmap.bmp");
 	swegl::scene_t s;
+
+	s.images.emplace_back("resources/dice.bmp");
+	s.images.emplace_back("resources/tex.bmp");
+	s.images.emplace_back("resources/mercator.bmp");
+
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 0});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 2});
 
 	s.ambient_light_intensity = 0.2f;
 
@@ -38,7 +42,7 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
 	//*
-	auto tore = swegl::make_tore(100, texture_grid);
+	auto tore = swegl::make_tore(100, 1);
 	tore.orientation = swegl::matrix44_t::Identity;
 	tore.orientation.rotate_z(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
@@ -47,7 +51,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto cube = swegl::make_cube(1.0f, texture_dice);
+	auto cube = swegl::make_cube(1.0f, 0);
 	cube.orientation = swegl::matrix44_t::Identity;
 	cube.position = swegl::vertex_t(0.0f, 0.0f, -5.0f);
 	//c->SetBumpMap(bumpmap);
@@ -55,7 +59,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto sphere = swegl::make_sphere(100, 2.0f, texture_mercator);
+	auto sphere = swegl::make_sphere(100, 2.0f, 2);
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
 	//c->SetBumpMap(bumpmap);
@@ -63,14 +67,14 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto tri = swegl::make_tri(1, texture_dice);
+	auto tri = swegl::make_tri(1, 0);
 	tri.orientation = swegl::matrix44_t::Identity;
 	tri.position = swegl::vertex_t(1.0f, 2.5f, -5.1f);
 	s.models.emplace_back(std::move(tri));
 	//*/
 
 	//*
-	auto cube2 = swegl::make_cube(0.1f, texture_dice);
+	auto cube2 = swegl::make_cube(0.1f, -1);
 	cube2.orientation = swegl::matrix44_t::Identity;
 	cube2.position = s.point_source_lights[0].position;
 	//c->SetBumpMap(bumpmap);
@@ -78,7 +82,7 @@ swegl::scene_t build_scene()
 	//*/
 	
 	//*
-	auto cube3 = swegl::make_cube(0.1f, texture_dice);
+	auto cube3 = swegl::make_cube(0.1f, -1);
 	cube3.orientation = swegl::matrix44_t::Identity;
 	cube3.position = s.point_source_lights[1].position;
 	//c->SetBumpMap(bumpmap);
@@ -283,7 +287,7 @@ int main(int argc, char ** argv)
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_basic);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full);
 	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
 	swegl::post_shader_t post_shader_null;
 	viewport.set_post_shader(post_shader_null);

@@ -88,7 +88,7 @@ texture_t read_png_file(FILE *fp)
 	return texture_t(texture_data, width, height);
 }
 
-texture_t read_png_file(char *filename, int offset)
+texture_t read_png_file(const char *filename, int offset)
 {
 	FILE *fp = fopen(filename, "rb");
 	fseek(fp, offset, SEEK_SET);

@@ -46,7 +46,6 @@ struct mesh_t
 	std::vector<triangle_strip> triangle_strips;
 	std::vector<triangle_fan>   triangle_fans;
 	triangle_list_t             triangle_list;
-	std::vector<std::shared_ptr<texture_t>> textures;
 	int material_id;
 };
 
@@ -78,6 +77,7 @@ struct material_t
 	pixel_colors color;
 	float metallic;
 	float roughness;
+	int texture_idx; // -1 means none
 };
 
 struct scene_t
@@ -92,6 +92,7 @@ struct scene_t
 	std::vector<point_source_light> point_source_lights;
 
 	std::vector<material_t> materials;
+	std::vector<texture_t> images;
 };
 
 
@@ -146,7 +147,7 @@ inline void calculate_face_normals(model_t & model)
 }
 
 
-inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
+inline model_t make_tri(float size, int material_idx)
 {
 	model_t result;
 
@@ -158,7 +159,7 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.textures.push_back(texture);
+	result.mesh.material_id = material_idx;
 
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
@@ -172,7 +173,7 @@ inline model_t make_tri(float size, std::shared_ptr<texture_t> & texture)
 	return result;	
 }
 
-inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
+inline model_t make_cube(float size, int material_idx)
 {
 	model_t result;
 
@@ -211,7 +212,7 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.textures.push_back(texture);
+	result.mesh.material_id = material_idx;
 
 	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
@@ -232,7 +233,7 @@ inline model_t make_cube(float size, std::shared_ptr<texture_t> & texture)
 	return result;	
 }
 
-inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & texture)
+inline model_t make_tore(unsigned int precision, int material_idx)
 {
 	model_t result;
 
@@ -241,7 +242,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.textures.push_back(texture);
+	result.mesh.material_id = material_idx;
 
 	auto & vertices = result.mesh.vertices;
 
@@ -290,7 +291,7 @@ inline model_t make_tore(unsigned int precision, std::shared_ptr<texture_t> & te
 	return result;
 }
 
-inline model_t make_sphere(unsigned int precision, float radius, std::shared_ptr<texture_t> & texture)
+inline model_t make_sphere(unsigned int precision, float radius, int material_idx)
 {
 	model_t result;
 
@@ -299,7 +300,7 @@ inline model_t make_sphere(unsigned int precision, float radius, std::shared_ptr
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.textures.push_back(texture);
+	result.mesh.material_id = material_idx;
 
 	auto & vertices = result.mesh.vertices;
 
