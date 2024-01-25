@@ -23,7 +23,7 @@ LDFLAGS = -L. `sdl2-config --cflags --libs`
 LDLIBS_debug = -lasan
 LDLIBS_release = 
 LDLIBS_perf = 
-LDLIBS = $(LDLIBS_$(TYPE)) -pthread -L. `sdl2-config --cflags --libs` -fopenmp
+LDLIBS = $(LDLIBS_$(TYPE)) -pthread -L. `sdl2-config --cflags --libs` -fopenmp -lpng 
 #-L$(DEPDIR)/abseil-cpp/build/absl/container/ -L$(DEPDIR)/abseil-cpp/build/absl/synchronization/ -L$(DEPDIR)/abseil-cpp/build/absl/time
 #-labsl_hashtablez_sampler -labsl_synchronization -labsl_time
 
@@ -135,7 +135,7 @@ $(BINDIR)/%: $(OBJDIR)/%.o $(OBJDIR)/$(lib)
 	$(if $(new_objs), @$(MAKE) --no-print-directory $@)
 	$(if $(new_objs), , @echo "Linking $(GREEN)$@$(NC)")
 	$(if $(new_objs), , @mkdir -p $(dir $@))
-	$(if $(new_objs), , @$(LD) $(LDFLAGS) $(EXTRA_CFLAGS) -o $@ $(OBJDIR)/$*.o $(objs) $(LDLIBS)) $(BINDIR)/$(lib)
+	$(if $(new_objs), , @$(LD) $(LDFLAGS) $(EXTRA_CFLAGS) -o $@ $(OBJDIR)/$*.o $(objs) $(BINDIR)/$(lib) $(LDLIBS))
 
 .PHONY: clean all tests test thorough docker perf loc gen
 

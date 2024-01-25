@@ -126,6 +126,7 @@ namespace swegl
 	 */
 	texture_t::texture_t(unsigned int rgb)
 	{
+		m_mipmapsCount = 1;
 		m_mipmaps = std::make_unique<mipmap_t[]>(1);
 		m_mipmaps[0].m_height = 1;
 		m_mipmaps[0].m_width = 1;
@@ -135,7 +136,7 @@ namespace swegl
 
 	texture_t::texture_t(unsigned int * data, int w, int h)
 	{
-		m_mipmapsCount = 0;
+		m_mipmapsCount = 1;
 		m_mipmaps = std::make_unique<mipmap_t[]>(1);
 		m_mipmaps[0].m_bitmap = data;
 		m_mipmaps[0].m_width = w;
