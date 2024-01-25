@@ -246,6 +246,7 @@ struct pixel_shader_texture : pixel_shader_t
 		int texture_id = s.materials[m.mesh.material_id].texture_idx;
 		if (texture_id == -1)
 		{
+			default_bitmap = s.materials[m.mesh.material_id].color.to_int();
 			tbitmap = &default_bitmap;
 			twidth  = 1;
 			theight = 1;
@@ -340,6 +341,7 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 		int texture_id = s.materials[m.mesh.material_id].texture_idx;
 		if (texture_id == -1)
 		{
+			default_bitmap = s.materials[m.mesh.material_id].color.to_int();
 			tbitmap = &default_bitmap;
 			twidth  = 1;
 			theight = 1;
