@@ -28,17 +28,18 @@ struct line_side
 };
 
 void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
-bool do_triangle(const model_t & model, vertex_idx i0, vertex_idx i1, vertex_idx i2);
+bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2);
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
                    model_t & model,
+                   primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader);
 void fill_triangle_2(vertex_idx i0,
                      vertex_idx i1,
                      vertex_idx i2,
-                     model_t & model,
+                     primitive_t & primitive,
                      viewport_t & vp,
                      pixel_shader_t & pixel_shader);
 void fill_half_triangle(int y, int y_end,
@@ -61,103 +62,110 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 
 	for (auto & model : scene.models)
 	{
-		//vertex_shader_t::world_to_viewport(scene, viewport);
-
 		pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
-		pixel_shader.prepare_for_model(model, scene, viewport);
 
-		// STRIPS
-		for (triangle_strip & strip : model.mesh.triangle_strips)
+		// determine which vertices will be part of visible triangles and need more transformation 
+		for (auto & primitive : model.primitives)
 		{
-			for (unsigned int i=2 ; i<strip.indices.size() ; i++)
-				if ((i&0x1)==0)
-				{
-					if (do_triangle(model, strip.indices[i-2],strip.indices[i-1],strip.indices[i  ]))
+			pixel_shader.prepare_for_primitive(primitive, scene, viewport);
+
+			// STRIPS
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
+			{
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
+					if ((i&0x1)==0)
 					{
-						model.mesh.vertices[strip.indices[i-2]].yes = true;
-						model.mesh.vertices[strip.indices[i-1]].yes = true;
-						model.mesh.vertices[strip.indices[i  ]].yes = true;
+						if (do_triangle(primitive, primitive.indices[i-2],primitive.indices[i-1],primitive.indices[i  ]))
+						{
+							primitive.vertices[primitive.indices[i-2]].yes = true;
+							primitive.vertices[primitive.indices[i-1]].yes = true;
+							primitive.vertices[primitive.indices[i  ]].yes = true;
+						}
 					}
-				}
-				else
-					if (do_triangle(model, strip.indices[i-2],strip.indices[i  ],strip.indices[i-1]))
+					else
+						if (do_triangle(primitive, primitive.indices[i-2],primitive.indices[i  ],primitive.indices[i-1]))
+						{
+							primitive.vertices[primitive.indices[i-2]].yes = true;
+							primitive.vertices[primitive.indices[i-1]].yes = true;
+							primitive.vertices[primitive.indices[i  ]].yes = true;
+						}
+			}
+			// FANS
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
+					if (do_triangle(primitive, primitive.indices[0  ],primitive.indices[i-1],primitive.indices[i  ]))
 					{
-						model.mesh.vertices[strip.indices[i-2]].yes = true;
-						model.mesh.vertices[strip.indices[i-1]].yes = true;
-						model.mesh.vertices[strip.indices[i  ]].yes = true;
+						primitive.vertices[primitive.indices[0  ]].yes = true;
+						primitive.vertices[primitive.indices[i-1]].yes = true;
+						primitive.vertices[primitive.indices[i  ]].yes = true;
+					}
+			// TRIs
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i+= 3)
+					if (do_triangle(primitive
+					               ,primitive.indices[i-2]
+					               ,primitive.indices[i-1]
+					               ,primitive.indices[i  ])
+					    )
+					{
+						primitive.vertices[primitive.indices[i-2]].yes = true;
+						primitive.vertices[primitive.indices[i-1]].yes = true;
+						primitive.vertices[primitive.indices[i  ]].yes = true;
 					}
 		}
-		// FANS
-		for (triangle_fan & fan : model.mesh.triangle_fans)
-		{
-			for (unsigned int i=2 ; i<fan.indices.size() ; i++)
-			{
-				if (do_triangle(model, fan.indices[0  ],fan.indices[i-1],fan.indices[i  ]))
-				{
-					model.mesh.vertices[fan.indices[0  ]].yes = true;
-					model.mesh.vertices[fan.indices[i-1]].yes = true;
-					model.mesh.vertices[fan.indices[i  ]].yes = true;
-				}
-			}
-		}
-		// TRIs
-		for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-			if (do_triangle(model
-			               ,model.mesh.triangle_list.indices[i-2]
-			               ,model.mesh.triangle_list.indices[i-1]
-			               ,model.mesh.triangle_list.indices[i  ])
-			    )
-			{
-				model.mesh.vertices[model.mesh.triangle_list.indices[i-2]].yes = true;
-				model.mesh.vertices[model.mesh.triangle_list.indices[i-1]].yes = true;
-				model.mesh.vertices[model.mesh.triangle_list.indices[i  ]].yes = true;
-			}
 
+		// do the rest of the transformations to the vertices that are part of visible triangles
 		vertex_shader_t::frustum_to_viewport(model, viewport);
 
-
-		// STRIPS
-		for (triangle_strip & strip : model.mesh.triangle_strips)
+		// do the painting
+		for (auto & primitive : model.primitives)
 		{
-			for (unsigned int i=2 ; i<strip.indices.size() ; i++)
-				if ((i&0x1)==0)
-					fill_triangle(strip.indices[i-2]
-					             ,strip.indices[i-1]
-					             ,strip.indices[i  ]
+			// STRIPS
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
+			{
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
+					if ((i&0x1)==0)
+						fill_triangle(primitive.indices[i-2]
+						             ,primitive.indices[i-1]
+						             ,primitive.indices[i  ]
+						             ,model
+						             ,primitive
+						             ,viewport
+						             ,pixel_shader
+						             );
+					else
+						fill_triangle(primitive.indices[i-2]
+						             ,primitive.indices[i  ]
+						             ,primitive.indices[i-1]
+						             ,model
+						             ,primitive
+						             ,viewport
+						             ,pixel_shader
+						             );
+			}
+			// FANSv
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
+					fill_triangle(primitive.indices[0  ]
+					             ,primitive.indices[i-1]
+					             ,primitive.indices[i  ]
 					             ,model
+					             ,primitive
 					             ,viewport
 					             ,pixel_shader
 					             );
-				else
-					fill_triangle(strip.indices[i-2]
-					             ,strip.indices[i  ]
-					             ,strip.indices[i-1]
+			// TRIs
+			if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
+				for (unsigned int i=2 ; i<primitive.indices.size() ; i+= 3)
+					fill_triangle(primitive.indices[i-2]
+					             ,primitive.indices[i-1]
+					             ,primitive.indices[i  ]
 					             ,model
+					             ,primitive
 					             ,viewport
 					             ,pixel_shader
 					             );
 		}
-		// FANS
-		for (triangle_fan & fan : model.mesh.triangle_fans)
-		{
-			for (unsigned int i=2 ; i<fan.indices.size() ; i++)
-				fill_triangle(fan.indices[0  ]
-				             ,fan.indices[i-1]
-				             ,fan.indices[i  ]
-				             ,model
-				             ,viewport
-				             ,pixel_shader
-				             );
-		}
-		// TRIs
-		for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+= 3)
-			fill_triangle(model.mesh.triangle_list.indices[i-2]
-			             ,model.mesh.triangle_list.indices[i-1]
-			             ,model.mesh.triangle_list.indices[i  ]
-			             ,model
-			             ,viewport
-			             ,pixel_shader
-			             );
 	}
 
 	viewport.m_post_shader->shade(viewport);
@@ -180,11 +188,11 @@ void render(scene_t & scene, T&...t)
 }
 
 
-bool do_triangle(const model_t & model, vertex_idx i0, vertex_idx i1, vertex_idx i2)
+bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2)
 {
-	const vertex_t * v0 = &model.mesh.vertices[i0].v_viewport;
-	const vertex_t * v1 = &model.mesh.vertices[i1].v_viewport;
-	const vertex_t * v2 = &model.mesh.vertices[i2].v_viewport;
+	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
+	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
+	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
 
 	// backface culling
 	// z already inversed by viewmatrix (high Z = far)
@@ -210,18 +218,19 @@ void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
                    model_t & model,
+                   primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader)
 {
-	if (  !model.mesh.vertices[i0].yes
-	    ||!model.mesh.vertices[i1].yes
-	    ||!model.mesh.vertices[i2].yes )
+	if (  !primitive.vertices[i0].yes
+	    ||!primitive.vertices[i1].yes
+	    ||!primitive.vertices[i2].yes )
 	{
 	    return;
 	}
-	const vertex_t * v0 = &model.mesh.vertices[i0].v_viewport;
-	const vertex_t * v1 = &model.mesh.vertices[i1].v_viewport;
-	const vertex_t * v2 = &model.mesh.vertices[i2].v_viewport;
+	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
+	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
+	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
 
 	// handle cases where 1 or 2 vertices have screen z values below zero (behind the camera)
 
@@ -245,73 +254,73 @@ void fill_triangle(vertex_idx i0,
 	if (v1->z() < 0.001) // only v0 in front of the camera
 	{
 		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
-		mesh_vertex_t & new_vertex_1 = model.mesh.vertices.emplace_back();
-		new_vertex_1.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i1].v_world     -model.mesh.vertices[i0].v_world     )*cut_1;
-		new_vertex_1.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i1].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_1;
-		if (model.mesh.vertices[i1].normal == model.mesh.vertices[i0].normal)
-			new_vertex_1.normal = model.mesh.vertices[i0].normal;
+		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
+		new_vertex_1.v_world      = primitive.vertices[i0].v_world      + (primitive.vertices[i1].v_world     -primitive.vertices[i0].v_world     )*cut_1;
+		new_vertex_1.tex_coords   = primitive.vertices[i0].tex_coords   + (primitive.vertices[i1].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_1;
+		if (primitive.vertices[i1].normal == primitive.vertices[i0].normal)
+			new_vertex_1.normal = primitive.vertices[i0].normal;
 		else
-			new_vertex_1.normal = model.mesh.vertices[i0].normal       + (model.mesh.vertices[i1].normal      -model.mesh.vertices[i0].normal      )*cut_1;
+			new_vertex_1.normal = primitive.vertices[i0].normal         + (primitive.vertices[i1].normal      -primitive.vertices[i0].normal      )*cut_1;
 		vertex_shader_t::world_to_viewport(new_vertex_1, model, vp);
 
 		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		mesh_vertex_t & new_vertex_2 = model.mesh.vertices.emplace_back();
-		new_vertex_2.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i2].v_world     -model.mesh.vertices[i0].v_world     )*cut_2;
-		new_vertex_2.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i2].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_2;
-		if (model.mesh.vertices[i2].normal == model.mesh.vertices[i0].normal)
-			new_vertex_2.normal = model.mesh.vertices[i0].normal;
+		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
+		new_vertex_2.v_world      = primitive.vertices[i0].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i0].v_world     )*cut_2;
+		new_vertex_2.tex_coords   = primitive.vertices[i0].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_2;
+		if (primitive.vertices[i2].normal == primitive.vertices[i0].normal)
+			new_vertex_2.normal = primitive.vertices[i0].normal;
 		else
-			new_vertex_2.normal   = model.mesh.vertices[i0].normal       + (model.mesh.vertices[i2].normal      -model.mesh.vertices[i0].normal      )*cut_2;
+			new_vertex_2.normal   = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_2;
 		vertex_shader_t::world_to_viewport(new_vertex_2, model, vp);
 
-		fill_triangle_2(i0, model.mesh.vertices.size()-2, model.mesh.vertices.size()-1, model, vp, pixel_shader);
-		model.mesh.vertices.pop_back();
-		model.mesh.vertices.pop_back();
+		fill_triangle_2(i0, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
+		primitive.vertices.pop_back();
+		primitive.vertices.pop_back();
 		return;
 	}
 
 	if (v2->z() < 0.001) // only v2 is in the back of the camera
 	{
 		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		mesh_vertex_t & new_vertex_1 = model.mesh.vertices.emplace_back();
-		new_vertex_1.v_world      = model.mesh.vertices[i0].v_world      + (model.mesh.vertices[i2].v_world     -model.mesh.vertices[i0].v_world     )*cut_0;
-		new_vertex_1.tex_coords   = model.mesh.vertices[i0].tex_coords   + (model.mesh.vertices[i2].tex_coords  -model.mesh.vertices[i0].tex_coords  )*cut_0;
-		if (model.mesh.vertices[i2].normal == model.mesh.vertices[i0].normal)
-			new_vertex_1.normal = model.mesh.vertices[i0].normal;
+		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
+		new_vertex_1.v_world      = primitive.vertices[i0].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i0].v_world     )*cut_0;
+		new_vertex_1.tex_coords   = primitive.vertices[i0].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_0;
+		if (primitive.vertices[i2].normal == primitive.vertices[i0].normal)
+			new_vertex_1.normal = primitive.vertices[i0].normal;
 		else
-			new_vertex_1.normal   = model.mesh.vertices[i0].normal       + (model.mesh.vertices[i2].normal      -model.mesh.vertices[i0].normal      )*cut_0;
+			new_vertex_1.normal   = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_0;
 		vertex_shader_t::world_to_viewport(new_vertex_1, model, vp);
 
 		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
-		mesh_vertex_t & new_vertex_2 = model.mesh.vertices.emplace_back();
-		new_vertex_2.v_world      = model.mesh.vertices[i1].v_world      + (model.mesh.vertices[i2].v_world     -model.mesh.vertices[i1].v_world     )*cut_1;
-		new_vertex_2.tex_coords   = model.mesh.vertices[i1].tex_coords   + (model.mesh.vertices[i2].tex_coords  -model.mesh.vertices[i1].tex_coords  )*cut_1;
-		if (model.mesh.vertices[i2].normal == model.mesh.vertices[i1].normal)
-			new_vertex_2.normal = model.mesh.vertices[i0].normal;
+		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
+		new_vertex_2.v_world      = primitive.vertices[i1].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i1].v_world     )*cut_1;
+		new_vertex_2.tex_coords   = primitive.vertices[i1].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i1].tex_coords  )*cut_1;
+		if (primitive.vertices[i2].normal == primitive.vertices[i1].normal)
+			new_vertex_2.normal = primitive.vertices[i1].normal;
 		else
-			new_vertex_2.normal = model.mesh.vertices[i1].normal       + (model.mesh.vertices[i2].normal      -model.mesh.vertices[i1].normal      )*cut_1;
+			new_vertex_2.normal = primitive.vertices[i1].normal         + (primitive.vertices[i2].normal      -primitive.vertices[i1].normal      )*cut_1;
 		vertex_shader_t::world_to_viewport(new_vertex_2, model, vp);
 
-		fill_triangle_2(i1,                           i0, model.mesh.vertices.size()-2, model, vp, pixel_shader);
-		fill_triangle_2(i1, model.mesh.vertices.size()-2, model.mesh.vertices.size()-1, model, vp, pixel_shader);
-		model.mesh.vertices.pop_back();
-		model.mesh.vertices.pop_back();
+		fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader);
+		fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
+		primitive.vertices.pop_back();
+		primitive.vertices.pop_back();
 		return;
 	}
 
-	fill_triangle_2(i0, i1, i2, model, vp, pixel_shader);
+	fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader);
 }
 
 void fill_triangle_2([[maybe_unused]] vertex_idx i0,
                      [[maybe_unused]] vertex_idx i1,
                      [[maybe_unused]] vertex_idx i2,
-                     [[maybe_unused]] model_t & model,
+                     [[maybe_unused]] primitive_t & primitive,
                      [[maybe_unused]] viewport_t & vp,
                      [[maybe_unused]] pixel_shader_t & pixel_shader)
 {
-	const vertex_t * v0 = &model.mesh.vertices[i0].v_viewport;
-	const vertex_t * v1 = &model.mesh.vertices[i1].v_viewport;
-	const vertex_t * v2 = &model.mesh.vertices[i2].v_viewport;
+	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
+	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
+	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
 
 	// Sort points by screen Y ASC
 	if (v1->y() < v0->y()) {

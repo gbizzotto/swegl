@@ -16,19 +16,6 @@ class pixel_shader_t;
 
 using vertex_idx = std::uint32_t;
 
-struct triangle_strip
-{
-	std::vector<vertex_idx> indices;
-};
-struct triangle_fan
-{
-	std::vector<vertex_idx> indices;
-};
-struct triangle_list_t
-{
-	std::vector<vertex_idx> indices;
-};
-
 struct mesh_vertex_t
 {
 	vertex_t v;
@@ -40,12 +27,22 @@ struct mesh_vertex_t
 	bool yes = false;
 };
 
-struct mesh_t
+struct primitive_t
 {
-	std::vector<mesh_vertex_t>  vertices;
-	std::vector<triangle_strip> triangle_strips;
-	std::vector<triangle_fan>   triangle_fans;
-	triangle_list_t             triangle_list;
+	enum index_mode_t
+	{
+		POINTS         = 0,
+		LINES          = 1,
+		LINE_LOOP      = 2,
+		LINE_STRIP     = 3,
+		TRIANGLES      = 4,
+		TRIANGLE_STRIP = 5,
+		TRIANGLE_FAN   = 6,
+	};
+
+	std::vector<mesh_vertex_t> vertices;
+	std::vector<vertex_idx> indices;
+	index_mode_t mode;
 	int material_id;
 };
 
@@ -56,13 +53,7 @@ struct model_t
 	matrix44_t orientation;
 	vertex_t position;
 
-	//std::shared_ptr<mesh> commons;
-	//std::unique_ptr<mesh> replacements;
-	//std::vector    <mesh> additions;
-
-	mesh_t mesh;
-
-	bool smooth;
+	std::vector<primitive_t> primitives;
 };
 
 
@@ -96,54 +87,55 @@ struct scene_t
 };
 
 
-inline void calculate_face_normals(model_t & model)
+inline void calculate_face_normals(primitive_t & primitive)
 {
-	auto & vertices = model.mesh.vertices;
+	auto & vertices = primitive.vertices;
 
 	// Preca model.normals for strips
-	for (auto & strip : model.mesh.triangle_strips)
+	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
 	{
-		int i0 = strip.indices[0];
-		int i1 = strip.indices[1];
-		int i2 = strip.indices[2];
+		int i0 = primitive.indices[0];
+		int i1 = primitive.indices[1];
+		int i2 = primitive.indices[2];
 		normal_t n(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
 		vertices[i0].normal = n;
 		vertices[i1].normal = n;
 		vertices[i2].normal = n;
-		for (unsigned int i=3 ; i<strip.indices.size() ; i++, i0=i1, i1=i2)
+		for (unsigned int i=3 ; i<primitive.indices.size() ; i++, i0=i1, i1=i2)
 		{
-			i2 = strip.indices[i];
+			i2 = primitive.indices[i];
 			vertices[i2].normal = normal_t(((i&0x1)==0) ? cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v)
 			                                            : cross(vertices[i2].v-vertices[i0].v, vertices[i1].v-vertices[i0].v));
 		}
 	}
 	// Preca model.normals for fans
-	for (auto & fan : model.mesh.triangle_fans)
+	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 	{
-		int i0 = fan.indices[0];
-		int i1 = fan.indices[1];
-		int i2 = fan.indices[2];
+		int i0 = primitive.indices[0];
+		int i1 = primitive.indices[1];
+		int i2 = primitive.indices[2];
 		normal_t n(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
 		vertices[i0].normal = n;
 		vertices[i1].normal = n;
 		vertices[i2].normal = n;
-		for (unsigned int i=3 ; i<fan.indices.size() ; i++, i1=i2)
+		for (unsigned int i=3 ; i<primitive.indices.size() ; i++, i1=i2)
 		{
-			i2 = fan.indices[i];
+			i2 = primitive.indices[i];
 			vertices[i2].normal = normal_t(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
 		}
 	}
 	// Preca model.normals for lose triangles
-	for (unsigned int i=2 ; i<model.mesh.triangle_list.indices.size() ; i+=3)
-	{
-		int i0 = model.mesh.triangle_list.indices[i-2];
-		int i1 = model.mesh.triangle_list.indices[i-1];
-		int i2 = model.mesh.triangle_list.indices[i  ];
-		vector_t n(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
-		vertices[i0].normal = n;
-		vertices[i1].normal = n;
-		vertices[i2].normal = n;
-	}
+	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
+		for (unsigned int i=2 ; i<primitive.indices.size() ; i+=3)
+		{
+			int i0 = primitive.indices[i-2];
+			int i1 = primitive.indices[i-1];
+			int i2 = primitive.indices[i  ];
+			vector_t n(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
+			vertices[i0].normal = n;
+			vertices[i1].normal = n;
+			vertices[i2].normal = n;
+		}
 }
 
 
@@ -151,24 +143,23 @@ inline model_t make_tri(float size, int material_idx)
 {
 	model_t result;
 
-	result.mesh.vertices = std::vector<mesh_vertex_t>
+	result.primitives = std::vector<primitive_t>
 		{
-			mesh_vertex_t{vertex_t{0.0f, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,0.0f}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t{size, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,1.0f}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t{0.0f, size, 0.0f}, {}, {}, vec2f_t{1.0f,0.0f}, normal_t(0,0,0), {}}
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t{0.0f, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,0.0f}, normal_t(0,0,1), {}}
+			                                      ,mesh_vertex_t{vertex_t{size, 0.0f, 0.0f}, {}, {}, vec2f_t{0.0f,1.0f}, normal_t(0,0,1), {}}
+			                                      ,mesh_vertex_t{vertex_t{0.0f, size, 0.0f}, {}, {}, vec2f_t{1.0f,0.0f}, normal_t(0,0,1), {}}
+			                                      }
+			           ,{0,1,2}
+			           ,primitive_t::index_mode_t::TRIANGLES
+			           ,material_idx
+		               },
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.material_id = material_idx;
-
-	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	result.mesh.triangle_list = triangle_list_t{{0,1,2}};
 
-	calculate_face_normals(result);
-
-	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	//calculate_face_normals(result);
 	
 	return result;	
 }
@@ -177,67 +168,86 @@ inline model_t make_cube(float size, int material_idx)
 {
 	model_t result;
 
-	result.mesh.vertices = std::vector<mesh_vertex_t>
+	result.primitives = std::vector<primitive_t>
 		{
 			// 0 fan (top face): value 1
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(0,0,0), {}},
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.0  }, normal_t(0,1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(0,1,0), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
 			// 1 fan (front face): value 2
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.0  }, normal_t(0,0,1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.0  }, normal_t(0,0,1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(0,0,1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,1), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
+			/*
 			// 2 fan (right face): value 4
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(0,0,0), {}},
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.333}, normal_t(1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(1,0,0), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
 			// 3 fan (back face): value 6
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,1.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,0,0), {}},
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,-1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(0,0,-1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{1.0,1.0  }, normal_t(0,0,-1), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,0,-1), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
 			// 4 fan (left face): value 3
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.333}, normal_t(-1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.333}, normal_t(-1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{1.0,0.667}, normal_t(-1,0,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f,  size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(-1,0,0), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
 			// 6 fan (bottom face): value 5
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,0,0), {}},
-			mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,1.0  }, normal_t(0,0,0), {}}
+			primitive_t{std::vector<mesh_vertex_t>{mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.0,0.667}, normal_t(0,-1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f, -size / 2.0f), {}, {}, vec2f_t{0.5,0.667}, normal_t(0,-1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t( size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.5,1.0  }, normal_t(0,-1,0), {}, false}
+			                                      ,mesh_vertex_t{vertex_t(-size / 2.0f, -size / 2.0f,  size / 2.0f), {}, {}, vec2f_t{0.0,1.0  }, normal_t(0,-1,0), {}, false}
+			                                      }
+			           ,{0,1,2,3}
+			           ,primitive_t::index_mode_t::TRIANGLE_FAN
+			           ,material_idx
+		               },
+		               */
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.mesh.material_id = material_idx;
-
-	result.smooth = false;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
-	//result.common->triangle_strips.push_back(triangle_strip{{0,1,3,2,7,6,4,5}, {{0.0,1.0},{0.5,1.0},{0.0,0.666},{0.5,0.666},{0.0,0.333},{0.5,0.333},{0.0,0.0},{0.5,0.0}}});
-	//result.common->triangle_strips.push_back(triangle_strip{{6,2,5,1,4,0,7,3}, {{0.5,1.0},{1.0,1.0},{0.5,0.666},{1.0,0.666},{0.5,0.333},{1.0,0.333},{0.5,0.0},{1.0,0.0}}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{0,1,2,3}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{4,5,6,7}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{8,9,10,11}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{12,13,14,15}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{16,17,18,19}});
-	result.mesh.triangle_fans.push_back(triangle_fan{{20,21,22,23}});
 
-	calculate_face_normals(result);
-
-	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	//calculate_face_normals(result);
 
 	return result;	
 }
 
+/*
 inline model_t make_tore(unsigned int precision, int material_idx)
 {
 	model_t result;
 
-	result.smooth = true;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
@@ -295,7 +305,6 @@ inline model_t make_sphere(unsigned int precision, float radius, int material_id
 {
 	model_t result;
 
-	result.smooth = true;
 	result.forward = vector_t(0.0, 0.0, 1.0);
 	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
@@ -343,6 +352,6 @@ inline model_t make_sphere(unsigned int precision, float radius, int material_id
 
 	return result;
 }
-
+*/
 
 } // namespace

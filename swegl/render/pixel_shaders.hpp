@@ -18,21 +18,21 @@ namespace swegl
 
 struct pixel_shader_t
 {
-	const model_t * model;
+	const primitive_t * primitive;
 	const scene_t * scene;
 	const viewport_t * viewport;
 	pixel_colors color;
 
-	virtual void prepare_for_model(const model_t & m,
-	                               const scene_t & s,
-	                               const viewport_t & vp)
+	virtual void prepare_for_primitive(const primitive_t & p,
+	                                   const scene_t & s,
+	                                   const viewport_t & vp)
 	{
-		model = &m;
+		primitive = &p;
 		scene = &s;
 		viewport = &vp;
 
-		if (s.materials.size() > 0)
-			color = s.materials[m.mesh.material_id].color;
+		if (p.material_id > 0 && p.material_id < (int)s.materials.size()-1)
+			color = s.materials[p.material_id].color;
 		else
 			color = pixel_colors(128,128,128,255);
 	}
@@ -51,10 +51,10 @@ struct pixel_shader_lights_flat : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		vector_t normal_viewport = cross(model->mesh.vertices[i1].v_viewport - model->mesh.vertices[i0].v_viewport
-		                                ,model->mesh.vertices[i2].v_viewport - model->mesh.vertices[i0].v_viewport);
-		normal_t normal_world(cross(model->mesh.vertices[i1].v_world - model->mesh.vertices[i0].v_world
-		                           ,model->mesh.vertices[i2].v_world - model->mesh.vertices[i0].v_world));
+		vector_t normal_viewport = cross(primitive->vertices[i1].v_viewport - primitive->vertices[i0].v_viewport
+		                                ,primitive->vertices[i2].v_viewport - primitive->vertices[i0].v_viewport);
+		normal_t normal_world(cross(primitive->vertices[i1].v_world - primitive->vertices[i0].v_world
+		                           ,primitive->vertices[i2].v_world - primitive->vertices[i0].v_world));
 		if (normal_viewport.z() > 0)
 			normal_world = -normal_world;
 
@@ -64,7 +64,7 @@ struct pixel_shader_lights_flat : pixel_shader_t
 		else
 			face_sun_intensity *= scene->sun_intensity;
 
-		vertex_t center_vertex = (model->mesh.vertices[i0].v_world + model->mesh.vertices[i1].v_world + model->mesh.vertices[i2].v_world) / 3;
+		vertex_t center_vertex = (primitive->vertices[i0].v_world + primitive->vertices[i1].v_world + primitive->vertices[i2].v_world) / 3;
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
 
@@ -125,12 +125,12 @@ struct pixel_shader_lights_phong : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		n0 = (vector_t)model->mesh.vertices[i0].normal_world;
-		n1 = (vector_t)model->mesh.vertices[i1].normal_world;
-		n2 = (vector_t)model->mesh.vertices[i2].normal_world;
-		v0 = model->mesh.vertices[i0].v_world;
-		v1 = model->mesh.vertices[i1].v_world;
-		v2 = model->mesh.vertices[i2].v_world;
+		n0 = (vector_t)primitive->vertices[i0].normal_world;
+		n1 = (vector_t)primitive->vertices[i1].normal_world;
+		n2 = (vector_t)primitive->vertices[i2].normal_world;
+		v0 = primitive->vertices[i0].v_world;
+		v1 = primitive->vertices[i1].v_world;
+		v2 = primitive->vertices[i2].v_world;
 	}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
@@ -235,18 +235,18 @@ struct pixel_shader_texture : pixel_shader_t
 	unsigned int theight;
 
 
-	virtual void prepare_for_model([[maybe_unused]] const model_t & m,
-	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const viewport_t & vp) override
+	virtual void prepare_for_primitive([[maybe_unused]] const primitive_t & p,
+	                                   [[maybe_unused]] const scene_t & s,
+	                                   [[maybe_unused]] const viewport_t & vp) override
 	{
-		pixel_shader_t::prepare_for_model(m, s, vp);
+		pixel_shader_t::prepare_for_primitive(p, s, vp);
 
 		// TODO: select LOD / mipmap according to distance from camera
 
-		int texture_id = s.materials[m.mesh.material_id].texture_idx;
+		int texture_id = s.materials[p.material_id].texture_idx;
 		if (texture_id == -1)
 		{
-			default_bitmap = s.materials[m.mesh.material_id].color.to_int();
+			default_bitmap = s.materials[p.material_id].color.to_int();
 			tbitmap = &default_bitmap;
 			twidth  = 1;
 			theight = 1;
@@ -261,9 +261,9 @@ struct pixel_shader_texture : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		t0 = model->mesh.vertices[i0].tex_coords;
-		t1 = model->mesh.vertices[i1].tex_coords;
-		t2 = model->mesh.vertices[i2].tex_coords;
+		t0 = primitive->vertices[i0].tex_coords;
+		t1 = primitive->vertices[i1].tex_coords;
+		t2 = primitive->vertices[i2].tex_coords;
 
 		t0.x() *= twidth;
 		t0.y() *= theight;
@@ -332,16 +332,16 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	float twidth;
 	float theight;
 
-	virtual void prepare_for_model([[maybe_unused]] const model_t & m,
-	                               [[maybe_unused]] const scene_t & s,
-	                               [[maybe_unused]] const viewport_t & vp) override
+	virtual void prepare_for_primitive([[maybe_unused]] const primitive_t & p,
+	                                   [[maybe_unused]] const scene_t & s,
+	                                   [[maybe_unused]] const viewport_t & vp) override
 	{
-		pixel_shader_t::prepare_for_model(m, s, vp);
+		pixel_shader_t::prepare_for_primitive(p, s, vp);
 
-		int texture_id = s.materials[m.mesh.material_id].texture_idx;
+		int texture_id = s.materials[p.material_id].texture_idx;
 		if (texture_id == -1)
 		{
-			default_bitmap = s.materials[m.mesh.material_id].color.to_int();
+			default_bitmap = s.materials[p.material_id].color.to_int();
 			tbitmap = &default_bitmap;
 			twidth  = 1;
 			theight = 1;
@@ -356,9 +356,9 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		t0 = model->mesh.vertices[i0].tex_coords;
-		t1 = model->mesh.vertices[i1].tex_coords;
-		t2 = model->mesh.vertices[i2].tex_coords;
+		t0 = primitive->vertices[i0].tex_coords;
+		t1 = primitive->vertices[i1].tex_coords;
+		t2 = primitive->vertices[i2].tex_coords;
 
 		t0.x() *= twidth;
 		t0.y() *= theight;
@@ -440,12 +440,12 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 	L shader_flat_light;
 	T shader_texture;
 
-	virtual void prepare_for_model(const model_t & m,
-	                               const scene_t & s,
-	                               const viewport_t & vp) override
+	virtual void prepare_for_primitive(const primitive_t & p,
+	                                   const scene_t & s,
+	                                   const viewport_t & vp) override
 	{
-		shader_flat_light.prepare_for_model(m, s, vp);
-		shader_texture.prepare_for_model(m, s, vp);
+		shader_flat_light.prepare_for_primitive(p, s, vp);
+		shader_texture.prepare_for_primitive(p, s, vp);
 	}
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override

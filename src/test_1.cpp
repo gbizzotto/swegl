@@ -28,9 +28,11 @@ swegl::scene_t build_scene()
 	s.images.emplace_back("resources/tex.bmp");
 	s.images.emplace_back("resources/mercator.bmp");
 
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 0});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, 2});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  0});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  2});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,255,255}, 1, 1, -1});
 
 	s.ambient_light_intensity = 0.2f;
 
@@ -41,7 +43,8 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, -5.0}, 0.6});
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
-	//*
+
+	/*
 	auto tore = swegl::make_tore(100, 1);
 	tore.orientation = swegl::matrix44_t::Identity;
 	tore.orientation.rotate_z(0.5);
@@ -58,7 +61,7 @@ swegl::scene_t build_scene()
 	s.models.emplace_back(std::move(cube));
 	//*/
 
-	//*
+	/*
 	auto sphere = swegl::make_sphere(100, 2.0f, 2);
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
@@ -74,7 +77,7 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto cube2 = swegl::make_cube(0.1f, -1);
+	auto cube2 = swegl::make_cube(0.1f, 4);
 	cube2.orientation = swegl::matrix44_t::Identity;
 	cube2.position = s.point_source_lights[0].position;
 	//c->SetBumpMap(bumpmap);
@@ -82,7 +85,7 @@ swegl::scene_t build_scene()
 	//*/
 	
 	//*
-	auto cube3 = swegl::make_cube(0.1f, -1);
+	auto cube3 = swegl::make_cube(0.1f, 4);
 	cube3.orientation = swegl::matrix44_t::Identity;
 	cube3.position = s.point_source_lights[1].position;
 	//c->SetBumpMap(bumpmap);
@@ -90,7 +93,8 @@ swegl::scene_t build_scene()
 	//*/
 
 	for (auto & model : s.models)
-		model.mesh.vertices.reserve(model.mesh.vertices.size()+2);
+		for (auto & primitive : model.primitives)
+			primitive.vertices.reserve(primitive.vertices.size()+2);
 
 	return s;
 }
