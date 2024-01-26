@@ -71,7 +71,7 @@ struct material_t
 
 struct scene_t
 {
-	std::vector<node_t> models;
+	std::vector<node_t> nodes;
 
 	float ambient_light_intensity;
 
@@ -89,7 +89,7 @@ inline void calculate_face_normals(primitive_t & primitive)
 {
 	auto & vertices = primitive.vertices;
 
-	// Preca model.normals for strips
+	// Preca node.normals for strips
 	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
 	{
 		int i0 = primitive.indices[0];
@@ -106,7 +106,7 @@ inline void calculate_face_normals(primitive_t & primitive)
 			                                            : cross(vertices[i2].v-vertices[i0].v, vertices[i1].v-vertices[i0].v));
 		}
 	}
-	// Preca model.normals for fans
+	// Preca node.normals for fans
 	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 	{
 		int i0 = primitive.indices[0];
@@ -122,7 +122,7 @@ inline void calculate_face_normals(primitive_t & primitive)
 			vertices[i2].normal = normal_t(cross(vertices[i1].v-vertices[i0].v, vertices[i2].v-vertices[i0].v));
 		}
 	}
-	// Preca model.normals for lose triangles
+	// Preca node.normals for lose triangles
 	if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 		for (unsigned int i=2 ; i<primitive.indices.size() ; i+=3)
 		{

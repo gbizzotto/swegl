@@ -213,16 +213,16 @@ swegl::scene_t load_scene(std::string filename)
 	auto & meshes = j["meshes"];
 	for (auto & mesh : meshes)
 	{
-		node_t & model = result.models.emplace_back();
-		model.orientation = matrix44_t::Identity;
-		model.position = {0,0,0};
+		node_t & node = result.nodes.emplace_back();
+		node.orientation = matrix44_t::Identity;
+		node.position = {0,0,0};
 
 		if ( ! mesh.contains("primitives"))
 			continue;
 
 		for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
 		{
-			primitive_t & primitive = model.primitives.emplace_back();
+			primitive_t & primitive = node.primitives.emplace_back();
 
 			primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
 			primitive.mode        = (decltype(primitive.mode)) mesh["primitives"][i]["mode"    ].template get<int>();

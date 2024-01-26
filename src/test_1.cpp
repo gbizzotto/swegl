@@ -50,7 +50,7 @@ swegl::scene_t build_scene()
 	tore.orientation.rotate_z(0.5);
 	tore.position = swegl::vertex_t(0.0f, 0.0f, -7.5f);
 	//tore.SetBumpMap(bumpmap);
-	s.models.emplace_back(std::move(tore));
+	s.nodes.emplace_back(std::move(tore));
 	//*/
 
 	//*
@@ -58,7 +58,7 @@ swegl::scene_t build_scene()
 	cube.orientation = swegl::matrix44_t::Identity;
 	cube.position = swegl::vertex_t(0.0f, 0.0f, -5.0f);
 	//c->SetBumpMap(bumpmap);
-	s.models.emplace_back(std::move(cube));
+	s.nodes.emplace_back(std::move(cube));
 	//*/
 
 	/*
@@ -66,14 +66,14 @@ swegl::scene_t build_scene()
 	sphere.orientation = swegl::matrix44_t::Identity;
 	sphere.position = swegl::vertex_t(3.0f, 0.0f, -6.0f);
 	//c->SetBumpMap(bumpmap);
-	s.models.emplace_back(std::move(sphere));
+	s.nodes.emplace_back(std::move(sphere));
 	//*/
 
 	//*
 	auto tri = swegl::make_tri(1, 0);
 	tri.orientation = swegl::matrix44_t::Identity;
 	tri.position = swegl::vertex_t(1.0f, 2.5f, -5.1f);
-	s.models.emplace_back(std::move(tri));
+	s.nodes.emplace_back(std::move(tri));
 	//*/
 
 	//*
@@ -81,7 +81,7 @@ swegl::scene_t build_scene()
 	cube2.orientation = swegl::matrix44_t::Identity;
 	cube2.position = s.point_source_lights[0].position;
 	//c->SetBumpMap(bumpmap);
-	s.models.emplace_back(std::move(cube2));
+	s.nodes.emplace_back(std::move(cube2));
 	//*/
 	
 	//*
@@ -89,11 +89,11 @@ swegl::scene_t build_scene()
 	cube3.orientation = swegl::matrix44_t::Identity;
 	cube3.position = s.point_source_lights[1].position;
 	//c->SetBumpMap(bumpmap);
-	s.models.emplace_back(std::move(cube3));
+	s.nodes.emplace_back(std::move(cube3));
 	//*/
 
-	for (auto & model : s.models)
-		for (auto & primitive : model.primitives)
+	for (auto & node : s.nodes)
+		for (auto & primitive : node.primitives)
 			primitive.vertices.reserve(primitive.vertices.size()+2);
 
 	return s;
@@ -238,9 +238,9 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 
 		if (sdl.keys['t'])
 		{
-			scene.models[0].orientation.rotate_x(0.02);
-			scene.models[1].orientation.rotate_y(0.01);
-			scene.models[1].orientation.rotate_z(0.001);
+			scene.nodes[0].orientation.rotate_x(0.02);
+			scene.nodes[1].orientation.rotate_y(0.01);
+			scene.nodes[1].orientation.rotate_z(0.001);
 		}
 		if (sdl.keys['g'])
 		{
@@ -249,8 +249,8 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 
 			scene.point_source_lights[0].position = transform(scene.point_source_lights[0].position, rot1);
 			scene.point_source_lights[1].position = transform(scene.point_source_lights[1].position, rot2);
-			scene.models[4].position = scene.point_source_lights[0].position;
-			scene.models[5].position = scene.point_source_lights[1].position;
+			scene.nodes[4].position = scene.point_source_lights[0].position;
+			scene.nodes[5].position = scene.point_source_lights[1].position;
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])

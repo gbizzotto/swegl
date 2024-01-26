@@ -32,7 +32,7 @@ bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, ve
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   node_t & model,
+                   node_t & node,
                    primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader);
@@ -60,12 +60,12 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 	vertex_shader_t::world_to_camera_or_frustum(scene, viewport);
 	viewport.clear();
 
-	for (auto & model : scene.models)
+	for (auto & node : scene.nodes)
 	{
 		pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
 
 		// determine which vertices will be part of visible triangles and need more transformation 
-		for (auto & primitive : model.primitives)
+		for (auto & primitive : node.primitives)
 		{
 			pixel_shader.prepare_for_primitive(primitive, scene, viewport);
 
@@ -115,10 +115,10 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		}
 
 		// do the rest of the transformations to the vertices that are part of visible triangles
-		vertex_shader_t::frustum_to_viewport(model, viewport);
+		vertex_shader_t::frustum_to_viewport(node, viewport);
 
 		// do the painting
-		for (auto & primitive : model.primitives)
+		for (auto & primitive : node.primitives)
 		{
 			// STRIPS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
@@ -128,7 +128,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 						fill_triangle(primitive.indices[i-2]
 						             ,primitive.indices[i-1]
 						             ,primitive.indices[i  ]
-						             ,model
+						             ,node
 						             ,primitive
 						             ,viewport
 						             ,pixel_shader
@@ -137,7 +137,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 						fill_triangle(primitive.indices[i-2]
 						             ,primitive.indices[i  ]
 						             ,primitive.indices[i-1]
-						             ,model
+						             ,node
 						             ,primitive
 						             ,viewport
 						             ,pixel_shader
@@ -149,7 +149,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 					fill_triangle(primitive.indices[0  ]
 					             ,primitive.indices[i-1]
 					             ,primitive.indices[i  ]
-					             ,model
+					             ,node
 					             ,primitive
 					             ,viewport
 					             ,pixel_shader
@@ -160,7 +160,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 					fill_triangle(primitive.indices[i-2]
 					             ,primitive.indices[i-1]
 					             ,primitive.indices[i  ]
-					             ,model
+					             ,node
 					             ,primitive
 					             ,viewport
 					             ,pixel_shader
@@ -217,7 +217,7 @@ bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, ve
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   node_t & model,
+                   node_t & node,
                    primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader)
@@ -261,7 +261,7 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_1.normal = primitive.vertices[i0].normal;
 		else
 			new_vertex_1.normal = primitive.vertices[i0].normal         + (primitive.vertices[i1].normal      -primitive.vertices[i0].normal      )*cut_1;
-		vertex_shader_t::world_to_viewport(new_vertex_1, model, vp);
+		vertex_shader_t::world_to_viewport(new_vertex_1, node, vp);
 
 		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
 		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
@@ -271,7 +271,7 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_2.normal = primitive.vertices[i0].normal;
 		else
 			new_vertex_2.normal   = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_2;
-		vertex_shader_t::world_to_viewport(new_vertex_2, model, vp);
+		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
 
 		fill_triangle_2(i0, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
 		primitive.vertices.pop_back();
@@ -289,7 +289,7 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_1.normal = primitive.vertices[i0].normal;
 		else
 			new_vertex_1.normal   = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_0;
-		vertex_shader_t::world_to_viewport(new_vertex_1, model, vp);
+		vertex_shader_t::world_to_viewport(new_vertex_1, node, vp);
 
 		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
 		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
@@ -299,7 +299,7 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_2.normal = primitive.vertices[i1].normal;
 		else
 			new_vertex_2.normal = primitive.vertices[i1].normal         + (primitive.vertices[i2].normal      -primitive.vertices[i1].normal      )*cut_1;
-		vertex_shader_t::world_to_viewport(new_vertex_2, model, vp);
+		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
 
 		fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader);
 		fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
