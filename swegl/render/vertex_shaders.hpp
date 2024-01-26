@@ -19,23 +19,29 @@ struct vertex_shader_t
 		{
 			matrix44_t original_to_world_matrix = model.orientation;
 			original_to_world_matrix.translate(model.position.x(), model.position.y(), model.position.z());
-			__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+			//__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+			for (auto & primitive : model.primitives)
+				for (auto & mv : primitive.vertices)
 				{
 					mv.v_world = transform(mv.v, original_to_world_matrix);
-				});
+				}
+			//);
 		}
 	}
 	static inline void world_to_camera_or_frustum(scene_t & scene, const viewport_t & viewport)
 	{
 		for (auto & model : scene.models)
 		{
-			__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+			//__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+			for (auto & primitive : model.primitives)
+				for (auto & mv : primitive.vertices)
 				{
 					mv.yes = false;
 					mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
 					//if (mv.v_viewport.z() >= 0.001)
 						camera_to_frustum(mv, model, viewport);
-				});
+				}
+			//);
 		}
 	}
 
@@ -59,11 +65,14 @@ struct vertex_shader_t
 	}
 	static inline void frustum_to_viewport(model_t & model, const viewport_t & viewport)
 	{
-		__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+		//__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
+		for (auto & primitive : model.primitives)
+			for (auto & mv : primitive.vertices)
 			{
 				if (mv.yes)
 					viewport.transform(mv);
-			});
+			}
+		//);
 	}
 	static inline void frustum_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
 	{

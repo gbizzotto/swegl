@@ -95,8 +95,8 @@ struct accessor_t
 						case component_type_e::         SHORT: return 2;
 						case component_type_e::UNSIGNED_SHORT: return 2;
 						case component_type_e::UNSIGNED_INT  : return 4;
-						case component_type_e::FLOAT         : assert(false);
-						default: return 0;
+						case component_type_e::         FLOAT: return 5;
+						default:                assert(false); return 0;
 					}
 				}();
 			int number_of_components = [&]()
@@ -216,47 +216,58 @@ swegl::scene_t load_scene(std::string filename)
 		model_t & model = result.models.emplace_back();
 		model.orientation = matrix44_t::Identity;
 		model.position = {0,0,0};
-		model.mesh.material_id = mesh["primitives"][0]["material"].template get<int>();
 
-		accessor_t & accessor_vertices = accessors[mesh["primitives"][0]["attributes"]["POSITION"].template get<int>()];
-		accessor_t & accessor_indices  = accessors[mesh["primitives"][0]["indices"   ]            .template get<int>()];
+		if ( ! mesh.contains("primitives"))
+			continue;
 
-		model.mesh.vertices.resize(accessor_vertices.count + 2);
-		model.mesh.vertices.reserve(accessor_vertices.count + 2);
-		for (int i=0 ; i<accessor_vertices.count ; i++)
+		for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
 		{
-			auto & vertex = model.mesh.vertices[i];
-			vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+i*accessor_vertices.buffer_view.byte_stride];
-			vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.buffer_view.byte_stride];
-			vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.buffer_view.byte_stride];
-		}
-		if (mesh["primitives"][0]["attributes"].contains("NORMAL"))
-		{
-			accessor_t & accessor_normals  = accessors[mesh["primitives"][0]["attributes"]["NORMAL"  ].template get<int>()];
-			for (int i=0 ; i<accessor_normals.count ; i++)
+			primitive_t & primitive = model.primitives.emplace_back();
+
+			primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
+			primitive.mode        = (decltype(primitive.mode)) mesh["primitives"][i]["mode"    ].template get<int>();
+
+			accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
+
+			primitive.vertices.resize(accessor_vertices.count + 2);
+			primitive.vertices.reserve(accessor_vertices.count + 2);
+			for (int i=0 ; i<accessor_vertices.count ; i++)
 			{
-				auto & vertex = model.mesh.vertices[i];
-				vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
-				vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
-				vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+				auto & vertex = primitive.vertices[i];
+				vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+i*accessor_vertices.buffer_view.byte_stride];
+				vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.buffer_view.byte_stride];
+				vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.buffer_view.byte_stride];
+			}
+			if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
+			{
+				accessor_t & accessor_normals  = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
+				for (int i=0 ; i<accessor_normals.count ; i++)
+				{
+					auto & vertex = primitive.vertices[i];
+					vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
+					vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
+					vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+				}
+			}
+			if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
+			{
+				accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
+				for (int i=0 ; i<accessor_texcoords.count ; i++)
+				{
+					auto & vertex = primitive.vertices[i];
+					vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.buffer_view.byte_stride];
+					vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.buffer_view.byte_stride];				
+				}
+			}
+
+			if (mesh["primitives"][i].contains("indices"))
+			{
+				accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
+				primitive.indices.reserve(accessor_indices.count);
+				for (int i=0 ; i<accessor_indices.count ; i++)
+					primitive.indices.push_back(*(std::uint16_t*)&accessor_indices.buffer_view.data[i*accessor_indices.buffer_view.byte_stride]);
 			}
 		}
-		if (mesh["primitives"][0]["attributes"].contains("TEXCOORD_0"))
-		{
-			accessor_t & accessor_texcoords = accessors[mesh["primitives"][0]["attributes"]["TEXCOORD_0"].template get<int>()];
-			for (int i=0 ; i<accessor_texcoords.count ; i++)
-			{
-				auto & vertex = model.mesh.vertices[i];
-				vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.buffer_view.byte_stride];
-				vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.buffer_view.byte_stride];				
-			}
-		}
-
-		model.mesh.triangle_list.indices.reserve(accessor_indices.count);
-		for (int i=0 ; i<accessor_indices.count ; i++)
-		{
-			model.mesh.triangle_list.indices.push_back(*(std::uint16_t*)&accessor_indices.buffer_view.data[i*accessor_indices.buffer_view.byte_stride]);
-		}		
 	}
 
 	return result;
