@@ -213,7 +213,7 @@ swegl::scene_t load_scene(std::string filename)
 	auto & meshes = j["meshes"];
 	for (auto & mesh : meshes)
 	{
-		model_t & model = result.models.emplace_back();
+		node_t & model = result.models.emplace_back();
 		model.orientation = matrix44_t::Identity;
 		model.position = {0,0,0};
 

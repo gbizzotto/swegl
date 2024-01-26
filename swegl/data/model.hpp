@@ -46,10 +46,8 @@ struct primitive_t
 	int material_id;
 };
 
-struct model_t
+struct node_t
 {
-	vector_t forward;
-	vector_t up;
 	matrix44_t orientation;
 	vertex_t position;
 
@@ -73,7 +71,7 @@ struct material_t
 
 struct scene_t
 {
-	std::vector<model_t> models;
+	std::vector<node_t> models;
 
 	float ambient_light_intensity;
 
@@ -139,9 +137,9 @@ inline void calculate_face_normals(primitive_t & primitive)
 }
 
 
-inline model_t make_tri(float size, int material_idx)
+inline node_t make_tri(float size, int material_idx)
 {
-	model_t result;
+	node_t result;
 
 	result.primitives = std::vector<primitive_t>
 		{
@@ -156,17 +154,15 @@ inline model_t make_tri(float size, int material_idx)
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.forward = vector_t(0.0, 0.0, 1.0);
-	result.up      = vector_t(0.0, 1.0, 0.0);
 
 	//calculate_face_normals(result);
 	
 	return result;	
 }
 
-inline model_t make_cube(float size, int material_idx)
+inline node_t make_cube(float size, int material_idx)
 {
-	model_t result;
+	node_t result;
 
 	result.primitives = std::vector<primitive_t>
 		{
@@ -233,8 +229,6 @@ inline model_t make_cube(float size, int material_idx)
 		};
 	result.orientation = matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
-	result.forward = vector_t(0.0, 0.0, 1.0);
-	result.up      = vector_t(0.0, 1.0, 0.0);
 
 	//calculate_face_normals(result);
 
@@ -242,12 +236,10 @@ inline model_t make_cube(float size, int material_idx)
 }
 
 /*
-inline model_t make_tore(unsigned int precision, int material_idx)
+inline node_t make_tore(unsigned int precision, int material_idx)
 {
-	model_t result;
+	node_t result;
 
-	result.forward = vector_t(0.0, 0.0, 1.0);
-	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.material_id = material_idx;
@@ -299,12 +291,10 @@ inline model_t make_tore(unsigned int precision, int material_idx)
 	return result;
 }
 
-inline model_t make_sphere(unsigned int precision, float radius, int material_idx)
+inline node_t make_sphere(unsigned int precision, float radius, int material_idx)
 {
-	model_t result;
+	node_t result;
 
-	result.forward = vector_t(0.0, 0.0, 1.0);
-	result.up      = vector_t(0.0, 1.0, 0.0);
 	result.orientation = swegl::matrix44_t::Identity;
 	result.position = vertex_t(0.0,0.0,0.0);
 	result.mesh.material_id = material_idx;

@@ -45,14 +45,14 @@ struct vertex_shader_t
 		}
 	}
 
-	static inline void world_to_viewport(mesh_vertex_t & mv, const model_t & model, const viewport_t & viewport)
+	static inline void world_to_viewport(mesh_vertex_t & mv, const node_t & model, const viewport_t & viewport)
 	{
 		mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
 		camera_to_frustum(mv, model, viewport);
 		frustum_to_viewport(mv, viewport);
 	}
 
-	static inline void camera_to_frustum(mesh_vertex_t & mv, const model_t & model, const viewport_t & viewport)
+	static inline void camera_to_frustum(mesh_vertex_t & mv, const node_t & model, const viewport_t & viewport)
 	{
 		mv.normal_world = rotate(mv.normal, model.orientation);
 
@@ -63,7 +63,7 @@ struct vertex_shader_t
 			mv.v_viewport.y() /= fabs(mv.v_viewport.z());
 		}
 	}
-	static inline void frustum_to_viewport(model_t & model, const viewport_t & viewport)
+	static inline void frustum_to_viewport(node_t & model, const viewport_t & viewport)
 	{
 		//__gnu_parallel::for_each(model.mesh.vertices.begin(), model.mesh.vertices.end(), [&](auto & mv)
 		for (auto & primitive : model.primitives)

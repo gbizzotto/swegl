@@ -32,7 +32,7 @@ bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, ve
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   model_t & model,
+                   node_t & model,
                    primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader);
@@ -51,8 +51,8 @@ void fill_half_triangle(int y, int y_end,
 struct transformed_scene_t
 {
 	scene_t * original;
-	std::vector<model_t> world_view;
-	std::vector<model_t> screen_view;
+	std::vector<node_t> world_view;
+	std::vector<node_t> screen_view;
 };
 
 inline void _render(scene_t & scene, viewport_t & viewport)
@@ -217,7 +217,7 @@ bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, ve
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
-                   model_t & model,
+                   node_t & model,
                    primitive_t & primitive,
                    viewport_t & vp,
                    pixel_shader_t & pixel_shader)
