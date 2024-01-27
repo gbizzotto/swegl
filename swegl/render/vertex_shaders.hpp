@@ -17,8 +17,8 @@ struct vertex_shader_t
 	{
 		for (auto & node : scene.nodes)
 		{
-			matrix44_t original_to_world_matrix = node.orientation;
-			original_to_world_matrix.translate(node.position.x(), node.position.y(), node.position.z());
+			matrix44_t original_to_world_matrix = node.rotation;
+			original_to_world_matrix.translate(node.translation.x(), node.translation.y(), node.translation.z());
 			//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
 			for (auto & primitive : node.primitives)
 				for (auto & mv : primitive.vertices)
@@ -54,7 +54,7 @@ struct vertex_shader_t
 
 	static inline void camera_to_frustum(mesh_vertex_t & mv, const node_t & node, const viewport_t & viewport)
 	{
-		mv.normal_world = rotate(mv.normal, node.orientation);
+		mv.normal_world = rotate(mv.normal, node.rotation);
 
 		mv.v_viewport = transform(mv.v_viewport, viewport.camera().m_projectionmatrix);
 		if (mv.v_viewport.z() != 0)

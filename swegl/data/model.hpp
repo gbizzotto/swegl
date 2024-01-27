@@ -48,8 +48,8 @@ struct primitive_t
 
 struct node_t
 {
-	matrix44_t orientation;
-	vertex_t position;
+	matrix44_t rotation;
+	vertex_t translation;
 
 	std::vector<primitive_t> primitives;
 };
@@ -152,8 +152,8 @@ inline node_t make_tri(float size, int material_idx)
 			           ,material_idx
 		               },
 		};
-	result.orientation = matrix44_t::Identity;
-	result.position = vertex_t(0.0,0.0,0.0);
+	result.rotation = matrix44_t::Identity;
+	result.translation = vertex_t(0.0,0.0,0.0);
 
 	//calculate_face_normals(result);
 	
@@ -227,8 +227,8 @@ inline node_t make_cube(float size, int material_idx)
 			           ,material_idx
 		               },
 		};
-	result.orientation = matrix44_t::Identity;
-	result.position = vertex_t(0.0,0.0,0.0);
+	result.rotation = matrix44_t::Identity;
+	result.translation = vertex_t(0.0,0.0,0.0);
 
 	//calculate_face_normals(result);
 
@@ -240,8 +240,8 @@ inline node_t make_tore(unsigned int precision, int material_idx)
 {
 	node_t result;
 
-	result.orientation = swegl::matrix44_t::Identity;
-	result.position = vertex_t(0.0,0.0,0.0);
+	result.rotation = swegl::matrix44_t::Identity;
+	result.translation = vertex_t(0.0,0.0,0.0);
 	result.mesh.material_id = material_idx;
 
 	auto & vertices = result.mesh.vertices;
@@ -295,8 +295,8 @@ inline node_t make_sphere(unsigned int precision, float radius, int material_idx
 {
 	node_t result;
 
-	result.orientation = swegl::matrix44_t::Identity;
-	result.position = vertex_t(0.0,0.0,0.0);
+	result.rotation = swegl::matrix44_t::Identity;
+	result.translation = vertex_t(0.0,0.0,0.0);
 	result.mesh.material_id = material_idx;
 
 	auto & vertices = result.mesh.vertices;

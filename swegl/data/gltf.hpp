@@ -214,8 +214,8 @@ swegl::scene_t load_scene(std::string filename)
 	for (auto & mesh : meshes)
 	{
 		node_t & node = result.nodes.emplace_back();
-		node.orientation = matrix44_t::Identity;
-		node.position = {0,0,0};
+		node.rotation = matrix44_t::Identity;
+		node.translation = {0,0,0};
 
 		if ( ! mesh.contains("primitives"))
 			continue;
