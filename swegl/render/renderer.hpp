@@ -120,6 +120,8 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		// do the painting
 		for (auto & primitive : node.primitives)
 		{
+			pixel_shader.prepare_for_primitive(primitive, scene, viewport);
+
 			// STRIPS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
 			{

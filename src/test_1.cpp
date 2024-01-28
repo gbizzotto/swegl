@@ -55,6 +55,7 @@ swegl::scene_t build_scene()
 
 	//*
 	auto cube = swegl::make_cube(1.0f, 0);
+	cube.scale.x() = 2;
 	cube.rotation = swegl::matrix44_t::Identity;
 	cube.translation = swegl::vertex_t(0.0f, 0.0f, -5.0f);
 	//c->SetBumpMap(bumpmap);
@@ -249,8 +250,8 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 
 			scene.point_source_lights[0].position = transform(scene.point_source_lights[0].position, rot1);
 			scene.point_source_lights[1].position = transform(scene.point_source_lights[1].position, rot2);
-			scene.nodes[4].translation = scene.point_source_lights[0].position;
-			scene.nodes[5].translation = scene.point_source_lights[1].position;
+			scene.nodes[2].translation = scene.point_source_lights[0].position;
+			scene.nodes[3].translation = scene.point_source_lights[1].position;
 		}
 
 		if (sdl.keys['i'] || sdl.keys['k'] || sdl.keys['j'] || sdl.keys['l'] || sdl.keys['o'] || sdl.keys['u'])

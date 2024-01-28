@@ -30,6 +30,7 @@ public:
 };
 
 vertex_t transform(const vertex_t &, const matrix44_t &);
+matrix44_t scale(const matrix44_t &, const vertex_t &);
 
 template<typename T>
 vertex_t operator+(const vertex_t & left, const T & right)

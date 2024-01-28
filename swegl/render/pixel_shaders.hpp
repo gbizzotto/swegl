@@ -45,8 +45,6 @@ struct pixel_shader_t
 
 struct pixel_shader_lights_flat : pixel_shader_t
 {
-	vertex_shader_t vertex_shader;
-
 	float light;
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override

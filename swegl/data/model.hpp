@@ -7,6 +7,7 @@
 #include <swegl/projection/matrix44.hpp>
 #include <swegl/data/texture.hpp>
 #include <swegl/render/colors.hpp>
+#include <swegl/projection/points.hpp>
 
 namespace swegl
 {
@@ -48,8 +49,16 @@ struct primitive_t
 
 struct node_t
 {
-	matrix44_t rotation;
-	vertex_t translation;
+	vertex_t scale = vertex_t(1,1,1);
+	matrix44_t rotation = matrix44_t::Identity;
+	vertex_t translation = vertex_t(0,0,0);
+
+	inline matrix44_t get_world_matrix() const
+	{
+		matrix44_t original_to_world_matrix = swegl::scale(rotation, scale);
+		original_to_world_matrix.translate(translation.x(), translation.y(), translation.z());
+		return original_to_world_matrix;
+	}
 
 	std::vector<primitive_t> primitives;
 };
