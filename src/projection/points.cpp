@@ -15,17 +15,17 @@ namespace swegl
 	{
 		matrix44_t result = m;
 		result[0][0] *= v.x();
-		result[0][1] *= v.x();
-		result[0][2] *= v.x();
-		result[0][3] *= v.x();
-		result[1][0] *= v.y();
+		result[1][0] *= v.x();
+		result[2][0] *= v.x();
+		result[3][0] *= v.x();
+		result[0][1] *= v.y();
 		result[1][1] *= v.y();
-		result[1][2] *= v.y();
-		result[1][3] *= v.y();
-		result[2][0] *= v.z();
-		result[2][1] *= v.z();
+		result[2][1] *= v.y();
+		result[3][1] *= v.y();
+		result[0][2] *= v.z();
+		result[1][2] *= v.z();
 		result[2][2] *= v.z();
-		result[2][3] *= v.z();
+		result[3][2] *= v.z();
 		return result;
 	}
 
