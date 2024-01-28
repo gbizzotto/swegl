@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdlib.h>
 #include <sstream>
+#include <chrono>
 
 #include <utttil/perf.hpp>
 
@@ -96,6 +97,9 @@ swegl::scene_t build_scene()
 	for (auto & node : s.nodes)
 		for (auto & primitive : node.primitives)
 			primitive.vertices.reserve(primitive.vertices.size()+2);
+
+	for (int i=0 ; i<(int)s.nodes.size() ; i++)
+		s.root_nodes.push_back(i);
 
 	return s;
 }
@@ -263,6 +267,15 @@ int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::
 	return 0;
 }
 
+struct myclock_t
+{
+	std::chrono::time_point<std::chrono::high_resolution_clock> begin = std::chrono::high_resolution_clock::now();
+	float elapsed_seconds() const
+	{
+		auto now = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration<double, std::micro>(now-begin).count() / 1000000.0f;
+	}
+};
 
 int main(int argc, char ** argv)
 {
@@ -278,6 +291,9 @@ int main(int argc, char ** argv)
 				scene.sun_direction = swegl::normal_t{1.0, -2.0, -0.5};
 				scene.sun_direction.normalize();
 				scene.sun_intensity = 0.3;
+				for (auto & node : scene.nodes)
+					for (auto & primitive : node.primitives)
+						primitive.vertices.reserve(primitive.vertices.size()+2);
 				return scene;
 			}
 		}();
@@ -301,19 +317,22 @@ int main(int argc, char ** argv)
 	viewport.m_camera.rotate_y(-0.2);
 	viewport.m_camera.rotate_x(-0.3);
 
+	myclock_t clock;
+
 	utttil::measurement_point mp("frame");
 	for(;;)
 	{
 		{
 			utttil::measurement m(mp);
 
-			sdl.clear(0, 0, 100, 30);
+			//sdl.clear(0, 0, 100, 30);
 
 			//swegl::render(scene, viewport1, viewport2);
 			swegl::render(scene, viewport);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
+			scene.animate(clock.elapsed_seconds());
 			if (handle_keyboard_events(sdl, viewport.camera(), scene) < 0)
 				break;
 

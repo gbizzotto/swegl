@@ -95,7 +95,7 @@ struct accessor_t
 						case component_type_e::         SHORT: return 2;
 						case component_type_e::UNSIGNED_SHORT: return 2;
 						case component_type_e::UNSIGNED_INT  : return 4;
-						case component_type_e::         FLOAT: return 5;
+						case component_type_e::         FLOAT: return 4;
 						default:                assert(false); return 0;
 					}
 				}();
@@ -282,27 +282,93 @@ swegl::scene_t load_scene(std::string filename)
 				float q1 = jnode["rotation"][1].template get<float>();
 				float q2 = jnode["rotation"][2].template get<float>();
 				float q3 = jnode["rotation"][3].template get<float>();
-				node.rotation = matrix44_t
-					{
-						2*(q0*q0+q1*q1)-1,2*(q1*q2-q0*q3)  ,2*(q1*q3+q0*q2)  , 0.0f,
-						2*(q1*q2+q0*q3)  ,2*(q0*q0+q2*q2)-1,2*(q2*q3-q0*q1)  , 0.0f,
-						2*(q2*q3+q0*q2)  ,2*(q2*q3+q0*q1)  ,2*(q0*q0+q3*q3)-1, 0.0f,
-						             0.0f,             0.0f,             0.0f, 1.0f,
-					};
+				node.rotation = matrix44_t::from_quaternion(q0, q1, q2, q3);
 			}
 			if (jnode.contains("mesh"))
 				node.primitives = std::move(temp_meshes[jnode["mesh"].template get<int>()].primitives);
 			if (jnode.contains("children"))
 				for (size_t k=0 ; k<jnode["children"].size() ; k++)
-				{
 					node.children_idx.push_back(jnode["children"][k].template get<int>());
-
-				}
 		}
 
 		for (size_t i=0 ; i<result.nodes.size() ; i++)
+			for (size_t k=0 ; k<result.nodes[i].children_idx.size() ; i++)
+				result.nodes[result.nodes[i].children_idx[k]].root = false;
+		for (size_t i=0 ; i<result.nodes.size() ; i++)
 			if (result.nodes[i].root)
 				result.root_nodes.emplace_back(i);
+	}
+
+	struct sampler_t
+	{
+		int input;
+		int output;
+		std::string interpolation_type;
+	};
+
+	if (j.contains("animations"))
+	{
+		for (auto & janim : j["animations"])
+		{
+			auto & animation = result.animations.emplace_back();
+
+			std::vector<sampler_t> samplers;
+			for (auto & jsampler : janim["samplers"])
+				samplers.push_back(sampler_t{jsampler["input"].template get<int>()
+				                            ,jsampler["output"].template get<int>()
+				                            ,jsampler["interpolation"].template get<std::string>()});
+			for (auto & jchannel : janim["channels"])
+			{
+				int node_idx = jchannel["target"]["node"].template get<int>();
+				std::string path_str = jchannel["target"]["path"].template get<std::string>();
+				animation_channel_t::path_t path = [&]()
+					{
+						     if (path_str == "scale"      ) return animation_channel_t::path_t::SCALE      ;
+						else if (path_str == "rotation"   ) return animation_channel_t::path_t::ROTATION   ;
+						else if (path_str == "translation") return animation_channel_t::path_t::TRANSLATION;
+						else if (path_str == "weights"    ) return animation_channel_t::path_t::WEIGHTS    ;
+						else                                return animation_channel_t::path_t::NONE       ;
+					}();
+				auto & animation_channel = animation.channels.emplace_back(animation_channel_t{node_idx, path, {}});
+
+				sampler_t & sampler = samplers[jchannel["sampler"]];
+				accessor_t & accessor_times  = accessors[sampler.input];
+				accessor_t & accessor_values = accessors[sampler.output];
+
+				animation_channel.steps.reserve(accessor_times.count);
+				for (int i=0 ; i<accessor_times.count ; i++)
+				{
+					float time = *(float*)&accessor_times.buffer_view.data[0+i*accessor_times.buffer_view.byte_stride];
+					vec4f_t value(0,0,0,0);
+					if (animation_channel.path == animation_channel_t::path_t::SCALE)
+					{
+						value.x() = *(float*)&accessor_values.buffer_view.data[ 0+i*accessor_values.buffer_view.byte_stride];
+					}
+					else if (animation_channel.path == animation_channel_t::path_t::ROTATION)
+					{
+						value.x() = *(float*)&accessor_values.buffer_view.data[ 0+i*accessor_values.buffer_view.byte_stride];
+						value.y() = *(float*)&accessor_values.buffer_view.data[ 4+i*accessor_values.buffer_view.byte_stride];
+						value.z() = *(float*)&accessor_values.buffer_view.data[ 8+i*accessor_values.buffer_view.byte_stride];
+						value.w() = *(float*)&accessor_values.buffer_view.data[12+i*accessor_values.buffer_view.byte_stride];
+					}
+					else if (animation_channel.path == animation_channel_t::path_t::TRANSLATION)
+					{
+						value.x() = *(float*)&accessor_values.buffer_view.data[ 0+i*accessor_values.buffer_view.byte_stride];
+						value.y() = *(float*)&accessor_values.buffer_view.data[ 4+i*accessor_values.buffer_view.byte_stride];
+						value.z() = *(float*)&accessor_values.buffer_view.data[ 8+i*accessor_values.buffer_view.byte_stride];
+					}
+					else if (animation_channel.path == animation_channel_t::path_t::WEIGHTS)
+					{
+					}
+					animation_channel.steps.emplace_back(animation_step_t{time, value});
+					animation.end_time = std::max(animation.end_time, time);
+				}
+				std::sort(animation_channel.steps.begin(), animation_channel.steps.end(), [](const animation_step_t & left, const animation_step_t & right)
+					{
+						return left.time < right.time;
+					});
+			}
+		}
 	}
 
 	return result;

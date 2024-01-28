@@ -40,4 +40,51 @@ namespace swegl
 	{
 		return vec2f_t{left.x()*right, left.y()*right};
 	}
+
+
+	struct vec4f_t
+	{
+		float _x, _y, _z, _w;
+
+		vec4f_t() = default;
+		inline vec4f_t(float x, float y, float z, float w)
+			: _x(x)
+			, _y(y)
+			, _z(z)
+			, _w(w)
+		{}
+		vec4f_t(const vec4f_t & other) = default;
+		vec4f_t & operator=(const vec4f_t &) = default;
+
+		inline float & x()       { return _x; }
+		inline float   x() const { return _x; }
+		inline float & y()       { return _y; }
+		inline float   y() const { return _y; }
+		inline float & z()       { return _z; }
+		inline float   z() const { return _z; }
+		inline float & w()       { return _w; }
+		inline float   w() const { return _w; }
+
+		inline void normalize()
+		{
+			float len = sqrt(x()*x() + y()*y() + z()*z() + w()*w());
+			if (len != 0)
+			{
+				_x = x()/len;
+				_y = y()/len;
+				_z = z()/len;
+				_w = w()/len;
+			};
+		}
+	};
+	template<typename T>
+	inline vec4f_t operator*(const vec4f_t & left, const T & right)
+	{
+		return vec4f_t{left.x()*right, left.y()*right, left.z()*right, left.w()*right};
+	}
+	template<typename T>
+	inline vec4f_t operator+(const vec4f_t & left, const T & right)
+	{
+		return vec4f_t{left.x()+right.x(), left.y()+right.y(), left.z()+right.z(), left.w()+right.w()};
+	}
 }
