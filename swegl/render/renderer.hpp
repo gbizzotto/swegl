@@ -60,10 +60,9 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 	vertex_shader_t::world_to_camera_or_frustum(scene, viewport);
 	viewport.clear();
 
+	pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
 	for (auto & node : scene.nodes)
 	{
-		pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
-
 		// determine which vertices will be part of visible triangles and need more transformation 
 		for (auto & primitive : node.primitives)
 		{

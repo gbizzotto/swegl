@@ -44,7 +44,7 @@ swegl::scene_t build_scene()
 	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
 
 
-	/*
+	//*
 	auto tore = swegl::make_tore(100, 1);
 	tore.rotation = swegl::matrix44_t::Identity;
 	tore.rotation.rotate_z(0.5);
@@ -62,7 +62,7 @@ swegl::scene_t build_scene()
 	s.nodes.emplace_back(std::move(cube));
 	//*/
 
-	/*
+	///*
 	auto sphere = swegl::make_sphere(100, 2.0f, 2);
 	sphere.rotation = swegl::matrix44_t::Identity;
 	sphere.translation = swegl::vertex_t(3.0f, 0.0f, -6.0f);

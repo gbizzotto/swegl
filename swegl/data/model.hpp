@@ -244,16 +244,9 @@ inline node_t make_cube(float size, int material_idx)
 	return result;	
 }
 
-/*
 inline node_t make_tore(unsigned int precision, int material_idx)
 {
 	node_t result;
-
-	result.rotation = swegl::matrix44_t::Identity;
-	result.translation = vertex_t(0.0,0.0,0.0);
-	result.mesh.material_id = material_idx;
-
-	auto & vertices = result.mesh.vertices;
 
 	float angle = (2 * 3.141592653589f) / precision;
 	matrix44_t big = matrix44_t::Identity;
@@ -262,40 +255,57 @@ inline node_t make_tore(unsigned int precision, int material_idx)
 
 	for (unsigned int bg = 0; bg <= precision; bg++)
 	{
-		matrix44_t small = matrix44_t::Identity;
-		matrix44_t small_normal = matrix44_t::Identity;
-		small.translate(0.8f, 0.0f, 0.0f);
-		for (unsigned int sm = 0; sm <= precision; sm++)
+		auto & primitive = result.primitives.emplace_back(primitive_t{{}, {}, primitive_t::index_mode_t::TRIANGLE_STRIP, material_idx});
+
+		// first row
 		{
-			vertices.push_back(mesh_vertex_t{transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big)
-			                                ,{}
-			                                ,{}
-			                                ,vec2f_t(1.0*bg/precision, 1.0*sm/precision)
-			                                ,transform(transform(normal_t(1.0f, 0.0f, 0.0f), small_normal), big_normal)
-			                                ,{}
-				                            }
-			                  );
-			small.rotate_z(angle);
-			small_normal.rotate_z(angle);
+			matrix44_t small = matrix44_t::Identity;
+			matrix44_t small_normal = matrix44_t::Identity;
+			small.translate(0.8f, 0.0f, 0.0f);
+			for (unsigned int sm = 0; sm <= precision; sm++)
+			{
+				primitive.vertices.push_back(mesh_vertex_t{transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big)
+				                                          ,{}
+				                                          ,{}
+				                                          ,vec2f_t(1.0*bg/precision, 1.0*sm/precision)
+				                                          ,transform(transform(normal_t(1.0f, 0.0f, 0.0f), small_normal), big_normal)
+				                                          ,{}
+					                                      }
+				                            );
+				small.rotate_z(angle);
+				small_normal.rotate_z(angle);
+			}
 		}
 		big.rotate_y(angle);
 		big_normal.rotate_y(angle);
-	}
-
-	for (unsigned int bg = 0; bg < precision; bg++)
-	{
-		result.mesh.triangle_strips.emplace_back();
-		auto & strip = result.mesh.triangle_strips.back();
-		strip.indices.push_back((bg+1)*(precision+1));
-		strip.indices.push_back((bg  )*(precision+1));
-		for (unsigned int sm = 0; sm < precision; sm++)
+		// second row
 		{
-			strip.indices.push_back((bg+1)*(precision+1) + (sm+1));
-			strip.indices.push_back((bg  )*(precision+1) + (sm+1));
+			matrix44_t small = matrix44_t::Identity;
+			matrix44_t small_normal = matrix44_t::Identity;
+			small.translate(0.8f, 0.0f, 0.0f);
+			for (unsigned int sm = 0; sm <= precision; sm++)
+			{
+				primitive.vertices.push_back(mesh_vertex_t{transform(transform(vertex_t(0.0f, 0.0f, 0.0f), small), big)
+				                                          ,{}
+				                                          ,{}
+				                                          ,vec2f_t(1.0*(bg+1)/precision, 1.0*sm/precision)
+				                                          ,transform(transform(normal_t(1.0f, 0.0f, 0.0f), small_normal), big_normal)
+				                                          ,{}
+					                                      }
+				                            );
+				small.rotate_z(angle);
+				small_normal.rotate_z(angle);
+			}
 		}
-	}
 
-	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+		for (unsigned int sm = 0; sm <= precision; sm++)
+		{
+			primitive.indices.push_back(precision+1 + sm);
+			primitive.indices.push_back(              sm);
+		}
+
+		primitive.vertices.reserve(primitive.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	}
 
 	return result;
 }
@@ -304,34 +314,58 @@ inline node_t make_sphere(unsigned int precision, float radius, int material_idx
 {
 	node_t result;
 
-	result.rotation = swegl::matrix44_t::Identity;
-	result.translation = vertex_t(0.0,0.0,0.0);
-	result.mesh.material_id = material_idx;
-
-	auto & vertices = result.mesh.vertices;
-
 	float angle = (2 * 3.141592653589f) / precision;
 	matrix44_t big = matrix44_t::Identity;
 
 	for (unsigned int bg = 0; bg <= precision; bg++)
 	{
-		matrix44_t small = matrix44_t::Identity;
-		for (unsigned int sm = 0; sm <= precision; sm++)
+		auto & primitive = result.primitives.emplace_back(primitive_t{{}, {}, primitive_t::index_mode_t::TRIANGLE_STRIP, material_idx});
+
+		// first row
 		{
-			vertex_t v = transform(transform(vertex_t(0.0f, radius, 0.0f),small), big);
-			vertices.push_back(mesh_vertex_t{v
-			                                ,{}
-			                                ,{}
-			                                ,vec2f_t(1.0*sm/precision, 1.0*bg/precision)
-			                                ,normal_t(v.x(), v.y(), v.z())
-			                                ,{}
-			                                }
-			                  );
-			small.rotate_z(angle/2);
+			matrix44_t small = matrix44_t::Identity;
+			for (unsigned int sm = 0; sm <= precision; sm++)
+			{
+				vertex_t v = transform(transform(vertex_t(0.0f, radius, 0.0f),small), big);
+				primitive.vertices.push_back(mesh_vertex_t{v
+				                                          ,{}
+				                                          ,{}
+				                                          ,vec2f_t(1.0*sm/precision, 1.0*bg/precision)
+				                                          ,normal_t(v.x(), v.y(), v.z())
+				                                          ,{}
+				                                          }
+				                            );
+				small.rotate_z(angle/2);
+			}
 		}
 		big.rotate_y(angle);
+		// second row
+		{
+			matrix44_t small = matrix44_t::Identity;
+			for (unsigned int sm = 0; sm <= precision; sm++)
+			{
+				vertex_t v = transform(transform(vertex_t(0.0f, radius, 0.0f),small), big);
+				primitive.vertices.push_back(mesh_vertex_t{v
+				                                          ,{}
+				                                          ,{}
+				                                          ,vec2f_t(1.0*sm/precision, 1.0*(bg+1)/precision)
+				                                          ,normal_t(v.x(), v.y(), v.z())
+				                                          ,{}
+				                                          }
+				                            );
+				small.rotate_z(angle/2);
+			}
+		}
+		for (unsigned int sm = 0; sm <= precision; sm++)
+		{
+			primitive.indices.push_back(precision+1 + sm);
+			primitive.indices.push_back(              sm);
+		}
+
+		primitive.vertices.reserve(primitive.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
 	}
 
+	/*
 	for (unsigned int bg = 0; bg < precision; bg++)
 	{
 		result.mesh.triangle_strips.emplace_back();
@@ -344,11 +378,9 @@ inline node_t make_sphere(unsigned int precision, float radius, int material_idx
 			strip.indices.push_back((bg  )*(precision+1) + (sm+1));
 		}
 	}
-
-	result.mesh.vertices.reserve(result.mesh.vertices.size() + 2); // allow for 2 extra vertices in case we have triangles intersecting the 0,0 camera plane
+	*/
 
 	return result;
 }
-*/
 
 } // namespace
