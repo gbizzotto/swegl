@@ -161,8 +161,6 @@ inline node_t make_tri(float size, int material_idx)
 			           ,material_idx
 		               },
 		};
-	result.rotation = matrix44_t::Identity;
-	result.translation = vertex_t(0.0,0.0,0.0);
 
 	//calculate_face_normals(result);
 	
@@ -234,10 +232,8 @@ inline node_t make_cube(float size, int material_idx)
 			           ,{0,1,2,3}
 			           ,primitive_t::index_mode_t::TRIANGLE_FAN
 			           ,material_idx
-		               },
+			           },
 		};
-	result.rotation = matrix44_t::Identity;
-	result.translation = vertex_t(0.0,0.0,0.0);
 
 	//calculate_face_normals(result);
 
