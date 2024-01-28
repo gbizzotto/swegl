@@ -16,30 +16,37 @@ struct vertex_shader_t
 	static inline void original_to_world(scene_t & scene)
 	{
 		for (auto & node : scene.nodes)
-		{
-			matrix44_t original_to_world_matrix = node.get_world_matrix();
-			//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
-			for (auto & primitive : node.primitives)
-				for (auto & mv : primitive.vertices)
-					mv.v_world = transform(mv.v, original_to_world_matrix);
-			//);
-		}
+			original_to_world(node, matrix44_t::Identity);
 	}
+	static inline void original_to_world(node_t & node, const matrix44_t & parent_matrix)
+	{
+		node.original_to_world_matrix = parent_matrix * node.get_local_world_matrix();
+		//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
+		for (auto & primitive : node.primitives)
+		{
+			for (auto & mv : primitive.vertices)
+				mv.v_world = transform(mv.v, node.original_to_world_matrix);
+		}
+		//);
+	}
+
 	static inline void world_to_camera_or_frustum(scene_t & scene, const viewport_t & viewport)
 	{
 		for (auto & node : scene.nodes)
-		{
-			//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
-			for (auto & primitive : node.primitives)
-				for (auto & mv : primitive.vertices)
-				{
-					mv.yes = false;
-					mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
-					//if (mv.v_viewport.z() >= 0.001)
-						camera_to_frustum(mv, node, viewport);
-				}
-			//);
-		}
+			world_to_camera_or_frustum(node, viewport);
+	}
+	static inline void world_to_camera_or_frustum(node_t & node, const viewport_t & viewport)	
+	{
+		//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
+		for (auto & primitive : node.primitives)
+			for (auto & mv : primitive.vertices)
+			{
+				mv.yes = false;
+				mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
+				//if (mv.v_viewport.z() >= 0.001)
+					camera_to_frustum(mv, node, viewport);
+			}
+		//);
 	}
 
 	static inline void world_to_viewport(mesh_vertex_t & mv, const node_t & node, const viewport_t & viewport)

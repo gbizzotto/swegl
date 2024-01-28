@@ -209,65 +209,100 @@ swegl::scene_t load_scene(std::string filename)
 		}
 	}
 
-
-	auto & meshes = j["meshes"];
-	for (auto & mesh : meshes)
+	std::vector<node_t> temp_meshes;
+	if (j.contains("meshes"))
 	{
-		node_t & node = result.nodes.emplace_back();
-		node.rotation = matrix44_t::Identity;
-		node.translation = {0,0,0};
-
-		if ( ! mesh.contains("primitives"))
-			continue;
-
-		for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
+		temp_meshes.reserve(j["meshes"].size());
+		auto & meshes = j["meshes"];
+		for (auto & mesh : meshes)
 		{
-			primitive_t & primitive = node.primitives.emplace_back();
+			if ( ! mesh.contains("primitives"))
+				continue;
 
-			primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
-			primitive.mode        = (decltype(primitive.mode)) mesh["primitives"][i]["mode"    ].template get<int>();
-
-			accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
-
-			primitive.vertices.resize(accessor_vertices.count + 2);
-			primitive.vertices.reserve(accessor_vertices.count + 2);
-			for (int i=0 ; i<accessor_vertices.count ; i++)
+			node_t & node = temp_meshes.emplace_back();
+			for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
 			{
-				auto & vertex = primitive.vertices[i];
-				vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+i*accessor_vertices.buffer_view.byte_stride];
-				vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.buffer_view.byte_stride];
-				vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.buffer_view.byte_stride];
-			}
-			if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
-			{
-				accessor_t & accessor_normals  = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
-				for (int i=0 ; i<accessor_normals.count ; i++)
+				primitive_t & primitive = node.primitives.emplace_back();
+
+				primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
+				primitive.mode        = (decltype(primitive.mode)) mesh["primitives"][i]["mode"    ].template get<int>();
+
+				accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
+
+				primitive.vertices.resize(accessor_vertices.count + 2);
+				primitive.vertices.reserve(accessor_vertices.count + 2);
+				for (int i=0 ; i<accessor_vertices.count ; i++)
 				{
 					auto & vertex = primitive.vertices[i];
-					vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
-					vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
-					vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+					vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+i*accessor_vertices.buffer_view.byte_stride];
+					vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.buffer_view.byte_stride];
+					vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.buffer_view.byte_stride];
 				}
-			}
-			if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
-			{
-				accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
-				for (int i=0 ; i<accessor_texcoords.count ; i++)
+				if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
 				{
-					auto & vertex = primitive.vertices[i];
-					vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.buffer_view.byte_stride];
-					vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.buffer_view.byte_stride];				
+					accessor_t & accessor_normals  = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
+					for (int i=0 ; i<accessor_normals.count ; i++)
+					{
+						auto & vertex = primitive.vertices[i];
+						vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.buffer_view.byte_stride];
+						vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.buffer_view.byte_stride];
+						vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.buffer_view.byte_stride];
+					}
 				}
-			}
+				if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
+				{
+					accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
+					for (int i=0 ; i<accessor_texcoords.count ; i++)
+					{
+						auto & vertex = primitive.vertices[i];
+						vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.buffer_view.byte_stride];
+						vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.buffer_view.byte_stride];				
+					}
+				}
 
-			if (mesh["primitives"][i].contains("indices"))
-			{
-				accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
-				primitive.indices.reserve(accessor_indices.count);
-				for (int i=0 ; i<accessor_indices.count ; i++)
-					primitive.indices.push_back(*(std::uint16_t*)&accessor_indices.buffer_view.data[i*accessor_indices.buffer_view.byte_stride]);
+				if (mesh["primitives"][i].contains("indices"))
+				{
+					accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
+					primitive.indices.reserve(accessor_indices.count);
+					for (int i=0 ; i<accessor_indices.count ; i++)
+						primitive.indices.push_back(*(std::uint16_t*)&accessor_indices.buffer_view.data[i*accessor_indices.buffer_view.byte_stride]);
+				}
 			}
 		}
+	}
+
+	if (j.contains("nodes"))
+	{
+		for (auto & jnode : j["nodes"])
+		{
+			node_t & node = result.nodes.emplace_back();
+			if (jnode.contains("rotation"))
+			{
+				float q0 = jnode["rotation"][0].template get<float>();
+				float q1 = jnode["rotation"][1].template get<float>();
+				float q2 = jnode["rotation"][2].template get<float>();
+				float q3 = jnode["rotation"][3].template get<float>();
+				node.rotation = matrix44_t
+					{
+						2*(q0*q0+q1*q1)-1,2*(q1*q2-q0*q3)  ,2*(q1*q3+q0*q2)  , 0.0f,
+						2*(q1*q2+q0*q3)  ,2*(q0*q0+q2*q2)-1,2*(q2*q3-q0*q1)  , 0.0f,
+						2*(q2*q3+q0*q2)  ,2*(q2*q3+q0*q1)  ,2*(q0*q0+q3*q3)-1, 0.0f,
+						             0.0f,             0.0f,             0.0f, 1.0f,
+					};
+			}
+			if (jnode.contains("mesh"))
+				node.primitives = std::move(temp_meshes[jnode["mesh"].template get<int>()].primitives);
+			if (jnode.contains("children"))
+				for (size_t k=0 ; k<jnode["children"].size() ; k++)
+				{
+					node.children_idx.push_back(jnode["children"][k].template get<int>());
+
+				}
+		}
+
+		for (size_t i=0 ; i<result.nodes.size() ; i++)
+			if (result.nodes[i].root)
+				result.root_nodes.emplace_back(i);
 	}
 
 	return result;

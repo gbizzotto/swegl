@@ -18,6 +18,10 @@ namespace swegl
 		matrix44_t(const freon::Matrix<float,4,4> & other)
 			:freon::Matrix<float,4,4>(other)
 		{}
+		template <typename... P>
+		matrix44_t(P... ts)
+			:freon::Matrix<float,4,4>{ ts... }
+		{}
 		void rotate_x(float a);
 		void rotate_y(float a);
 		void rotate_z(float a);

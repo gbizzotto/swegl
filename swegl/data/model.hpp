@@ -53,14 +53,21 @@ struct node_t
 	matrix44_t rotation = matrix44_t::Identity;
 	vertex_t translation = vertex_t(0,0,0);
 
-	inline matrix44_t get_world_matrix() const
+	inline matrix44_t get_local_world_matrix() const
 	{
 		matrix44_t original_to_world_matrix = swegl::scale(rotation, scale);
 		original_to_world_matrix.translate(translation.x(), translation.y(), translation.z());
 		return original_to_world_matrix;
 	}
 
+	// final transformation matrix, including parents
+	matrix44_t original_to_world_matrix = matrix44_t::Identity;
+
 	std::vector<primitive_t> primitives;
+
+	std::vector<int> children_idx;
+
+	bool root = true;
 };
 
 
@@ -81,6 +88,7 @@ struct material_t
 struct scene_t
 {
 	std::vector<node_t> nodes;
+	std::vector<int> root_nodes;
 
 	float ambient_light_intensity;
 
