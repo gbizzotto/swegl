@@ -60,6 +60,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 	std::vector<buffer_view_t> buffer_views;
 	for (const auto & buffer_view : j["bufferViews"])
 	{
+		assert(buffer_view["buffer"].template get<size_t>() < buffers.size());
+		assert(buffer_view["buffer"].template get<int>() >= 0);
 		auto & buffer = buffers[buffer_view["buffer"].template get<int>()];
 		buffer_views.push_back(buffer_view_t{buffer.sub(buffer_view.value("byteOffset", 0)
 		                                               ,buffer_view["byteLength"].template get<int>())
@@ -84,6 +86,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			}
 			else if (jimage["mimeType"] == "image/png")
 			{
+				assert(jimage["bufferView"].template get<size_t>() < buffer_views.size());
+				assert(jimage["bufferView"].template get<int>() >= 0);
 				auto & buffer_view = buffer_views[jimage["bufferView"].template get<int>()];
 				int file_offset = &buffer_view.data[0] - file_beginning_ptr;
 				texture_t image = read_png_file(filename.c_str(), file_offset);
@@ -91,6 +95,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			}
 			else if (jimage["mimeType"] == "image/jpg" || jimage["mimeType"] == "image/jpeg")
 			{
+				assert(jimage["bufferView"].template get<size_t>() < buffer_views.size());
+				assert(jimage["bufferView"].template get<int>() >= 0);
 				auto & buffer_view = buffer_views[jimage["bufferView"].template get<int>()];
 				int file_offset = &buffer_view.data[0] - file_beginning_ptr;
 				texture_t image = read_jpeg_file(filename.c_str(), file_offset);
@@ -131,9 +137,13 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 				img_idx = j["textures"][texture_idx]["source"].template get<int>();
 			}
 			if (material["pbrMetallicRoughness"].contains("metallicFactor"))
+			{
 				metallic = material["pbrMetallicRoughness"]["metallicFactor"].template get<float>();
+			}
 			if (material["pbrMetallicRoughness"].contains("roughnessFactor"))
+			{
 				roughness = material["pbrMetallicRoughness"]["roughnessFactor"].template get<float>();
+			}
 			result.materials.push_back(material_t{color, metallic, roughness, img_idx});
 		}
 	}
@@ -156,6 +166,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 				primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
 				primitive.mode = (decltype(primitive.mode)) mesh["primitives"][i].value("mode", 4);
 
+				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<size_t>() < accessors.size());
+				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<int>() >= 0);
 				accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
 
 				primitive.vertices.resize(accessor_vertices.count + 2);
@@ -169,7 +181,9 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 				}
 				if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
 				{
-					accessor_t & accessor_normals  = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
+					assert(mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<size_t>() < accessors.size());
+					assert(mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>() >= 0);
+					accessor_t & accessor_normals = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
 					for (int i=0 ; i<accessor_normals.count ; i++)
 					{
 						auto & vertex = primitive.vertices[i];
@@ -180,6 +194,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 				}
 				if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
 				{
+					assert(mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<size_t>() < accessors.size());
+					assert(mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>() >= 0);
 					accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
 					for (int i=0 ; i<accessor_texcoords.count ; i++)
 					{
@@ -191,6 +207,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 
 				if (mesh["primitives"][i].contains("indices"))
 				{
+					assert(mesh["primitives"][i]["indices"].template get<size_t>() < accessors.size());
+					assert(mesh["primitives"][i]["indices"].template get<int>() >= 0);
 					accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
 					primitive.indices.reserve(accessor_indices.count);
 					for (int i=0 ; i<accessor_indices.count ; i++)
@@ -210,11 +228,80 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			node_t & node = result.nodes.emplace_back();
 			if (jnode.contains("rotation"))
 			{
+				assert(jnode["rotation"].size() == 4);
 				float q0 = jnode["rotation"][0].template get<float>();
 				float q1 = jnode["rotation"][1].template get<float>();
 				float q2 = jnode["rotation"][2].template get<float>();
 				float q3 = jnode["rotation"][3].template get<float>();
 				node.rotation = matrix44_t::from_quaternion(q0, q1, q2, q3);
+			}
+			if (jnode.contains("translation"))
+			{
+				assert(jnode["translation"].size() == 3);
+				node.translation.x() = jnode["translation"][0].template get<float>();
+				node.translation.y() = jnode["translation"][1].template get<float>();
+				node.translation.z() = jnode["translation"][2].template get<float>();
+			}
+			if (jnode.contains("scale"))
+			{
+				assert(jnode["scale"].size() == 3);
+				node.scale.x() = jnode["scale"][0].template get<float>();
+				node.scale.y() = jnode["scale"][1].template get<float>();
+				node.scale.z() = jnode["scale"][2].template get<float>();
+			}
+			if (jnode.contains("matrix"))
+			{
+				assert(jnode["matrix"].size() == 16);
+				matrix44_t m
+					{ // gltf is column-major, swegl is row-major
+						jnode["matrix"][ 0].template get<float>(),
+						jnode["matrix"][ 4].template get<float>(),
+						jnode["matrix"][ 8].template get<float>(),
+						jnode["matrix"][12].template get<float>(),
+
+						jnode["matrix"][ 1].template get<float>(),
+						jnode["matrix"][ 5].template get<float>(),
+						jnode["matrix"][ 9].template get<float>(),
+						jnode["matrix"][13].template get<float>(),
+
+						jnode["matrix"][ 2].template get<float>(),
+						jnode["matrix"][ 6].template get<float>(),
+						jnode["matrix"][10].template get<float>(),
+						jnode["matrix"][14].template get<float>(),
+
+						jnode["matrix"][ 3].template get<float>(),
+						jnode["matrix"][ 7].template get<float>(),
+						jnode["matrix"][11].template get<float>(),
+						jnode["matrix"][15].template get<float>(),
+					};
+				node.translation.x() = m[0][3];
+				node.translation.y() = m[1][3];
+				node.translation.z() = m[2][3];
+				node.scale.x() = vector_t(m[0][0], m[0][1], m[0][2]).len();
+				node.scale.y() = vector_t(m[1][0], m[1][1], m[1][2]).len();
+				node.scale.z() = vector_t(m[2][0], m[2][1], m[2][2]).len();
+				m[0][3] = 0;
+				m[1][3] = 0;
+				m[2][3] = 0;
+				if (node.scale.x() != 0)
+				{
+					m[0][0] /= node.scale.x();
+					m[1][0] /= node.scale.x();
+					m[2][0] /= node.scale.x();
+				}
+				if (node.scale.y() != 0)
+				{
+					m[0][1] /= node.scale.y();
+					m[1][1] /= node.scale.y();
+					m[2][1] /= node.scale.y();
+				}
+				if (node.scale.z() != 0)
+				{
+					m[0][2] /= node.scale.z();
+					m[1][2] /= node.scale.z();
+					m[2][2] /= node.scale.z();
+				}
+				node.rotation = m;
 			}
 			if (jnode.contains("mesh"))
 				node.primitives = std::move(temp_meshes[jnode["mesh"].template get<int>()].primitives);
@@ -223,8 +310,9 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 					node.children_idx.push_back(jnode["children"][k].template get<int>());
 		}
 
+		// get root nodes
 		for (size_t i=0 ; i<result.nodes.size() ; i++)
-			for (size_t k=0 ; k<result.nodes[i].children_idx.size() ; i++)
+			for (size_t k=0 ; k<result.nodes[i].children_idx.size() ; k++)
 				result.nodes[result.nodes[i].children_idx[k]].root = false;
 		for (size_t i=0 ; i<result.nodes.size() ; i++)
 			if (result.nodes[i].root)
