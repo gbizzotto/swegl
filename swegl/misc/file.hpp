@@ -8,7 +8,7 @@
 namespace swegl
 {
 
-std::unique_ptr<char[]> read_file(std::string filename)
+inline std::unique_ptr<char[]> read_file(std::string filename)
 {
 	std::ifstream t(filename);
 	t.seekg(0, std::ios::end);

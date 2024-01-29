@@ -1,0 +1,175 @@
+{
+    "accessors": [
+        {
+            "bufferView": 3,
+            "componentType": 5126,
+            "count": 2188,
+            "type": "VEC2"
+        },
+        {
+            "bufferView": 4,
+            "componentType": 5126,
+            "count": 2188,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 5,
+            "componentType": 5126,
+            "count": 2188,
+            "type": "VEC4"
+        },
+        {
+            "bufferView": 6,
+            "componentType": 5126,
+            "count": 2188,
+            "type": "VEC3",
+            "max": [
+                0.0690619648,
+                0.2866283,
+                0.3253729
+            ],
+            "min": [
+                -0.073841624,
+                -0.000878453255,
+                -0.317738324
+            ]
+        },
+        {
+            "bufferView": 7,
+            "componentType": 5123,
+            "count": 11592,
+            "type": "SCALAR"
+        }
+    ],
+    "asset": {
+        "generator": "glTF Tools for Unity",
+        "version": "2.0"
+    },
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 4985099
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 4985099,
+            "byteLength": 4355820
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 9340919,
+            "byteLength": 3050432
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 12391352,
+            "byteLength": 17504
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 12408856,
+            "byteLength": 26256
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 12435112,
+            "byteLength": 35008
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 12470120,
+            "byteLength": 26256
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 12496376,
+            "byteLength": 23184
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 12519560
+        }
+    ],
+    "images": [
+        {
+            "mimeType": "image/png",
+            "bufferView": 0
+        },
+        {
+            "mimeType": "image/png",
+            "bufferView": 1
+        },
+        {
+            "mimeType": "image/png",
+            "bufferView": 2
+        }
+    ],
+    "meshes": [
+        {
+            "primitives": [
+                {
+                    "attributes": {
+                        "TEXCOORD_0": 0,
+                        "NORMAL": 1,
+                        "TANGENT": 2,
+                        "POSITION": 3
+                    },
+                    "indices": 4,
+                    "material": 0
+                }
+            ],
+            "name": "barramundi_fish_Hero"
+        }
+    ],
+    "materials": [
+        {
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0
+                },
+                "metallicRoughnessTexture": {
+                    "index": 1
+                }
+            },
+            "normalTexture": {
+                "index": 2
+            },
+            "occlusionTexture": {
+                "index": 1
+            },
+            "name": "7288_barramundi fish_col"
+        }
+    ],
+    "nodes": [
+        {
+            "mesh": 0,
+            "rotation": [
+                0.0,
+                1.0,
+                0.0,
+                0.0
+            ],
+            "name": "BarramundiFish"
+        }
+    ],
+    "scene": 0,
+    "scenes": [
+        {
+            "nodes": [
+                0
+            ]
+        }
+    ],
+    "textures": [
+        {
+            "source": 0
+        },
+        {
+            "source": 1
+        },
+        {
+            "source": 2
+        }
+    ]
+}

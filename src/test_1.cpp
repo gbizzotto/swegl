@@ -287,7 +287,7 @@ int main(int argc, char ** argv)
 				return build_scene();
 			else {
 				swegl::scene_t scene = swegl::load_scene(argv[1]);
-				scene.ambient_light_intensity = 0.2f;
+				scene.ambient_light_intensity = 0.7f;
 				scene.sun_direction = swegl::normal_t{1.0, -2.0, -0.5};
 				scene.sun_direction.normalize();
 				scene.sun_intensity = 0.3;
