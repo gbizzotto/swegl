@@ -184,8 +184,8 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 					for (int i=0 ; i<accessor_texcoords.count ; i++)
 					{
 						auto & vertex = primitive.vertices[i];
-						vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.stride];
-						vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.stride];				
+						vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.stride];
+						vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.stride];				
 					}
 				}
 
