@@ -251,9 +251,9 @@ struct pixel_shader_texture : pixel_shader_t
 		}
 		else
 		{
-			tbitmap = s.images[texture_id].m_mipmaps.get()[0].m_bitmap;
-			twidth  = s.images[texture_id].m_mipmaps.get()[0].m_width;
-			theight = s.images[texture_id].m_mipmaps.get()[0].m_height;
+			tbitmap = s.images[texture_id].m_mipmaps[0]->m_bitmap;
+			twidth  = s.images[texture_id].m_mipmaps[0]->m_width;
+			theight = s.images[texture_id].m_mipmaps[0]->m_height;
 		}
 	}
 
@@ -346,9 +346,9 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 		}
 		else
 		{
-			tbitmap = s.images[texture_id].m_mipmaps.get()[0].m_bitmap;
-			twidth  = s.images[texture_id].m_mipmaps.get()[0].m_width;
-			theight = s.images[texture_id].m_mipmaps.get()[0].m_height;
+			tbitmap = s.images[texture_id].m_mipmaps[0]->m_bitmap;
+			twidth  = s.images[texture_id].m_mipmaps[0]->m_width;
+			theight = s.images[texture_id].m_mipmaps[0]->m_height;
 		}
 	}
 

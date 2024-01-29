@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 namespace swegl
 {
@@ -13,6 +14,11 @@ namespace swegl
 		unsigned int *m_bitmap = nullptr;
 		unsigned int m_width;
 		unsigned int m_height;
+		inline mipmap_t(unsigned int * b, unsigned int w, unsigned int h)
+			: m_bitmap(b)
+			, m_width(w)
+			, m_height(h)
+		{}
 		~mipmap_t()
 		{
 			if (m_bitmap)
@@ -24,11 +30,12 @@ namespace swegl
 	{
 	public:
 		int m_mipmapsCount;
-		std::unique_ptr<mipmap_t[]> m_mipmaps;
+		std::vector<std::shared_ptr<mipmap_t>> m_mipmaps;
 
-		texture_t(const char *filename);
 		texture_t(unsigned int rgb);
 		texture_t(unsigned * data, int w, int h);
+
+		void produce_mipmaps();
 	};
 
 }

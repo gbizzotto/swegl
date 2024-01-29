@@ -25,9 +25,9 @@ swegl::scene_t build_scene()
 {
 	swegl::scene_t s;
 
-	s.images.emplace_back("resources/dice.bmp");
-	s.images.emplace_back("resources/tex.bmp");
-	s.images.emplace_back("resources/mercator.bmp");
+	s.images.emplace_back(swegl::read_image_file("resources/dice.bmp"));
+	s.images.emplace_back(swegl::read_image_file("resources/tex.bmp"));
+	s.images.emplace_back(swegl::read_image_file("resources/mercator.bmp"));
 
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  0});
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  1});

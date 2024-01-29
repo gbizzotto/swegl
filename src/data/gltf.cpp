@@ -1,10 +1,16 @@
 
+#include <filesystem>
+#include <cassert>
+
 #include <swegl/data/gltf.hpp>
+
+#define assertm(exp, msg) assert(((void)msg, exp))
+
 
 namespace swegl
 {
 
-accessor_t::accessor_t(std::vector<buffer_view_t> buffer_views, const nlohmann::json & accessor)
+accessor_t::accessor_t(std::vector<buffer_view_t> & buffer_views, const nlohmann::json & accessor)
 	: type(accessor["type"])
 	, component_type(component_type_e(accessor["componentType"].template get<int>()))
 	, count(accessor["count"].template get<int>())
@@ -47,6 +53,8 @@ accessor_t::accessor_t(std::vector<buffer_view_t> buffer_views, const nlohmann::
 
 swegl::scene_t load_scene(std::string filename)
 {
+	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
+
 	swegl::scene_t result;
 
 	std::unique_ptr<char[]> glb_data = read_file(filename);
@@ -60,8 +68,17 @@ swegl::scene_t load_scene(std::string filename)
 
 
 	std::vector<view_t<char>> buffers;
-	for (auto & buffer : j["buffers"])
-		buffers.emplace_back(view_t<char>{chunks[1].data, chunks[1].data + buffer["byteLength"].template get<int>()});
+	for (auto & jbuffer : j["buffers"])
+	{
+		if (jbuffer.contains("uri"))
+		{
+			auto data_uptr = read_file(root_path / jbuffer["uri"].template get<std::string>());
+			buffers.emplace_back(view_t<char>{data_uptr.get(), data_uptr.get() + jbuffer["byteLength"].template get<int>(), std::move(data_uptr)});
+		}
+		else
+			buffers.emplace_back(view_t<char>{chunks[1].data, chunks[1].data + jbuffer["byteLength"].template get<int>(), nullptr});
+	}
+
 	std::vector<buffer_view_t> buffer_views;
 	for (auto & buffer_view : j["bufferViews"])
 	{
@@ -78,14 +95,25 @@ swegl::scene_t load_scene(std::string filename)
 
 	if (j.contains("images"))
 	{
-		for (auto & image : j["images"])
+		for (auto & jimage : j["images"])
 		{
-			if (image["mimeType"] == "image/png")
+			if (jimage.contains("uri"))
 			{
-				auto & buffer_view = buffer_views[image["bufferView"].template get<int>()];
+				texture_t image = read_image_file(root_path / jimage["uri"].template get<std::string>());
+				if (image.m_mipmaps.size() == 0)
+					assertm(false, "cant load image format");
+				result.images.emplace_back(std::move(image));
+			}
+			else if (jimage["mimeType"] == "image/png")
+			{
+				auto & buffer_view = buffer_views[jimage["bufferView"].template get<int>()];
 				int file_offset = &buffer_view.data[0] - glb_data.get();
 				texture_t image = read_png_file(filename.c_str(), file_offset);
 				result.images.emplace_back(std::move(image));
+			}
+			else
+			{
+				assertm(false, "dont know how to load image");
 			}
 		}
 	}

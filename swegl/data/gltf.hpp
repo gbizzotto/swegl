@@ -36,10 +36,11 @@ struct view_t
 {
 	T *begin;
 	T *end;
+	std::unique_ptr<char[]> data;
 	inline size_t size() const { return end-begin; }
 	inline       T & operator[](size_t idx)       { return *(begin+idx); }
 	inline const T & operator[](size_t idx) const { return *(begin+idx); }
-	inline view_t sub(int offset, int length) { return {begin+offset, begin+offset+length}; }
+	inline view_t sub(int offset, int length) { return {begin+offset, begin+offset+length, nullptr}; }
 };
 
 struct buffer_view_t
@@ -77,7 +78,7 @@ struct accessor_t
 	int              count;
 	int              stride;
 
-	accessor_t(std::vector<buffer_view_t> buffer_views, const nlohmann::json & accessor);
+	accessor_t(std::vector<buffer_view_t> & buffer_views, const nlohmann::json & accessor);
 };
 
 

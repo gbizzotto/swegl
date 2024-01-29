@@ -23,7 +23,7 @@ LDFLAGS = -L. `sdl2-config --cflags --libs`
 LDLIBS_debug = -lasan
 LDLIBS_release = 
 LDLIBS_perf = 
-LDLIBS = $(LDLIBS_$(TYPE)) -pthread -L. `sdl2-config --cflags --libs` -fopenmp -lpng 
+LDLIBS = $(LDLIBS_$(TYPE)) -pthread -L. `sdl2-config --cflags --libs` -fopenmp -lpng -ljpeg 
 #-L$(DEPDIR)/abseil-cpp/build/absl/container/ -L$(DEPDIR)/abseil-cpp/build/absl/synchronization/ -L$(DEPDIR)/abseil-cpp/build/absl/time
 #-labsl_hashtablez_sampler -labsl_synchronization -labsl_time
 

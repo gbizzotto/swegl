@@ -1,75 +1,31 @@
 
-#include <memory.h>
+#include <memory>
 #include <stdio.h>
 #include <swegl/data/texture.hpp>
 
 namespace swegl
 {
 
-	texture_t::texture_t(const char *filename)
+	/**
+	 * Build a 1-pixel dummy texture
+	 */
+	texture_t::texture_t(unsigned int rgb)
 	{
-		unsigned int file_size;
-		unsigned int data_offset;
-		unsigned int data_size;
-		unsigned short bits_per_pixel;
-		int width;
-		int height;
-		int dummy;
-		int texel_count;
-		unsigned char r,g,b;
-		unsigned int *bitmap;
-		unsigned int *previousbitmap;
+		unsigned int * buffer = new unsigned int[1];
+		*buffer = rgb;
+		m_mipmaps.push_back(std::make_shared<mipmap_t>(buffer, 1, 1));
+	}
 
-		FILE *fin = fopen(filename, "rb");
-		if (fin == NULL)
-			return;
+	texture_t::texture_t(unsigned int * data, int w, int h)
+	{
+		m_mipmaps.push_back(std::make_shared<mipmap_t>(data, (unsigned int)w, (unsigned int)h));
+	}
 
-		dummy = fread(&dummy, 1, 2, fin); // magic number
-		dummy = fread(&file_size, 1, 4, fin);
-		dummy = fread(&dummy, 1, 2, fin); // RFU
-		dummy = fread(&dummy, 1, 2, fin); // RFU
-		dummy = fread(&data_offset, 1, 4, fin); 
-		dummy = fread(&dummy, 1, 4, fin); // header size
-		dummy = fread(&width, 1, 4, fin);
-		dummy = fread(&height, 1, 4, fin);
-		dummy = fread(&dummy, 1, 2, fin); // color planes
-		dummy = fread(&bits_per_pixel, 1, 2, fin);
-		dummy = fread(&dummy, 1, 4, fin); // compression mode
-		dummy = fread(&data_size, 1, 4, fin);
-		dummy = fread(&dummy, 1, 4, fin); // horizontal resolution
-		dummy = fread(&dummy, 1, 4, fin); // vertical resolution
-		dummy = fread(&dummy, 1, 4, fin); // palette size
-		dummy = fread(&dummy, 1, 4, fin); // number of important colors
-
-		m_mipmapsCount = MIPMAPS_COUNT;
-
-		texel_count = width*height;
-		m_mipmaps = std::make_unique<mipmap_t[]>(MIPMAPS_COUNT);
-		if (m_mipmaps == nullptr)
-			return;
-		m_mipmaps[0].m_bitmap = new unsigned int[texel_count];
-		if (m_mipmaps[0].m_bitmap == nullptr)
-			return;
-		m_mipmaps[0].m_width = width;
-		m_mipmaps[0].m_height = height;
-		bitmap = m_mipmaps[0].m_bitmap;
-		memset(bitmap, 0, texel_count*sizeof(unsigned int));
-
-		int lineoffset = texel_count;
-		while (lineoffset > 0)
-		{
-			lineoffset -= width;
-			for (int i=0 ; i<width ; i++)
-			{
-				dummy = fread(&b, 1, 1, fin);
-				dummy = fread(&g, 1, 1, fin);
-				dummy = fread(&r, 1, 1, fin);
-				bitmap[lineoffset+i] = (r<<16)|(g<<8)|b;
-			}
-			dummy = fread(&dummy, 1, (width*3)%4, fin); // skipping padding bytes aligning lines on 32bits
-		}
-
-		//Calculating mipmaps	
+	void texture_t::produce_mipmaps()
+	{
+		/*
+		//Calculating mipmaps
+		unsigned int *previousbitmap;	
 		for (int mm=1 ; mm<MIPMAPS_COUNT ; mm++)
 		{
 			width /= 2;
@@ -89,12 +45,15 @@ namespace swegl
 			texel_count = width*height;
 			m_mipmaps[mm].m_bitmap = new unsigned int[texel_count];
 			if (m_mipmaps[mm].m_bitmap == NULL)
-				return;
+			{
+				free(bitmap);
+				return texture_t(nullptr, 0, 0);;
+			}
 			m_mipmaps[mm].m_width = width;
 			m_mipmaps[mm].m_height = height;
 			previousbitmap = m_mipmaps[mm-1].m_bitmap;
 			bitmap = m_mipmaps[mm].m_bitmap;
- 			//memset(bitmap, 0, texel_count*sizeof(unsigned int));
+				//memset(bitmap, 0, texel_count*sizeof(unsigned int));
 			for (int y=0 ; y<height ; y++)
 			{
 				for (int x=0 ; x<width ; x++)
@@ -119,28 +78,6 @@ namespace swegl
 				}
 			}
 		}
+		*/
 	}
-
-	/**
-	 * Build a 1-pixel dummy texture
-	 */
-	texture_t::texture_t(unsigned int rgb)
-	{
-		m_mipmapsCount = 1;
-		m_mipmaps = std::make_unique<mipmap_t[]>(1);
-		m_mipmaps[0].m_height = 1;
-		m_mipmaps[0].m_width = 1;
-		m_mipmaps[0].m_bitmap = new unsigned int[1];
-		m_mipmaps[0].m_bitmap[0] = rgb;
-	}
-
-	texture_t::texture_t(unsigned int * data, int w, int h)
-	{
-		m_mipmapsCount = 1;
-		m_mipmaps = std::make_unique<mipmap_t[]>(1);
-		m_mipmaps[0].m_bitmap = data;
-		m_mipmaps[0].m_width = w;
-		m_mipmaps[0].m_height = h;
-	}
-
 }

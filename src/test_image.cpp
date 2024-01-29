@@ -15,15 +15,15 @@ int main(int argc, char *argv[])
 	swegl::texture_t texture = [&]()
 		{
 			if (argc == 2)
-				return swegl::read_png_file(argv[1]);
+				return swegl::read_image_file(argv[1]);
 			else
-				 return swegl::read_png_file(argv[1], std::stoi(argv[2]));
+				 return swegl::read_image_file(argv[1], std::stoi(argv[2]));
 		}();
-	if (texture.m_mipmapsCount == 0)
+	if (texture.m_mipmaps.size() == 0)
 		return 1;
 
 	SDL_Surface * surface = sdl.surface;
-	swegl::mipmap_t & mipmap = texture.m_mipmaps[0];
+	swegl::mipmap_t & mipmap = *texture.m_mipmaps[0];
 	for (size_t j=0 ; j<mipmap.m_height ; j++)
 		for (size_t i=0 ; i<mipmap.m_width ; i++)
 			((unsigned int*)surface->pixels)[(int) ( j*surface->pitch/surface->format->BytesPerPixel + i)] = mipmap.m_bitmap[j*mipmap.m_width + i];
