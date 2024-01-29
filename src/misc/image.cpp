@@ -10,22 +10,16 @@
 //#include <GL/gl.h>
 
 #include <swegl/misc/image.hpp>
+#include <swegl/misc/file.hpp>
 #include <swegl/render/colors.hpp>
 
 namespace swegl
 {
 
-bool ends_with(const std::string & a, const std::string & b)
-{
-	if (b.size() > a.size())
-		return false;
-	return a.substr(a.size()-b.size()) == b;
-}
 
 texture_t read_image_file(const std::string & filename, int offset)
 {
-	std::string filename_lower = filename;
-	std::transform(filename_lower.begin(), filename_lower.end(), filename_lower.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::string filename_lower = to_lower(filename);
 	     if (ends_with(filename_lower, "png" )) return read_png_file (filename, offset);
 	else if (ends_with(filename_lower, "jpg" )) return read_jpeg_file(filename, offset);
 	else if (ends_with(filename_lower, "jpeg")) return read_jpeg_file(filename, offset);

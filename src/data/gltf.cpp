@@ -51,36 +51,14 @@ accessor_t::accessor_t(std::vector<buffer_view_t> & buffer_views, const nlohmann
 }
 
 
-swegl::scene_t load_scene(std::string filename)
+swegl::scene_t load_scene_json(const std::string & filename, char * file_beginning_ptr, nlohmann::json & j, std::vector<view_t<char>> & buffers)
 {
 	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
 
 	swegl::scene_t result;
 
-	std::unique_ptr<char[]> glb_data = read_file(filename);
-
-	glb_header * header = (glb_header*) glb_data.get();
-	std::vector<glb_chunk> chunks;
-	for (int i=12 ; i<header->length ; i += 8 + chunks.back().length)
-		chunks.push_back(glb_chunk{*(unsigned int*)&glb_data[i], *(unsigned int*)&glb_data[i+4], (char*)&glb_data[i+8]});
-
-	nlohmann::json j = nlohmann::json::parse(chunks[0].data, chunks[0].data + chunks[0].length);
-
-
-	std::vector<view_t<char>> buffers;
-	for (auto & jbuffer : j["buffers"])
-	{
-		if (jbuffer.contains("uri"))
-		{
-			auto data_uptr = read_file(root_path / jbuffer["uri"].template get<std::string>());
-			buffers.emplace_back(view_t<char>{data_uptr.get(), data_uptr.get() + jbuffer["byteLength"].template get<int>(), std::move(data_uptr)});
-		}
-		else
-			buffers.emplace_back(view_t<char>{chunks[1].data, chunks[1].data + jbuffer["byteLength"].template get<int>(), nullptr});
-	}
-
 	std::vector<buffer_view_t> buffer_views;
-	for (auto & buffer_view : j["bufferViews"])
+	for (const auto & buffer_view : j["bufferViews"])
 	{
 		auto & buffer = buffers[buffer_view["buffer"].template get<int>()];
 		buffer_views.push_back(buffer_view_t{buffer.sub(buffer_view.value("byteOffset", 0)
@@ -90,12 +68,12 @@ swegl::scene_t load_scene(std::string filename)
 		                      );
 	}
 	std::vector<accessor_t> accessors;
-	for (auto & accessor : j["accessors"])
+	for (const auto & accessor : j["accessors"])
 		accessors.push_back(accessor_t(buffer_views, accessor));
 
 	if (j.contains("images"))
 	{
-		for (auto & jimage : j["images"])
+		for (const auto & jimage : j["images"])
 		{
 			if (jimage.contains("uri"))
 			{
@@ -107,8 +85,15 @@ swegl::scene_t load_scene(std::string filename)
 			else if (jimage["mimeType"] == "image/png")
 			{
 				auto & buffer_view = buffer_views[jimage["bufferView"].template get<int>()];
-				int file_offset = &buffer_view.data[0] - glb_data.get();
+				int file_offset = &buffer_view.data[0] - file_beginning_ptr;
 				texture_t image = read_png_file(filename.c_str(), file_offset);
+				result.images.emplace_back(std::move(image));
+			}
+			else if (jimage["mimeType"] == "image/jpg" || jimage["mimeType"] == "image/jpeg")
+			{
+				auto & buffer_view = buffer_views[jimage["bufferView"].template get<int>()];
+				int file_offset = &buffer_view.data[0] - file_beginning_ptr;
+				texture_t image = read_jpeg_file(filename.c_str(), file_offset);
 				result.images.emplace_back(std::move(image));
 			}
 			else
@@ -121,14 +106,17 @@ swegl::scene_t load_scene(std::string filename)
 	if (j.contains("materials"))
 	{
 		result.materials.reserve(j["materials"].size());
-		for (auto & material : j["materials"])
+		for (const auto & material : j["materials"])
 		{
-			if ( ! material.contains("pbrMetallicRoughness"))
-				continue;
 			pixel_colors color{255,255,255,255};
 			float metallic = 1.0;
 			float roughness = 1.0;
 			int img_idx = -1;
+			if ( ! material.contains("pbrMetallicRoughness"))
+			{
+				result.materials.push_back(material_t{color, metallic, roughness, img_idx});
+				continue;
+			}
 			if (material["pbrMetallicRoughness"].contains("baseColorFactor"))
 			{
 				color = pixel_colors{(unsigned char)(255 * material["pbrMetallicRoughness"]["baseColorFactor"][2].template get<float>()) // g // b
@@ -155,7 +143,7 @@ swegl::scene_t load_scene(std::string filename)
 	{
 		temp_meshes.reserve(j["meshes"].size());
 		auto & meshes = j["meshes"];
-		for (auto & mesh : meshes)
+		for (const auto & mesh : meshes)
 		{
 			if ( ! mesh.contains("primitives"))
 				continue;
@@ -217,7 +205,7 @@ swegl::scene_t load_scene(std::string filename)
 
 	if (j.contains("nodes"))
 	{
-		for (auto & jnode : j["nodes"])
+		for (const auto & jnode : j["nodes"])
 		{
 			node_t & node = result.nodes.emplace_back();
 			if (jnode.contains("rotation"))
@@ -317,5 +305,62 @@ swegl::scene_t load_scene(std::string filename)
 
 	return result;
 }
+
+swegl::scene_t load_scene_glb(const std::string & filename)
+{
+	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
+
+	auto [glb_data, file_size] = read_file(filename);
+
+	glb_header * header = (glb_header*) glb_data.get();
+	std::vector<glb_chunk> chunks;
+	for (int i=12 ; i<header->length ; i += 8 + chunks.back().length)
+		chunks.push_back(glb_chunk{*(unsigned int*)&glb_data[i], *(unsigned int*)&glb_data[i+4], (char*)&glb_data[i+8]});
+
+	nlohmann::json j = nlohmann::json::parse(chunks[0].data, chunks[0].data + chunks[0].length);
+
+	std::vector<view_t<char>> buffers;
+	for (auto & jbuffer : j["buffers"])
+	{
+		if (jbuffer.contains("uri"))
+		{
+			auto [data_uptr,file_size] = read_file(root_path / jbuffer["uri"].template get<std::string>());
+			buffers.emplace_back(view_t<char>{data_uptr.get(), data_uptr.get() + jbuffer["byteLength"].template get<int>(), std::move(data_uptr)});
+		}
+		else
+			buffers.emplace_back(view_t<char>{chunks[1].data, chunks[1].data + jbuffer["byteLength"].template get<int>(), nullptr});
+	}
+
+	return load_scene_json(filename, glb_data.get(), j, buffers);
+}
+swegl::scene_t load_scene_gltf(const std::string & filename)
+{
+	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
+	auto [gltf_data, file_size] = read_file(filename);
+	nlohmann::json j = nlohmann::json::parse(gltf_data.get(), gltf_data.get() + file_size);
+
+	std::vector<view_t<char>> buffers;
+	for (auto & jbuffer : j["buffers"])
+	{
+		if (jbuffer.contains("uri"))
+		{
+			auto [data_uptr,file_size] = read_file(root_path / jbuffer["uri"].template get<std::string>());
+			buffers.emplace_back(view_t<char>{data_uptr.get(), data_uptr.get() + jbuffer["byteLength"].template get<int>(), std::move(data_uptr)});
+		}
+		else
+			assertm(false, "can't load buffer from self in gltf mode.");
+	}
+
+	return load_scene_json(filename, nullptr, j, buffers);
+}
+
+swegl::scene_t load_scene(std::string filename)
+{
+	std::string filename_lower = to_lower(filename);
+	     if (ends_with(filename_lower, "glb" )) return load_scene_glb (filename);
+	else if (ends_with(filename_lower, "gltf")) return load_scene_gltf(filename);
+	else                                        return scene_t();
+}
+
 
 } // namespace

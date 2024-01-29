@@ -47,7 +47,6 @@ struct buffer_view_t
 {
 	view_t<char> data;
 	int byte_stride;
-
 	buffer_view_t sub(int offset, int length) { return buffer_view_t{data.sub(offset, length), byte_stride}; }
 };
 

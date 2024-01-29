@@ -29,7 +29,6 @@ namespace swegl
 	class texture_t
 	{
 	public:
-		int m_mipmapsCount;
 		std::vector<std::shared_ptr<mipmap_t>> m_mipmaps;
 
 		texture_t(unsigned int rgb);
