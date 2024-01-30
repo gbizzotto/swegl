@@ -287,10 +287,9 @@ int main(int argc, char ** argv)
 				return build_scene();
 			else {
 				swegl::scene_t scene = swegl::load_scene(argv[1]);
-				scene.ambient_light_intensity = 0.7f;
-				scene.sun_direction = swegl::normal_t{1.0, -2.0, -0.5};
-				scene.sun_direction.normalize();
-				scene.sun_intensity = 0.3;
+				scene.ambient_light_intensity = 0.3f;
+				scene.sun_direction = swegl::normal_t(1.0, -2.0, -1.0);
+				scene.sun_intensity = 0.7;
 				for (auto & node : scene.nodes)
 					for (auto & primitive : node.primitives)
 						primitive.vertices.reserve(primitive.vertices.size()+2);
@@ -300,7 +299,7 @@ int main(int argc, char ** argv)
 
 	font_t font("resources/ascii.bmp");
 
-	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_full  = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_texture_bilinear>>();
+	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_full  = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_phong, swegl::pixel_shader_texture_bilinear>>();
 	std::shared_ptr<swegl::pixel_shader_t>  pixel_shader_basic = std::make_shared<swegl::pixel_shader_light_and_texture<swegl::pixel_shader_lights_flat, swegl::pixel_shader_t>>();
 	//std::shared_ptr<swegl::post_shader_t>   post_shader_null   = std::make_shared<swegl::post_shader_t>();
 	//std::shared_ptr<swegl::post_shader_t>   post_shader_DOF    = std::make_shared<swegl::post_shader_depth_box>(5, 5);

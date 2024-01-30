@@ -78,13 +78,27 @@ namespace swegl
 		}
 	};
 	template<typename T>
-	inline vec4f_t operator*(const vec4f_t & left, const T & right)
+	vec4f_t operator*(const vec4f_t & left, const T & right)
 	{
 		return vec4f_t{left.x()*right, left.y()*right, left.z()*right, left.w()*right};
 	}
 	template<typename T>
-	inline vec4f_t operator+(const vec4f_t & left, const T & right)
+	vec4f_t operator+(const vec4f_t & left, const T & right)
 	{
 		return vec4f_t{left.x()+right.x(), left.y()+right.y(), left.z()+right.z(), left.w()+right.w()};
+	}
+	inline bool operator!=(const vec4f_t & left, const vec4f_t & right)
+	{
+		return false
+			|| (left.x() != right.x())
+			|| (left.y() != right.y())
+			|| (left.z() != right.z())
+			|| (left.w() != right.w())
+			;
+	}
+	template<typename O>
+	O & operator<<(O & out, const vec4f_t & v)
+	{
+		return out << "{" << v.x() << "," << v.y() << "," << v.z() << "," << v.w() << "}";
 	}
 }

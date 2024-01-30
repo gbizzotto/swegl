@@ -118,6 +118,7 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			float metallic = 1.0;
 			float roughness = 1.0;
 			int img_idx = -1;
+			bool double_sided = material.value("doubleSided", false);
 			if ( ! material.contains("pbrMetallicRoughness"))
 			{
 				result.materials.push_back(material_t{color, metallic, roughness, img_idx});
@@ -144,7 +145,7 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			{
 				roughness = material["pbrMetallicRoughness"]["roughnessFactor"].template get<float>();
 			}
-			result.materials.push_back(material_t{color, metallic, roughness, img_idx});
+			result.materials.push_back(material_t{color, metallic, roughness, img_idx, double_sided});
 		}
 	}
 
@@ -163,7 +164,7 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			{
 				primitive_t & primitive = node.primitives.emplace_back();
 
-				primitive.material_id = mesh["primitives"][i]["material"].template get<int>();
+				primitive.material_id = mesh["primitives"][i].value("material", -1);
 				primitive.mode = (decltype(primitive.mode)) mesh["primitives"][i].value("mode", 4);
 
 				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<size_t>() < accessors.size());
@@ -351,18 +352,24 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 					}();
 				auto & animation_channel = animation.channels.emplace_back(animation_channel_t{node_idx, path, {}});
 
-				sampler_t & sampler = samplers[jchannel["sampler"]];
+				assert(jchannel["sampler"].template get<size_t>() < samplers.size());
+				assert(jchannel["sampler"].template get<int>() >= 0);
+				sampler_t & sampler = samplers[jchannel["sampler"].template get<int>()];
+				assert(sampler. input < (int)accessors.size());
+				assert(sampler.output < (int)accessors.size());
 				accessor_t & accessor_times  = accessors[sampler.input];
 				accessor_t & accessor_values = accessors[sampler.output];
 
 				animation_channel.steps.reserve(accessor_times.count);
 				for (int i=0 ; i<accessor_times.count ; i++)
 				{
-					float time = *(float*)&accessor_times.buffer_view.data[0+i*accessor_times.stride];
-					vec4f_t value(0,0,0,0);
+					float time = *(float*)&accessor_times.buffer_view.data[i*accessor_times.stride];
+					vec4f_t value(0,0,0,1);
 					if (animation_channel.path == animation_channel_t::path_t::SCALE)
 					{
 						value.x() = *(float*)&accessor_values.buffer_view.data[ 0+i*accessor_values.stride];
+						value.y() = *(float*)&accessor_values.buffer_view.data[ 4+i*accessor_values.stride];
+						value.z() = *(float*)&accessor_values.buffer_view.data[ 8+i*accessor_values.stride];
 					}
 					else if (animation_channel.path == animation_channel_t::path_t::ROTATION)
 					{
@@ -379,14 +386,19 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 					}
 					else if (animation_channel.path == animation_channel_t::path_t::WEIGHTS)
 					{
+						//assert(false);
+					}
+					else
+					{
+						assert(false);
 					}
 					animation_channel.steps.emplace_back(animation_step_t{time, value});
-					animation.end_time = std::max(animation.end_time, time);
 				}
 				std::sort(animation_channel.steps.begin(), animation_channel.steps.end(), [](const animation_step_t & left, const animation_step_t & right)
 					{
 						return left.time < right.time;
 					});
+				animation.end_time = std::max(animation.end_time, animation_channel.steps.back().time);
 			}
 		}
 	}

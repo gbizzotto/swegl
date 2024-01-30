@@ -28,7 +28,7 @@ struct line_side
 };
 
 void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
-bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2);
+bool do_triangle(const scene_t & scene, const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2);
 void fill_triangle(vertex_idx i0,
                    vertex_idx i1,
                    vertex_idx i2,
@@ -74,7 +74,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
 					if ((i&0x1)==0)
 					{
-						if (do_triangle(primitive, primitive.indices[i-2],primitive.indices[i-1],primitive.indices[i  ]))
+						if (do_triangle(scene, primitive, primitive.indices[i-2],primitive.indices[i-1],primitive.indices[i  ]))
 						{
 							primitive.vertices[primitive.indices[i-2]].yes = true;
 							primitive.vertices[primitive.indices[i-1]].yes = true;
@@ -82,7 +82,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 						}
 					}
 					else
-						if (do_triangle(primitive, primitive.indices[i-2],primitive.indices[i  ],primitive.indices[i-1]))
+						if (do_triangle(scene, primitive, primitive.indices[i-2],primitive.indices[i  ],primitive.indices[i-1]))
 						{
 							primitive.vertices[primitive.indices[i-2]].yes = true;
 							primitive.vertices[primitive.indices[i-1]].yes = true;
@@ -92,7 +92,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 			// FANS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
-					if (do_triangle(primitive, primitive.indices[0  ],primitive.indices[i-1],primitive.indices[i  ]))
+					if (do_triangle(scene, primitive, primitive.indices[0  ],primitive.indices[i-1],primitive.indices[i  ]))
 					{
 						primitive.vertices[primitive.indices[0  ]].yes = true;
 						primitive.vertices[primitive.indices[i-1]].yes = true;
@@ -101,7 +101,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 			// TRIs
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i+= 3)
-					if (do_triangle(primitive
+					if (do_triangle(scene, primitive
 					               ,primitive.indices[i-2]
 					               ,primitive.indices[i-1]
 					               ,primitive.indices[i  ])
@@ -189,7 +189,7 @@ void render(scene_t & scene, T&...t)
 }
 
 
-bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2)
+bool do_triangle(const scene_t & scene, const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2)
 {
 	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
 	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
@@ -197,6 +197,7 @@ bool do_triangle(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, ve
 
 	// backface culling
 	// z already inversed by viewmatrix (high Z = far)
+	if (primitive.material_id == -1 || scene.materials[primitive.material_id].double_sided == false)
 	if ( cross((*v1-*v0),(*v2-*v0)).z() <= 0 )
 	{
 		return false;

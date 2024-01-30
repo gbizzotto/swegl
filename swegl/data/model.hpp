@@ -79,10 +79,11 @@ struct point_source_light
 
 struct material_t
 {
-	pixel_colors color;
-	float metallic;
-	float roughness;
-	int texture_idx; // -1 means none
+	pixel_colors color = pixel_colors(255,255,255,255);
+	float metallic = 1;
+	float roughness = 1;
+	int texture_idx = -1; // -1 means none
+	bool double_sided = false;
 };
 
 
@@ -134,6 +135,8 @@ struct scene_t
 	normal_t sun_direction;
 	float sun_intensity;
 
+	material_t default_material;
+
 	std::vector<point_source_light> point_source_lights;
 
 	std::vector<material_t> materials;
@@ -167,6 +170,8 @@ struct scene_t
 				}
 				else if (channel.path == animation_channel_t::path_t::TRANSLATION)
 					node.translation = vertex_t(frame.x(), frame.y(), frame.z());
+				else if (channel.path == animation_channel_t::path_t::SCALE)
+					node.scale = vertex_t(frame.x(), frame.y(), frame.z());
 			}
 		}
 	}

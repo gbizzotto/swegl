@@ -22,6 +22,7 @@ struct pixel_shader_t
 	const scene_t * scene;
 	const viewport_t * viewport;
 	pixel_colors color;
+	bool double_sided;
 
 	virtual void prepare_for_primitive(const primitive_t & p,
 	                                   const scene_t & s,
@@ -31,10 +32,17 @@ struct pixel_shader_t
 		scene = &s;
 		viewport = &vp;
 
-		if (p.material_id > 0 && p.material_id < (int)s.materials.size()-1)
+		if (p.material_id != -1)
+		{
 			color = s.materials[p.material_id].color;
+			double_sided = s.materials[p.material_id].double_sided;
+		}
 		else
-			color = pixel_colors(128,128,128,255);
+		{
+			color = s.default_material.color;
+			double_sided = s.default_material.double_sided;
+		}
+
 	}
 	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
@@ -73,6 +81,8 @@ struct pixel_shader_lights_flat : pixel_shader_t
 				vector_t light_direction = center_vertex - psl.position;
 				float light_distance_squared = light_direction.len_squared();
 				float diffuse = psl.intensity / light_distance_squared;
+				if (diffuse < 0.05)
+					return;
 				light_direction.normalize();
 				float alignment = -normal_world.dot(light_direction);
 				if (alignment < 0.0f)
@@ -123,12 +133,12 @@ struct pixel_shader_lights_phong : pixel_shader_t
 
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
 	{
-		n0 = (vector_t)primitive->vertices[i0].normal_world;
-		n1 = (vector_t)primitive->vertices[i1].normal_world;
-		n2 = (vector_t)primitive->vertices[i2].normal_world;
 		v0 = primitive->vertices[i0].v_world;
 		v1 = primitive->vertices[i1].v_world;
 		v2 = primitive->vertices[i2].v_world;
+		n0 = (vector_t)primitive->vertices[i0].normal_world;
+		n1 = (vector_t)primitive->vertices[i1].normal_world;
+		n2 = (vector_t)primitive->vertices[i2].normal_world;
 	}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
@@ -187,7 +197,16 @@ struct pixel_shader_lights_phong : pixel_shader_t
 	{
 		vertex_t center_vertex = v + vdir*progress;
 		normal_t normal        = n + ndir*progress;
-		
+		vector_t camera_vector = viewport->camera().position() - center_vertex;
+		camera_vector.normalize();
+
+		if (double_sided)
+		{
+			float face_alignment = normal.dot(camera_vector);
+			if (face_alignment < 0)
+				normal = -normal;
+		}
+
 		float face_sun_intensity = - normal.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
 			face_sun_intensity = 0.0f;
@@ -199,14 +218,31 @@ struct pixel_shader_lights_phong : pixel_shader_t
 			[&](const auto & psl)
 			{
 				vector_t light_direction = center_vertex - psl.position;
-				float intensity = psl.intensity / light_direction.len_squared();
-				if (intensity < 0.05)
+				float light_distance_squared = light_direction.len_squared();
+				float diffuse = psl.intensity / light_distance_squared;
+				if (diffuse < 0.05)
 					return;
 				light_direction.normalize();
 				float alignment = - normal.dot(light_direction);
 				if (alignment < 0.0f)
 					return;
-				dynamic_lights_intensity += alignment * intensity;
+				diffuse *= alignment;
+
+				// specular
+				vector_t reflection = light_direction + normal * (alignment * 2);
+				float specular = reflection.dot(camera_vector);
+				if (specular > 0)
+				{
+					static const int p = 32;
+					specular = pow(specular, p);
+					specular = specular * p / 2; // make the integral[0,1] of specular 0.5 again so that no extra light is generated
+					// should multiply by overall albedo, too so that some light is absorbed
+					dynamic_lights_intensity += diffuse + specular / light_distance_squared;
+				}
+				else
+				{
+					dynamic_lights_intensity += diffuse;
+				}
 			});
 
 		return 65536 * (scene->ambient_light_intensity + face_sun_intensity + dynamic_lights_intensity);
@@ -241,8 +277,7 @@ struct pixel_shader_texture : pixel_shader_t
 
 		// TODO: select LOD / mipmap according to distance from camera
 
-		int texture_id = s.materials[p.material_id].texture_idx;
-		if (texture_id == -1)
+		if (p.material_id == -1 || s.materials[p.material_id].texture_idx == -1)
 		{
 			default_bitmap = s.materials[p.material_id].color.to_int();
 			tbitmap = &default_bitmap;
@@ -251,6 +286,7 @@ struct pixel_shader_texture : pixel_shader_t
 		}
 		else
 		{
+			int texture_id = s.materials[p.material_id].texture_idx;
 			tbitmap = s.images[texture_id].m_mipmaps[0]->m_bitmap;
 			twidth  = s.images[texture_id].m_mipmaps[0]->m_width;
 			theight = s.images[texture_id].m_mipmaps[0]->m_height;
@@ -336,8 +372,7 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	{
 		pixel_shader_t::prepare_for_primitive(p, s, vp);
 
-		int texture_id = s.materials[p.material_id].texture_idx;
-		if (texture_id == -1)
+		if (p.material_id == -1 || s.materials[p.material_id].texture_idx == -1)
 		{
 			default_bitmap = s.materials[p.material_id].color.to_int();
 			tbitmap = &default_bitmap;
@@ -346,6 +381,7 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 		}
 		else
 		{
+			int texture_id = s.materials[p.material_id].texture_idx;
 			tbitmap = s.images[texture_id].m_mipmaps[0]->m_bitmap;
 			twidth  = s.images[texture_id].m_mipmaps[0]->m_width;
 			theight = s.images[texture_id].m_mipmaps[0]->m_height;
