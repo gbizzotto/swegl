@@ -71,14 +71,16 @@ struct vertex_shader_t
 	}
 	static inline void frustum_to_viewport(node_t & node, const viewport_t & viewport)
 	{
-		//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
+		//__gnu_parallel::for_each(node.primitives.begin(), node.primitives.end(), [&](auto & primitive) {
 		for (auto & primitive : node.primitives)
-			for (auto & mv : primitive.vertices)
-			{
-				if (mv.yes)
-					viewport.transform(mv);
-			}
-		//);
+			//__gnu_parallel::for_each(primitive.vertices.begin(), primitive.vertices.end(), [&](auto & mv) {
+				for (auto & mv : primitive.vertices)
+				{
+					if (mv.yes)
+						viewport.transform(mv);
+				}
+			//});
+		//});
 	}
 	static inline void frustum_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
 	{
