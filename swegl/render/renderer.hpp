@@ -446,15 +446,15 @@ void fill_half_triangle(int y, int y_end,
 			qpixel.DisplaceStartingPoint(x1 - side_left.x);
 
 			// fill_line
-			unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
+			pixel_colors *video = &((pixel_colors*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
 			float * zb = &vp.zbuffer()[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
 			for ( ; x1 < x2 ; x1++ )
 			{
 				if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near clipping
 				{
-					int color = pixel_shader.shade(qpixel.progress());
+					// new pixel in front
 
-					*video = color;
+					*video = blend(*video, pixel_shader.shade(qpixel.progress()));
 					*zb = qpixel.value(0);
 				}
 				video++;
