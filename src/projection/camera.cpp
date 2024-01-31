@@ -13,7 +13,7 @@ namespace swegl
 		// point to negative Z
 		m_viewmatrix[2][2] = -1;
 
-		float n = 1.0f;
+		float n = 0.5f;
 		float f = 10.0f;
 		float w = 1.0f;
 		float h = 1.0f;

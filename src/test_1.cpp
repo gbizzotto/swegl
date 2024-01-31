@@ -41,15 +41,15 @@ swegl::scene_t build_scene()
 	s.sun_direction.normalize();
 	s.sun_intensity = 0.3;
 
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, -5.0}, 0.6});
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, -5.0}, 100});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 0}, 0.6});
+	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 0}, 100});
 
 
 	//*
 	auto tore = swegl::make_tore(100, 1);
 	tore.rotation = swegl::matrix44_t::Identity;
 	tore.rotation.rotate_z(0.5);
-	tore.translation = swegl::vertex_t(0.0f, 0.0f, -7.5f);
+	tore.translation = swegl::vertex_t(0.0f, 0.0f, -2.5f);
 	//tore.SetBumpMap(bumpmap);
 	s.nodes.emplace_back(std::move(tore));
 	//*/
@@ -58,7 +58,7 @@ swegl::scene_t build_scene()
 	auto cube = swegl::make_cube(1.0f, 0);
 	cube.scale.x() = 2;
 	cube.rotation = swegl::matrix44_t::Identity;
-	cube.translation = swegl::vertex_t(0.0f, 0.0f, -5.0f);
+	cube.translation = swegl::vertex_t(0.0f, 0.0f, -0);
 	//c->SetBumpMap(bumpmap);
 	s.nodes.emplace_back(std::move(cube));
 	//*/
@@ -66,7 +66,7 @@ swegl::scene_t build_scene()
 	///*
 	auto sphere = swegl::make_sphere(100, 2.0f, 2);
 	sphere.rotation = swegl::matrix44_t::Identity;
-	sphere.translation = swegl::vertex_t(3.0f, 0.0f, -6.0f);
+	sphere.translation = swegl::vertex_t(3.0f, 0.0f, -1.0f);
 	//c->SetBumpMap(bumpmap);
 	s.nodes.emplace_back(std::move(sphere));
 	//*/
@@ -74,7 +74,7 @@ swegl::scene_t build_scene()
 	//*
 	auto tri = swegl::make_tri(1, 0);
 	tri.rotation = swegl::matrix44_t::Identity;
-	tri.translation = swegl::vertex_t(1.0f, 2.5f, -5.1f);
+	tri.translation = swegl::vertex_t(1.0f, 2.5f, -0.1f);
 	s.nodes.emplace_back(std::move(tri));
 	//*/
 
@@ -312,7 +312,7 @@ int main(int argc, char ** argv)
 	swegl::post_shader_t post_shader_null;
 	viewport.set_post_shader(post_shader_null);
 
-	viewport.m_camera.translate(1,2,-5);
+	viewport.m_camera.translate(1,2,-5); // -5 = backwards in the camera's local coordinates
 	viewport.m_camera.rotate_y(-0.2);
 	viewport.m_camera.rotate_x(-0.3);
 
