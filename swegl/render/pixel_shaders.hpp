@@ -44,7 +44,7 @@ struct pixel_shader_t
 		}
 
 	}
-	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx) {}
+	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx, bool) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
@@ -55,14 +55,12 @@ struct pixel_shader_lights_flat : pixel_shader_t
 {
 	float light;
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override
 	{
-		vector_t normal_viewport = cross(primitive->vertices[i1].v_viewport - primitive->vertices[i0].v_viewport
-		                                ,primitive->vertices[i2].v_viewport - primitive->vertices[i0].v_viewport);
 		normal_t normal_world(cross(primitive->vertices[i1].v_world - primitive->vertices[i0].v_world
 		                           ,primitive->vertices[i2].v_world - primitive->vertices[i0].v_world));
-		if (normal_viewport.z() > 0)
-			normal_world = -normal_world;
+		if (inverted)
+			normal_world = - normal_world;
 
 		float face_sun_intensity = - normal_world.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
@@ -131,14 +129,23 @@ struct pixel_shader_lights_phong : pixel_shader_t
 	vector_t n;
 	vector_t ndir;
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override
 	{
 		v0 = primitive->vertices[i0].v_world;
 		v1 = primitive->vertices[i1].v_world;
 		v2 = primitive->vertices[i2].v_world;
-		n0 = (vector_t)primitive->vertices[i0].normal_world;
-		n1 = (vector_t)primitive->vertices[i1].normal_world;
-		n2 = (vector_t)primitive->vertices[i2].normal_world;
+		if ( ! inverted)
+		{
+			n0 = (vector_t)primitive->vertices[i0].normal_world;
+			n1 = (vector_t)primitive->vertices[i1].normal_world;
+			n2 = (vector_t)primitive->vertices[i2].normal_world;
+		}
+		else
+		{
+			n0 = - (vector_t)primitive->vertices[i0].normal_world;
+			n1 = - (vector_t)primitive->vertices[i1].normal_world;
+			n2 = - (vector_t)primitive->vertices[i2].normal_world;
+		}
 	}
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
@@ -199,13 +206,6 @@ struct pixel_shader_lights_phong : pixel_shader_t
 		normal_t normal        = n + ndir*progress;
 		vector_t camera_vector = viewport->camera().position() - center_vertex;
 		camera_vector.normalize();
-
-		if (double_sided)
-		{
-			float face_alignment = normal.dot(camera_vector);
-			if (face_alignment < 0)
-				normal = -normal;
-		}
 
 		float face_sun_intensity = - normal.dot(scene->sun_direction);
 		if (face_sun_intensity < 0.0f)
@@ -293,7 +293,7 @@ struct pixel_shader_texture : pixel_shader_t
 		}
 	}
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool) override
 	{
 		t0 = primitive->vertices[i0].tex_coords;
 		t1 = primitive->vertices[i1].tex_coords;
@@ -388,7 +388,7 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 		}
 	}
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool) override
 	{
 		t0 = primitive->vertices[i0].tex_coords;
 		t1 = primitive->vertices[i1].tex_coords;
@@ -486,10 +486,10 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 		shader_texture.prepare_for_primitive(p, s, vp);
 	}
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2) override
+	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override
 	{
-		shader_flat_light.prepare_for_triangle(i0, i1, i2);
-		shader_texture.prepare_for_triangle(i0, i1, i2);
+		shader_flat_light.prepare_for_triangle(i0, i1, i2, inverted);
+		shader_texture.prepare_for_triangle(i0, i1, i2, inverted);
 	}
 
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override

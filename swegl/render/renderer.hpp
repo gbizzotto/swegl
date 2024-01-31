@@ -41,7 +41,8 @@ void fill_triangle_2(vertex_idx i0,
                      vertex_idx i2,
                      primitive_t & primitive,
                      viewport_t & vp,
-                     pixel_shader_t & pixel_shader);
+                     pixel_shader_t & pixel_shader, 
+                     bool front_face_visible);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         viewport_t & vp,
@@ -70,29 +71,17 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 
 			// STRIPS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
-			{
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
-					if ((i&0x1)==0)
+					if (do_triangle(scene, primitive, primitive.indices[i-2],primitive.indices[i-1+(i&0x1)],primitive.indices[i-(i&0x1)]))
 					{
-						if (do_triangle(scene, primitive, primitive.indices[i-2],primitive.indices[i-1],primitive.indices[i  ]))
-						{
-							primitive.vertices[primitive.indices[i-2]].yes = true;
-							primitive.vertices[primitive.indices[i-1]].yes = true;
-							primitive.vertices[primitive.indices[i  ]].yes = true;
-						}
+						primitive.vertices[primitive.indices[i-2]].yes = true;
+						primitive.vertices[primitive.indices[i-1]].yes = true;
+						primitive.vertices[primitive.indices[i  ]].yes = true;
 					}
-					else
-						if (do_triangle(scene, primitive, primitive.indices[i-2],primitive.indices[i  ],primitive.indices[i-1]))
-						{
-							primitive.vertices[primitive.indices[i-2]].yes = true;
-							primitive.vertices[primitive.indices[i-1]].yes = true;
-							primitive.vertices[primitive.indices[i  ]].yes = true;
-						}
-			}
 			// FANS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
-					if (do_triangle(scene, primitive, primitive.indices[0  ],primitive.indices[i-1],primitive.indices[i  ]))
+					if (do_triangle(scene, primitive, primitive.indices[0  ],primitive.indices[i-1],primitive.indices[i]))
 					{
 						primitive.vertices[primitive.indices[0  ]].yes = true;
 						primitive.vertices[primitive.indices[i-1]].yes = true;
@@ -101,10 +90,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 			// TRIs
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i+= 3)
-					if (do_triangle(scene, primitive
-					               ,primitive.indices[i-2]
-					               ,primitive.indices[i-1]
-					               ,primitive.indices[i  ])
+					if (do_triangle(scene, primitive ,primitive.indices[i-2] ,primitive.indices[i-1] ,primitive.indices[i])
 					    )
 					{
 						primitive.vertices[primitive.indices[i-2]].yes = true;
@@ -123,27 +109,15 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 
 			// STRIPS
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
-			{
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
-					if ((i&0x1)==0)
-						fill_triangle(primitive.indices[i-2]
-						             ,primitive.indices[i-1]
-						             ,primitive.indices[i  ]
+					fill_triangle(primitive.indices[i-2]
+						             ,primitive.indices[i-1+(i&0x1)]
+						             ,primitive.indices[i  -(i&0x1)]
 						             ,node
 						             ,primitive
 						             ,viewport
 						             ,pixel_shader
 						             );
-					else
-						fill_triangle(primitive.indices[i-2]
-						             ,primitive.indices[i  ]
-						             ,primitive.indices[i-1]
-						             ,node
-						             ,primitive
-						             ,viewport
-						             ,pixel_shader
-						             );
-			}
 			// FANSv
 			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 				for (unsigned int i=2 ; i<primitive.indices.size() ; i++)
@@ -196,12 +170,10 @@ bool do_triangle(const scene_t & scene, const primitive_t & primitive, vertex_id
 	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
 
 	// backface culling
-	// z already inversed by viewmatrix (high Z = far)
+	// z already inversed by viewmatrix, so high Z = far
 	if (primitive.material_id == -1 || scene.materials[primitive.material_id].double_sided == false)
-	if ( cross((*v1-*v0),(*v2-*v0)).z() <= 0 )
-	{
-		return false;
-	}
+		if ( cross((*v1-*v0),(*v2-*v0)).z() <= 0 )
+			return false;
 
 	// frustum clipping
 	if (  (v0->x()  < -1    && v1->x()  < -1    && v2->x()  < -1   )
@@ -234,6 +206,8 @@ void fill_triangle(vertex_idx i0,
 	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
 	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
 
+	bool front_face_visible = cross((*v1-*v0),(*v2-*v0)).z() < 0;
+
 	// handle cases where 1 or 2 vertices have screen z values below zero (behind the camera)
 
 	// sort by Z DESC
@@ -249,9 +223,6 @@ void fill_triangle(vertex_idx i0,
 		std::swap(v0, v1);
 		std::swap(i0, i1);
 	}
-
-	//if (v0->z() < 0.001) // no vertex in front of the camera
-	//	return; // Z-near clipping
 
 	if (v1->z() < 0.001) // only v0 in front of the camera
 	{
@@ -275,7 +246,7 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_2.normal   = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_2;
 		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
 
-		fill_triangle_2(i0, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
+		fill_triangle_2(i0, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
 		primitive.vertices.pop_back();
 		primitive.vertices.pop_back();
 		return;
@@ -303,14 +274,14 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_2.normal = primitive.vertices[i1].normal         + (primitive.vertices[i2].normal      -primitive.vertices[i1].normal      )*cut_1;
 		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
 
-		fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader);
-		fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader);
+		fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
+		fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
 		primitive.vertices.pop_back();
 		primitive.vertices.pop_back();
 		return;
 	}
 
-	fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader);
+	fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader, front_face_visible);
 }
 
 void fill_triangle_2([[maybe_unused]] vertex_idx i0,
@@ -318,11 +289,14 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
                      [[maybe_unused]] vertex_idx i2,
                      [[maybe_unused]] primitive_t & primitive,
                      [[maybe_unused]] viewport_t & vp,
-                     [[maybe_unused]] pixel_shader_t & pixel_shader)
+                     [[maybe_unused]] pixel_shader_t & pixel_shader, 
+                     bool front_face_visible)
 {
 	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
 	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
 	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
+
+	bool inverted = !front_face_visible;
 
 	// Sort points by screen Y ASC
 	if (v1->y() < v0->y()) {
@@ -362,7 +336,7 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
 
 	int y, y_end; // scanlines upper and lower bound of whole triangle
 
-	pixel_shader.prepare_for_triangle(i0, i1, i2);
+	pixel_shader.prepare_for_triangle(i0, i1, i2, inverted);
 
 	// upper half of the triangle
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
