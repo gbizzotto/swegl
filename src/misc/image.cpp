@@ -74,7 +74,7 @@ texture_t read_bmp_file(FILE *fp)
 			dummy = fread(&b, 1, 1, fp);
 			dummy = fread(&g, 1, 1, fp);
 			dummy = fread(&r, 1, 1, fp);
-			texture_data[lineoffset+i] = (r<<16)|(g<<8)|b;
+			texture_data[lineoffset+i] = (255<<24)|(r<<16)|(g<<8)|b;
 		}
 		dummy = fread(&dummy, 1, (width*3)%4, fp); // skipping padding bytes aligning lines on 32bits
 	}
