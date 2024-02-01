@@ -56,28 +56,23 @@ struct transformed_scene_t
 	std::vector<node_t> screen_view;
 };
 
-bool inside_camera_frustum(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2)
+bool inside_camera_frustum(const mesh_vertex_t & v0, const mesh_vertex_t & v1, const mesh_vertex_t & v2)
 {
-	const vertex_t & v0 = primitive.vertices[i0].v_viewport;
-	const vertex_t & v1 = primitive.vertices[i1].v_viewport;
-	const vertex_t & v2 = primitive.vertices[i2].v_viewport;
-
 	// frustum clipping
-	return  ((v0.x() >= -1   ) || (v1.x() >= -1   ) || (v2.x() >= -1   ))
-	      &&((v0.y() >= -1   ) || (v1.y() >= -1   ) || (v2.y() >= -1   ))
-	      &&((v0.x()  <  1   ) || (v1.x()  <  1   ) || (v2.x()  <  1   ))
-	      &&((v0.y()  <  1   ) || (v1.y()  <  1   ) || (v2.y()  <  1   ))
-	      &&((v0.z() >= 0.001) || (v1.z() >= 0.001) || (v2.z() >= 0.001))
+	return  ((v0.v_viewport.x() >= -1   ) || (v1.v_viewport.x() >= -1   ) || (v2.v_viewport.x() >= -1   ))
+	      &&((v0.v_viewport.y() >= -1   ) || (v1.v_viewport.y() >= -1   ) || (v2.v_viewport.y() >= -1   ))
+	      &&((v0.v_viewport.x()  <  1   ) || (v1.v_viewport.x()  <  1   ) || (v2.v_viewport.x()  <  1   ))
+	      &&((v0.v_viewport.y()  <  1   ) || (v1.v_viewport.y()  <  1   ) || (v2.v_viewport.y()  <  1   ))
+	      &&((v0.v_viewport.z() >= 0.001) || (v1.v_viewport.z() >= 0.001) || (v2.v_viewport.z() >= 0.001))
+	      // object size
+	      &&(v0.v_viewport.x() != v1.v_viewport.x() || v0.v_viewport.x() != v2.v_viewport.x())
+	      &&(v0.v_viewport.y() != v1.v_viewport.y() || v0.v_viewport.y() != v2.v_viewport.y())
 	      ;
 }
 
-bool front_face_visible(const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2)
+bool front_face_visible(const mesh_vertex_t & v0, const mesh_vertex_t & v1, const mesh_vertex_t & v2)
 {
-	const vertex_t & v0 = primitive.vertices[i0].v_viewport;
-	const vertex_t & v1 = primitive.vertices[i1].v_viewport;
-	const vertex_t & v2 = primitive.vertices[i2].v_viewport;
-
-	return cross((v1-v0),(v2-v0)).z() > 0;
+	return cross((v1.v_viewport-v0.v_viewport),(v2.v_viewport-v0.v_viewport)).z() > 0;
 }
 
 inline void _render(scene_t & scene, viewport_t & viewport)
@@ -92,71 +87,101 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		for (auto & primitive : node.primitives)
 		{
 			auto & vertices = primitive.vertices;
-			auto & indices  = primitive.indices ;
-			bool double_sided = primitive.material_id != -1 && scene.materials[primitive.material_id].double_sided;
+			const auto & indices  = primitive.indices ;
+			const bool double_sided = primitive.material_id != -1 && scene.materials[primitive.material_id].double_sided;
 
 			if (double_sided)
 			{
 				// STRIPS
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
 					for (unsigned int i=2 ; i<indices.size() ; i++)
-						if (inside_camera_frustum(primitive, indices[i-2],indices[i-1+(i&0x1)],indices[i-(i&0x1)]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
 						{
 							vertices[indices[i-2]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 				// FANS
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 					for (unsigned int i=2 ; i<indices.size() ; i++)
-						if (inside_camera_frustum(primitive, indices[0  ],indices[i-1],indices[i]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (inside_camera_frustum(vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]]))
 						{
 							vertices[indices[0  ]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 				// TRIs
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
 					for (unsigned int i=2 ; i<indices.size() ; i+= 3)
-						if (inside_camera_frustum(primitive ,indices[i-2] ,indices[i-1] ,indices[i]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
 						{
 							vertices[indices[i-2]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 			}
 			else
 			{
 				// STRIPS
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
 					for (unsigned int i=2 ; i<indices.size() ; i++)
-						if (   inside_camera_frustum(primitive, indices[i-2],indices[i-1+(i&0x1)],indices[i-(i&0x1)])
-							&& front_face_visible   (primitive, indices[i-2],indices[i-1+(i&0x1)],indices[i-(i&0x1)]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (   inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1        ]], vertices[indices[i        ]])
+							&& front_face_visible   (vertices[indices[i-2]], vertices[indices[i-1+(i&0x1)]], vertices[indices[i-(i&0x1)]]))
 						{
 							vertices[indices[i-2]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 				// FANS
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
 					for (unsigned int i=2 ; i<indices.size() ; i++)
-						if (   inside_camera_frustum(primitive, indices[0  ],indices[i-1],indices[i])
-						    && front_face_visible   (primitive, indices[0  ],indices[i-1],indices[i]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (   inside_camera_frustum(vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]])
+						    && front_face_visible   (vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]]))
 						{
 							vertices[indices[0  ]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 				// TRIs
 				if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
 					for (unsigned int i=2 ; i<indices.size() ; i+= 3)
-						if (   inside_camera_frustum(primitive ,indices[i-2] ,indices[i-1] ,indices[i])
-						    && front_face_visible   (primitive ,indices[i-2] ,indices[i-1] ,indices[i]))
+					{
+						assert(indices[i-2] < vertices.size());
+						assert(indices[i-1] < vertices.size());
+						assert(indices[i-0] < vertices.size());
+						if (   inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]])
+						    && front_face_visible   (vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
 						{
 							vertices[indices[i-2]].yes = true;
 							vertices[indices[i-1]].yes = true;
 							vertices[indices[i  ]].yes = true;
 						}
+					}
 			}
 		}
 
@@ -206,6 +231,7 @@ inline void _render(scene_t & scene, viewport_t & viewport)
 		}
 	}
 
+	viewport.flatten();
 	viewport.m_post_shader->shade(viewport);
 }
 
@@ -314,8 +340,10 @@ void fill_triangle(vertex_idx i0,
 			new_vertex_2.normal = primitive.vertices[i1].normal         + (primitive.vertices[i2].normal      -primitive.vertices[i1].normal      )*cut_1;
 		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
 
-		fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
-		fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
+		//fill_triangle_2(i1,                          i0, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
+		//fill_triangle_2(i1, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
+		fill_triangle_2(i0,                          i1, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
+		fill_triangle_2(i0, primitive.vertices.size()-1, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
 		primitive.vertices.pop_back();
 		primitive.vertices.pop_back();
 		return;
@@ -447,19 +475,92 @@ void fill_half_triangle(int y, int y_end,
 
 			// fill_line
 			pixel_colors *video = &((pixel_colors*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
-			float * zb = &vp.zbuffer()[(int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x))];
-			for ( ; x1 < x2 ; x1++ )
+			int zero_based_offset = (int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x));
+			float * zb = &vp.zbuffer()[zero_based_offset];
+			for ( ; x1 < x2 ; x1++,video++,zb++,zero_based_offset++,qpixel.Step() )
 			{
-				if (qpixel.value(0) < *zb && qpixel.value(0) > 0.001) // Ugly z-near clipping
+				float z = qpixel.value(0);
+				if (z <= 0.001) // Ugly z-near clipping
+					continue;
+				if (z >= *zb)
+					continue;
+				pixel_colors new_color = pixel_shader.shade(qpixel.progress());
+				if (vp.m_got_transparency == false)
 				{
-					// new pixel in front
-
-					*video = blend(*video, pixel_shader.shade(qpixel.progress()));
-					*zb = qpixel.value(0);
+					*video = new_color;
+					*zb = z;
+					continue;
 				}
-				video++;
-				zb++;
-				qpixel.Step();
+				size_t layer_idx = 0;
+				for (layer_idx=0 ; layer_idx<vp.m_transparency_layers.size() ; layer_idx++)
+					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == std::numeric_limits<float>::max()
+					  ||vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] < z)
+						break;
+				if (new_color.o.a == 255)
+				{
+					// solid color, use the base (deepest, backest) layer
+					*video = new_color;
+					*zb = z;
+					// eliminat transparency layers that were further away
+					size_t i,k;
+					for (i=0,k=layer_idx ; k<vp.m_transparency_layers.size() ; i++,k++)
+					{
+						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = vp.m_transparency_layers[k].m_zbuffer[zero_based_offset];
+						vp.m_transparency_layers[i].m_colors [zero_based_offset] = vp.m_transparency_layers[k].m_colors [zero_based_offset];
+					}
+					// zero remaining now-unused upper (fronter) transparency layers
+					for ( ; i<vp.m_transparency_layers.size() ; i++)
+					{
+						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = std::numeric_limits<float>::max();
+						vp.m_transparency_layers[i].m_colors [zero_based_offset] = {0,0,0,0};
+					}
+				}
+				else
+				{
+					// transparency color, let's not user the base layer
+					// let's insert a transparency layer at layer_idx
+
+					bool all_layers_used = [&]()
+						{
+							for (auto & transparency_layer : vp.m_transparency_layers)
+								if (transparency_layer.m_zbuffer[zero_based_offset] == std::numeric_limits<float>::max())
+									return false;
+							return true;
+						}();
+					if (all_layers_used)
+					{
+						// eliminate deepest layer and shift down
+						// we need to keep layers from layer_idx up
+
+						if (layer_idx == 0)
+						{
+							// even the deepest layer is a keeper
+							// we have nowhere to store this new layer, discard it
+							// might want to log something about not being able to process all transparencies
+							continue;
+						}
+
+						for (size_t i=1 ; i<layer_idx ; i++)
+						{
+							std::swap(vp.m_transparency_layers[i-1].m_zbuffer[zero_based_offset], vp.m_transparency_layers[i].m_zbuffer[zero_based_offset]);
+							std::swap(vp.m_transparency_layers[i-1].m_colors [zero_based_offset], vp.m_transparency_layers[i].m_colors [zero_based_offset]);
+						}
+						--layer_idx;
+						vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] = z;
+						vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset] = new_color;
+					}
+					else
+					{
+						// shift layers up
+						for ( ; layer_idx < vp.m_transparency_layers.size() ; layer_idx++)
+						{
+							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],        z);
+							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
+							if (z == std::numeric_limits<float>::max())
+								break; // we've reached the last used layer
+						}
+					}
+				}
 			}
 		}
 		side_left .x += side_left .ratio;

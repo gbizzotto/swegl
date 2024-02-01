@@ -1,12 +1,28 @@
 
+#include <cmath>
 #include <swegl/render/colors.hpp>
 
 namespace swegl
 {
 
-pixel_colors operator*(const pixel_colors & left, float right)
+
+pixel_colors_f operator+(const pixel_colors_f & left, const pixel_colors_f & right)
 {
-	return {(unsigned char)(left.o.b*right), (unsigned char)(left.o.g*right), (unsigned char)(left.o.r*right), (unsigned char)(left.o.a*right)};
+	return pixel_colors_f{left.b+right.b, left.g+right.g, left.r+right.r, left.a+right.a};
+}
+
+
+pixel_colors::pixel_colors(const pixel_colors_f & pcf)
+	:o{(unsigned char)round(pcf.b)
+	  ,(unsigned char)round(pcf.g)
+	  ,(unsigned char)round(pcf.r)
+	  ,(unsigned char)round(pcf.a)
+	  }
+{}
+
+pixel_colors_f operator*(const pixel_colors & left, float right)
+{
+	return {left.o.b*right, left.o.g*right, left.o.r*right, left.o.a*right};
 }
 pixel_colors operator/(const pixel_colors & left, int right)
 {

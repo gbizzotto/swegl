@@ -4,6 +4,8 @@
 namespace swegl
 {
 
+struct pixel_colors_f;
+
 struct pixel_colors
 {
 	typedef int v4i __attribute__ ((vector_size (4)));
@@ -14,6 +16,7 @@ struct pixel_colors
 		int i;
 	};
 	pixel_colors() = default;
+	pixel_colors(const pixel_colors_f & );
 	inline pixel_colors(unsigned char b, unsigned char g, unsigned char r, unsigned char a)
 		: o{b,g,r,a}
 	{}
@@ -28,7 +31,16 @@ struct pixel_colors
 	{}
 	inline int to_int() const { return *(int*)this; }
 };
-pixel_colors operator*(const pixel_colors & left, float right);
+
+struct pixel_colors_f
+{
+	float b,g,r,a;
+	inline int to_int() const { return pixel_colors(*this).to_int(); }
+};
+
+pixel_colors_f operator*(const pixel_colors & left, float right);
+pixel_colors_f operator+(const pixel_colors_f & left, const pixel_colors_f & right);
+
 pixel_colors operator/(const pixel_colors & left, int right);
 pixel_colors operator+(const pixel_colors & left, const pixel_colors & right);
 pixel_colors blend(const pixel_colors & back, const pixel_colors & front);

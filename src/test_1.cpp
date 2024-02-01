@@ -34,6 +34,7 @@ swegl::scene_t build_scene()
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  2});
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1});
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,255,255}, 1, 1, -1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,100}, 1, 1, -1});
 
 	s.ambient_light_intensity = 0.2f;
 
@@ -72,9 +73,9 @@ swegl::scene_t build_scene()
 	//*/
 
 	//*
-	auto tri = swegl::make_tri(1, 0);
+	auto tri = swegl::make_tri(1, 5);
 	tri.rotation = swegl::matrix44_t::Identity;
-	tri.translation = swegl::vertex_t(1.0f, 2.5f, -0.1f);
+	tri.translation = swegl::vertex_t(1.0f, 0.5f, 2.1f);
 	s.nodes.emplace_back(std::move(tri));
 	//*/
 
@@ -307,7 +308,7 @@ int main(int argc, char ** argv)
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 3);
 	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
 	swegl::post_shader_t post_shader_null;
 	viewport.set_post_shader(post_shader_null);

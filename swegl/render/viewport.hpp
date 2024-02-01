@@ -16,6 +16,14 @@ namespace swegl
 	struct  pixel_shader_t;
 	struct   post_shader_t;
 
+	struct transparency_layer_t
+	{
+		std::unique_ptr<pixel_colors[]> m_colors;
+		std::unique_ptr<float[]>        m_zbuffer;
+
+		transparency_layer_t(int w, int h);
+	};
+
 	struct viewport_t
 	{
 		int                                     m_x, m_y        ;
@@ -26,11 +34,18 @@ namespace swegl
 		camera_t                                m_camera        ;
 		std::shared_ptr<swegl::pixel_shader_t>  m_pixel_shader  ;
 		post_shader_t                          *m_post_shader   ;
+		std::vector<transparency_layer_t>       m_transparency_layers;
+		bool                                    m_got_transparency   ;
 
 		viewport_t(int x, int y, int w, int h
 		          ,SDL_Surface *screen
 		          ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
+		          ,int transparency_layer_count
 		          );
+
+		void flatten();
+		void flatten(transparency_layer_t & front, transparency_layer_t & back);
+		void flatten(transparency_layer_t & front);
 
 		inline void set_post_shader(post_shader_t & post_shader) { m_post_shader = & post_shader; }
 
