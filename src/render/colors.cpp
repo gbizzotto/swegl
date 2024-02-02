@@ -1,6 +1,7 @@
 
 #include <cmath>
 #include <swegl/render/colors.hpp>
+#include <xmmintrin.h>
 
 namespace swegl
 {
@@ -8,15 +9,17 @@ namespace swegl
 
 pixel_colors_f operator+(const pixel_colors_f & left, const pixel_colors_f & right)
 {
-	return pixel_colors_f{left.b+right.b, left.g+right.g, left.r+right.r, left.a+right.a};
+	return _mm_add_ps (left.v, right.v);
+	// return pixel_colors{left.v+right.v};
+	//return pixel_colors_f{left.b+right.b, left.g+right.g, left.r+right.r, left.a+right.a};
 }
 
 
 pixel_colors::pixel_colors(const pixel_colors_f & pcf)
-	:o{(unsigned char)round(pcf.b)
-	  ,(unsigned char)round(pcf.g)
-	  ,(unsigned char)round(pcf.r)
-	  ,(unsigned char)round(pcf.a)
+	:o{(unsigned char)round(pcf.o.b)
+	  ,(unsigned char)round(pcf.o.g)
+	  ,(unsigned char)round(pcf.o.r)
+	  ,(unsigned char)round(pcf.o.a)
 	  }
 {}
 

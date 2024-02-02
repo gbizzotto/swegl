@@ -1,6 +1,6 @@
 
 #pragma once
-
+#include <xmmintrin.h>
 namespace swegl
 {
 
@@ -29,12 +29,21 @@ struct pixel_colors
 	inline pixel_colors(unsigned int i)
 		: i(i)
 	{}
-	inline int to_int() const { return *(int*)this; }
+	inline int to_int() const { return i; }
 };
 
 struct pixel_colors_f
 {
-	float b,g,r,a;
+	union {
+		struct { float b,g,r,a; } o;
+		__m128 v;
+	};
+	inline pixel_colors_f(float b, float g, float r, float a)
+		: o{b,g,r,a}
+	{}
+	inline pixel_colors_f(__m128 v)
+		: v(v)
+	{}
 	inline int to_int() const { return pixel_colors(*this).to_int(); }
 };
 
