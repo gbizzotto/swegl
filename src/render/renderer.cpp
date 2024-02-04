@@ -12,8 +12,11 @@
 namespace swegl
 {
 
-const int max_zi = 0x7F7F7F7F;
-const float max_z = *(float*)&max_zi;
+union 
+{
+	int i = 0x7F7F7F7F;
+	float f;
+} max_z;
 
 struct line_side
 {
@@ -346,7 +349,7 @@ void fill_triangle(vertex_idx i0,
 			front_face_visible = ! front_face_visible;
 
 		fill_triangle_2(i0, primitive.vertices.size()-1, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
-		
+
 		primitive.vertices.pop_back();
 		primitive.vertices.pop_back();
 		return;
@@ -496,7 +499,7 @@ void fill_half_triangle(int y, int y_end,
 				}
 				size_t layer_idx = 0;
 				for (layer_idx=0 ; layer_idx<vp.m_transparency_layers.size() ; layer_idx++)
-					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == max_z
+					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == max_z.f
 					  ||vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] < z)
 						break;
 				if (new_color.o.a == 255)
@@ -514,7 +517,7 @@ void fill_half_triangle(int y, int y_end,
 					// zero remaining now-unused upper (fronter) transparency layers
 					for ( ; i<vp.m_transparency_layers.size() ; i++)
 					{
-						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = max_z;
+						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = max_z.f;
 						vp.m_transparency_layers[i].m_colors [zero_based_offset] = {0,0,0,0};
 					}
 				}
@@ -523,7 +526,7 @@ void fill_half_triangle(int y, int y_end,
 					// transparency color, let's not user the base layer
 					// let's insert a transparency layer at layer_idx
 
-					bool all_layers_used = vp.m_transparency_layers.back().m_zbuffer[zero_based_offset] != max_z;
+					bool all_layers_used = vp.m_transparency_layers.back().m_zbuffer[zero_based_offset] != max_z.f;
 					if (all_layers_used)
 					{
 						// shift layers down
@@ -540,7 +543,7 @@ void fill_half_triangle(int y, int y_end,
 						{
 							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],         z);
 							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
-							if (z == max_z)
+							if (z == max_z.f)
 								break; // we've reached the last used layer
 						}
 					}
