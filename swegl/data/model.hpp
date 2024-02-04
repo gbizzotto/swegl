@@ -7,7 +7,7 @@
 #include <swegl/projection/matrix44.hpp>
 #include <swegl/data/texture.hpp>
 #include <swegl/render/colors.hpp>
-#include <swegl/projection/points.hpp>
+
 
 namespace swegl
 {
