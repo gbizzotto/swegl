@@ -523,13 +523,7 @@ void fill_half_triangle(int y, int y_end,
 					// transparency color, let's not user the base layer
 					// let's insert a transparency layer at layer_idx
 
-					bool all_layers_used = [&]()
-						{
-							for (auto & transparency_layer : vp.m_transparency_layers)
-								if (transparency_layer.m_zbuffer[zero_based_offset] == max_z)
-									return false;
-							return true;
-						}();
+					bool all_layers_used = vp.m_transparency_layers.back().m_zbuffer[zero_based_offset] != max_z;
 					if (all_layers_used)
 					{
 						// eliminate deepest layer and shift down
