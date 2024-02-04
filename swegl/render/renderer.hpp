@@ -551,7 +551,7 @@ void fill_half_triangle(int y, int y_end,
 						// shift layers up
 						for ( ; layer_idx < vp.m_transparency_layers.size() ; layer_idx++)
 						{
-							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],        z);
+							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],         z);
 							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
 							if (z == max_z)
 								break; // we've reached the last used layer
