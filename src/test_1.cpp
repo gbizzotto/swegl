@@ -20,6 +20,33 @@
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>
 
+swegl::scene_t build_scene_2()
+{
+	swegl::scene_t s;
+
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, -1, false});
+	s.ambient_light_intensity = 0.2f;
+	s.sun_direction = swegl::normal_t{1.0, -1.0, -1.0};
+	s.sun_direction.normalize();
+	s.sun_intensity = 0.7;
+
+	//*
+	auto tri2 = swegl::make_tri(1, 0);
+	tri2.rotation = swegl::matrix44_t::Identity;
+	//tri2.rotation.rotate_x(3.14/4);
+	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
+	s.nodes.emplace_back(std::move(tri2));
+	//*/
+
+	for (auto & node : s.nodes)
+		for (auto & primitive : node.primitives)
+			primitive.vertices.reserve(primitive.vertices.size()+2);
+
+	for (int i=0 ; i<(int)s.nodes.size() ; i++)
+		s.root_nodes.push_back(i);
+	
+	return s;
+}
 
 swegl::scene_t build_scene()
 {
