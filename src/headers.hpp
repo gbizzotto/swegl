@@ -57,5 +57,4 @@
 #include <freon/OnScopeExit.hpp>
 
 #include <utttil/perf.hpp>
-
-#include <swegl/misc/json.hpp>
+#include <json.hpp>

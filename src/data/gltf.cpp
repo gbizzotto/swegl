@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include <swegl/data/gltf.hpp>
+#include <json.hpp>
 
 #define assertm(exp, msg) assert(((void)msg, exp))
 

@@ -16,7 +16,7 @@ CFLAGS_debug = -g -Wall -Wextra -fsanitize=address,leak
 CFLAGS_perf = -O3 -Wall -Wextra -DNDEBUG -msse4 
 CFLAGS_release = -g -O3 -Wall -Wextra -fno-omit-frame-pointer -DNDEBUG -msse4 
 EXTRA_CFLAGS = 
-CFLAGS = $(CFLAGS_$(TYPE)) $(EXTRA_CFLAGS) --std=c++2a -D_GLIBCXX_PARALLEL -I$(DEPDIR)/freon -I$(DEPDIR)/utttil -I. -I$(SRCDIR)/ 
+CFLAGS = $(CFLAGS_$(TYPE)) $(EXTRA_CFLAGS) --std=c++2a -D_GLIBCXX_PARALLEL -I$(DEPDIR)/freon -I$(DEPDIR)/utttil -I$(DEPDIR)/nlohmann -I. -I$(SRCDIR)/ 
 
 LD=$(CXX)
 LDFLAGS = -L. `sdl2-config --cflags --libs`

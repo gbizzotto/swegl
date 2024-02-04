@@ -7,8 +7,8 @@
 
 #include <swegl/misc/file.hpp>
 #include <swegl/data/model.hpp>
-#include <swegl/misc/json.hpp>
 #include <swegl/misc/image.hpp>
+#include <json.hpp>
 
 
 namespace swegl
