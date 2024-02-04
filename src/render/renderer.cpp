@@ -60,7 +60,7 @@ bool inside_camera_frustum(const mesh_vertex_t & v0, const mesh_vertex_t & v1, c
 	      &&((v0.v_viewport.x()  <  1   ) || (v1.v_viewport.x()  <  1   ) || (v2.v_viewport.x()  <  1   ))
 	      &&((v0.v_viewport.y()  <  1   ) || (v1.v_viewport.y()  <  1   ) || (v2.v_viewport.y()  <  1   ))
 	      &&((v0.v_viewport.z() >= 0.001) || (v1.v_viewport.z() >= 0.001) || (v2.v_viewport.z() >= 0.001))
-	      // object size
+	      // object must span at least 1 pixel in width AND in height
 	      &&(v0.v_viewport.x() != v1.v_viewport.x() || v0.v_viewport.x() != v2.v_viewport.x())
 	      &&(v0.v_viewport.y() != v1.v_viewport.y() || v0.v_viewport.y() != v2.v_viewport.y())
 	      ;
@@ -270,8 +270,14 @@ void fill_triangle(vertex_idx i0,
 		std::swap(i0, i1);
 	}
 
-	if (v1->z() < 0.001) // only v0 in front of the camera
+	if (v2->z() >= 0.001)
 	{
+		// normal case
+		fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader, front_face_visible);
+	}
+	else if (v1->z() < 0.001)
+	{
+		// only v0 in front of the camera
 		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
 		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
 		new_vertex_1.v_world      = primitive.vertices[i0].v_world      + (primitive.vertices[i1].v_world     -primitive.vertices[i0].v_world     )*cut_1;
@@ -297,9 +303,9 @@ void fill_triangle(vertex_idx i0,
 		primitive.vertices.pop_back();
 		return;
 	}
-
-	if (v2->z() < 0.001) // only v2 is in the back of the camera
+	else if (v2->z() < 0.001)
 	{
+		// only v2 is in the back of the camera
 		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
 		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
 		new_vertex_1.v_world      = primitive.vertices[i0].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i0].v_world     )*cut_0;
@@ -329,7 +335,7 @@ void fill_triangle(vertex_idx i0,
 		return;
 	}
 
-	fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader, front_face_visible);
+	
 }
 
 void fill_triangle_2([[maybe_unused]] vertex_idx i0,
