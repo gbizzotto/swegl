@@ -87,19 +87,29 @@ namespace swegl
 
 	void viewport_t::clear()
 	{
-		unsigned char * line_ptr = &((unsigned char*)m_screen->pixels)[(int) (m_y*m_screen->pitch) + m_x*m_screen->format->BytesPerPixel];
-		int clear_width = m_w * m_screen->format->BytesPerPixel;
-		int line_width = m_screen->pitch;
-		for (int j=m_y ; j<m_y+m_h ; j++, line_ptr+=line_width)
-			memset(line_ptr, 0, clear_width);
-		if (m_got_transparency)
+		if (m_x == 0 && m_w == m_screen->w)
 		{
-			memset(m_transparency_layers[0].m_colors.get(), 0, 4 * m_w * m_h);
+			// we can sweep a whole area with one memset call
+			unsigned char * line1_ptr = &((unsigned char*)m_screen->pixels)[(int) (m_y*m_screen->pitch)];
+			unsigned char * line2_ptr = &((unsigned char*)m_screen->pixels)[(int) ((m_y+m_h)*m_screen->pitch)];
+			memset(line1_ptr, 0, line2_ptr-line1_ptr);
+		}
+		else
+		{
+			unsigned char * line_ptr = &((unsigned char*)m_screen->pixels)[(int) (m_y*m_screen->pitch) + m_x*m_screen->format->BytesPerPixel];
+			int clear_width = m_w * m_screen->format->BytesPerPixel;
+			int line_width = m_screen->pitch;
+			for (int j=m_y ; j<m_y+m_h ; j++, line_ptr+=line_width)
+				memset(line_ptr, 0, clear_width);
 		}
 
-		std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
+		//std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
+		memset(m_zbuffer.get(), 0x7F, 4 * m_w * m_h);
 		for (auto & transparency_layer : m_transparency_layers)
-			std::fill(transparency_layer.m_zbuffer.get(), &transparency_layer.m_zbuffer[m_w*m_h], std::numeric_limits<float>::max());
+		{
+			memset(transparency_layer.m_zbuffer.get(), 0x7F, 4 * m_w * m_h);
+			memset(transparency_layer.m_colors .get(), 0, 4 * m_w * m_h);
+		}
 	}
 
 	vertex_t viewport_t::transform(const vertex_t & v) const

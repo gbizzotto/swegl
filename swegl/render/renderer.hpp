@@ -17,6 +17,9 @@
 #include <swegl/render/viewport.hpp>
 #include <swegl/render/interpolator.hpp>
 
+const int max_zi = 0x7F7F7F7F;
+const float max_z = *(float*)&max_zi;
+
 namespace swegl
 {
 
@@ -493,7 +496,7 @@ void fill_half_triangle(int y, int y_end,
 				}
 				size_t layer_idx = 0;
 				for (layer_idx=0 ; layer_idx<vp.m_transparency_layers.size() ; layer_idx++)
-					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == std::numeric_limits<float>::max()
+					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == max_z
 					  ||vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] < z)
 						break;
 				if (new_color.o.a == 255)
@@ -511,7 +514,7 @@ void fill_half_triangle(int y, int y_end,
 					// zero remaining now-unused upper (fronter) transparency layers
 					for ( ; i<vp.m_transparency_layers.size() ; i++)
 					{
-						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = std::numeric_limits<float>::max();
+						vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = max_z;
 						vp.m_transparency_layers[i].m_colors [zero_based_offset] = {0,0,0,0};
 					}
 				}
@@ -523,7 +526,7 @@ void fill_half_triangle(int y, int y_end,
 					bool all_layers_used = [&]()
 						{
 							for (auto & transparency_layer : vp.m_transparency_layers)
-								if (transparency_layer.m_zbuffer[zero_based_offset] == std::numeric_limits<float>::max())
+								if (transparency_layer.m_zbuffer[zero_based_offset] == max_z)
 									return false;
 							return true;
 						}();
@@ -556,7 +559,7 @@ void fill_half_triangle(int y, int y_end,
 						{
 							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],        z);
 							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
-							if (z == std::numeric_limits<float>::max())
+							if (z == max_z)
 								break; // we've reached the last used layer
 						}
 					}
