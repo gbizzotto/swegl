@@ -1,4 +1,5 @@
 
+#include <cassert>
 #include <cmath>
 #include <swegl/render/colors.hpp>
 #include <xmmintrin.h>
@@ -39,15 +40,20 @@ pixel_colors blend(const pixel_colors & back, const pixel_colors & front)
 {
 	int alpha = front.o.a;
 
+	int new_alpha = 255 - ((255-alpha) * (255-back.o.a) / 255);
+
+	assert(new_alpha >= 0);
+	assert(new_alpha < 256);
+
 	if (alpha == 255)
-		return front;
+		return {front.o.b, front.o.g, front.o.r, (unsigned char)new_alpha};
 	if (alpha == 0)
-		return back;
+		return {back .o.b, back .o.g, back .o.r, (unsigned char)new_alpha};
 
 	return pixel_colors(back.o.b * ((256-alpha)/256.0) + front.o.b * (alpha/256.0)
 	                   ,back.o.g * ((256-alpha)/256.0) + front.o.g * (alpha/256.0)
 	                   ,back.o.r * ((256-alpha)/256.0) + front.o.r * (alpha/256.0)
-	                   ,alpha);
+	                   ,(unsigned char)new_alpha);
 }
 
 } // namespace
