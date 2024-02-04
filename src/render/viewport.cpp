@@ -81,7 +81,7 @@ namespace swegl
 	void viewport_t::flatten()
 	{
 		for (size_t i=1 ; i<m_transparency_layers.size() ; i++)
-			flatten(m_transparency_layers[0], m_transparency_layers[i]);
+			flatten(m_transparency_layers[i], m_transparency_layers[0]);
 		flatten(m_transparency_layers[0]);
 	}
 
