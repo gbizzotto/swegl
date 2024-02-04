@@ -106,8 +106,8 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 
 	unsigned int default_bitmap = pixel_colors(128,128,128,255).to_int();
 	unsigned int *tbitmap;
-	float twidth;
-	float theight;
+	int twidth;
+	int theight;
 
 	virtual void prepare_for_primitive(const primitive_t & p, const scene_t & s, const viewport_t & vp) override;
 	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool) override;

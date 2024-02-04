@@ -361,17 +361,17 @@ namespace swegl
 		u = floor(u2);
 		v = floor(v2);
 
-		int v1m = ((int)v1) % (int)theight;
-		if (v1m < 0)
-			v1m += theight;
+		int v1m = ((int)v1+theight) % (int)theight;
+		//if (v1m < 0)
+		//	v1m += theight;
 		int v2m = v1m + 1;
 		if (v2m == theight)
 			v2m = 0;
 		v1m *= twidth;
 		v2m *= twidth;
-		int u1m = ((int)u1) % (int)twidth;
-		if (u1m < 0)
-			u1m += twidth;
+		int u1m = ((int)u1+twidth) % (int)twidth;
+		//if (u1m < 0)
+		//	u1m += twidth;
 		int u2m = u1m + 1;
 		if (u2m == twidth)
 			u2m = 0;
