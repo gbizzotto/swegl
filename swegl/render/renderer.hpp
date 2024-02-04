@@ -526,25 +526,12 @@ void fill_half_triangle(int y, int y_end,
 					bool all_layers_used = vp.m_transparency_layers.back().m_zbuffer[zero_based_offset] != max_z;
 					if (all_layers_used)
 					{
-						// eliminate deepest layer and shift down
-						// we need to keep layers from layer_idx up
-
-						if (layer_idx == 0)
+						// shift layers down
+						while(layer_idx-->0)
 						{
-							// even the deepest layer is a keeper
-							// we have nowhere to store this new layer, discard it
-							// might want to log something about not being able to process all transparencies
-							continue;
+							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],         z);
+							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
 						}
-
-						for (size_t i=1 ; i<layer_idx ; i++)
-						{
-							std::swap(vp.m_transparency_layers[i-1].m_zbuffer[zero_based_offset], vp.m_transparency_layers[i].m_zbuffer[zero_based_offset]);
-							std::swap(vp.m_transparency_layers[i-1].m_colors [zero_based_offset], vp.m_transparency_layers[i].m_colors [zero_based_offset]);
-						}
-						--layer_idx;
-						vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] = z;
-						vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset] = new_color;
 					}
 					else
 					{
