@@ -35,6 +35,8 @@ swegl::scene_t build_scene()
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1});
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,255,255}, 1, 1, -1});
 	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,100}, 1, 1, -1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,255,128,100}, 1, 1, -1});
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,128,100}, 1, 1, -1});
 
 	s.ambient_light_intensity = 0.2f;
 
@@ -93,6 +95,20 @@ swegl::scene_t build_scene()
 	cube3.translation = s.point_source_lights[1].position;
 	//c->SetBumpMap(bumpmap);
 	s.nodes.emplace_back(std::move(cube3));
+	//*/
+
+
+	//*
+	auto tri2 = swegl::make_tri(1, 6);
+	tri2.rotation = swegl::matrix44_t::Identity;
+	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
+	s.nodes.emplace_back(std::move(tri2));
+	//*/
+	//*
+	auto tri3 = swegl::make_tri(1, 7);
+	tri3.rotation = swegl::matrix44_t::Identity;
+	tri3.translation = swegl::vertex_t(1.0f, 0.5f, 2.2f);
+	s.nodes.emplace_back(std::move(tri3));
 	//*/
 
 	for (auto & node : s.nodes)
