@@ -21,7 +21,13 @@ void pixel_shader_t::prepare_for_scene(viewport_t & vp, new_scene_t & s)
 
 void pixel_shader_lights_flat::prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t *, const new_mesh_vertex_t *, const new_mesh_vertex_t *)
 {
-	float face_sun_intensity = - triangle.normal_world.dot(scene->sun_direction);
+	float face_sun_intensity = [&]()
+		{
+			if ( ! triangle.backface)
+				return - triangle.normal_world.dot(scene->sun_direction);
+			else
+				return triangle.normal_world.dot(scene->sun_direction);
+		}();
 	if (face_sun_intensity < 0.0f)
 		face_sun_intensity = 0.0f;
 	else

@@ -35,6 +35,12 @@ namespace swegl
 		                left.z()*right.x() - left.x()*right.z(),
 		                left.x()*right.y() - left.y()*right.x());
 	}
+	normal_t cross_2d(const vector_t & left, const vector_t & right)
+	{
+		return normal_t(                 0 - left.z()*right.y(),
+		                left.z()*right.x() -                  0,
+		                left.x()*right.y() - left.y()*right.x());
+	}
 	normal_t transform(const normal_t & v, const matrix44_t & m)
 	{
 		return normal_t(m[0][0]*v.x() + m[0][1]*v.y() + m[0][2]*v.z() + m[0][3],
