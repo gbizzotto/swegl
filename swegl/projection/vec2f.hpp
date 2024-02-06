@@ -40,6 +40,18 @@ namespace swegl
 	{
 		return vec2f_t{left.x()*right, left.y()*right};
 	}
+	inline bool operator==(const vec2f_t & left, const vec2f_t & right)
+	{
+		return left.x() == right.x()
+			&& left.y() == right.y()
+			;
+	}
+	inline bool operator<(const vec2f_t & left, const vec2f_t & right)
+	{
+		return left.x() < right.x()
+			|| (left.x() == right.x() && left.y() < right.y())
+			;
+	}
 
 
 	struct vec4f_t

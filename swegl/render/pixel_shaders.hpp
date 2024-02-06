@@ -14,14 +14,14 @@ namespace swegl
 
 struct pixel_shader_t
 {
-	const primitive_t * primitive;
-	const scene_t * scene;
+	const new_scene_t * scene;
 	const viewport_t * viewport;
 	pixel_colors color;
-	bool double_sided;
 
-	virtual void prepare_for_primitive(const primitive_t & p, const scene_t & s, const viewport_t & vp);
-	virtual void prepare_for_triangle(vertex_idx, vertex_idx, vertex_idx, bool) {}
+	virtual bool need_face_normals() { return true; }
+	virtual bool need_vertex_normals() { return true; }
+	virtual void prepare_for_scene(viewport_t & viewport, new_scene_t & scene);
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
@@ -32,7 +32,8 @@ struct pixel_shader_lights_flat : pixel_shader_t
 {
 	float light;
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override;
+	virtual bool need_vertex_normals() override { return false; }
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) override;
 	virtual int shade([[maybe_unused]] float progress) override
 	{
 		return light;
@@ -55,7 +56,8 @@ struct pixel_shader_lights_phong : pixel_shader_t
 	vector_t n;
 	vector_t ndir;
 
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override;
+	virtual bool need_face_normals() override { return false; }
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) override;
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_lower_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override;
@@ -81,8 +83,9 @@ struct pixel_shader_texture : pixel_shader_t
 	unsigned int twidth;
 	unsigned int theight;
 
-	virtual void prepare_for_primitive(const primitive_t & p, const scene_t & s, const viewport_t & vp) override;
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool) override;
+	virtual bool need_face_normals() override { return false; }
+	virtual bool need_vertex_normals() override { return false; }
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) override;
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_lower_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override;
@@ -109,8 +112,9 @@ struct pixel_shader_texture_bilinear : pixel_shader_t
 	int twidth;
 	int theight;
 
-	virtual void prepare_for_primitive(const primitive_t & p, const scene_t & s, const viewport_t & vp) override;
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool) override;
+	virtual bool need_face_normals() override { return false; }
+	virtual bool need_vertex_normals() override { return false; }
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) override;
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_lower_triangle(bool long_line_on_right) override;
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override;
@@ -124,36 +128,41 @@ struct pixel_shader_light_and_texture : pixel_shader_t
 	L shader_flat_light;
 	T shader_texture;
 
-	virtual void prepare_for_primitive(const primitive_t & p,
-	                                   const scene_t & s,
-	                                   const viewport_t & vp) override
+	virtual bool need_face_normals() override
 	{
-		shader_flat_light.prepare_for_primitive(p, s, vp);
-		shader_texture.prepare_for_primitive(p, s, vp);
+		return shader_flat_light.need_face_normals() || shader_texture.need_face_normals();
 	}
-
-	virtual void prepare_for_triangle(vertex_idx i0, vertex_idx i1, vertex_idx i2, bool inverted) override
+	virtual bool need_vertex_normals() override
 	{
-		shader_flat_light.prepare_for_triangle(i0, i1, i2, inverted);
-		shader_texture.prepare_for_triangle(i0, i1, i2, inverted);
+		return shader_flat_light.need_vertex_normals() || shader_texture.need_vertex_normals();
+	}
+	virtual void prepare_for_scene(viewport_t & viewport, new_scene_t & scene) override
+	{
+		shader_flat_light.prepare_for_scene(viewport, scene);
+		shader_texture   .prepare_for_scene(viewport, scene);
+	}
+	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) override
+	{
+		shader_flat_light.prepare_for_triangle(triangle, v0, v1, v2);
+		shader_texture   .prepare_for_triangle(triangle, v0, v1, v2);
 	}
 
 	virtual void prepare_for_upper_triangle(bool long_line_on_right) override
 	{
 		shader_flat_light.prepare_for_upper_triangle(long_line_on_right);
-		shader_texture.prepare_for_upper_triangle(long_line_on_right);
+		shader_texture   .prepare_for_upper_triangle(long_line_on_right);
 	}
 
 	virtual void prepare_for_lower_triangle(bool long_line_on_right) override
 	{
 		shader_flat_light.prepare_for_lower_triangle(long_line_on_right);
-		shader_texture.prepare_for_lower_triangle(long_line_on_right);
+		shader_texture   .prepare_for_lower_triangle(long_line_on_right);
 	}
 
 	virtual void prepare_for_scanline(float progress_left, float progress_right) override
 	{
 		shader_flat_light.prepare_for_scanline(progress_left, progress_right);
-		shader_texture.prepare_for_scanline(progress_left, progress_right);
+		shader_texture   .prepare_for_scanline(progress_left, progress_right);
 	}
 
 	virtual int shade(float progress) override

@@ -34,6 +34,7 @@
 #include <numeric>
 #include <numeric>
 #include <ostream>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <stdint.h>

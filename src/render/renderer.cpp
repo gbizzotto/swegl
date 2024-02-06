@@ -26,21 +26,7 @@ struct line_side
 };
 
 void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
-bool do_triangle(const scene_t & scene, const primitive_t & primitive, vertex_idx i0, vertex_idx i1, vertex_idx i2);
-void fill_triangle(vertex_idx i0,
-                   vertex_idx i1,
-                   vertex_idx i2,
-                   node_t & node,
-                   primitive_t & primitive,
-                   viewport_t & vp,
-                   pixel_shader_t & pixel_shader);
-void fill_triangle_2(vertex_idx i0,
-                     vertex_idx i1,
-                     vertex_idx i2,
-                     primitive_t & primitive,
-                     viewport_t & vp,
-                     pixel_shader_t & pixel_shader, 
-                     bool front_face_visible);
+void fill_triangle(new_triangle_t &, new_scene_t &, viewport_t &);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         viewport_t & vp,
@@ -49,342 +35,44 @@ void fill_half_triangle(int y, int y_end,
 
 struct transformed_scene_t
 {
-	scene_t * original;
+	new_scene_t * original;
 	std::vector<node_t> world_view;
 	std::vector<node_t> screen_view;
 };
 
-
-bool inside_camera_frustum(const mesh_vertex_t & v0, const mesh_vertex_t & v1, const mesh_vertex_t & v2)
+void _render(fraction_t thread_number, new_scene_t & scene, viewport_t & viewport)
 {
-	// frustum clipping
-	return  ((v0.v_viewport.x() >= -1   ) || (v1.v_viewport.x() >= -1   ) || (v2.v_viewport.x() >= -1   ))
-	      &&((v0.v_viewport.y() >= -1   ) || (v1.v_viewport.y() >= -1   ) || (v2.v_viewport.y() >= -1   ))
-	      &&((v0.v_viewport.x()  <  1   ) || (v1.v_viewport.x()  <  1   ) || (v2.v_viewport.x()  <  1   ))
-	      &&((v0.v_viewport.y()  <  1   ) || (v1.v_viewport.y()  <  1   ) || (v2.v_viewport.y()  <  1   ))
-	      &&((v0.v_viewport.z() >= 0.001) || (v1.v_viewport.z() >= 0.001) || (v2.v_viewport.z() >= 0.001))
-	      // object must span at least 1 pixel in width AND in height
-	      &&(v0.v_viewport.x() != v1.v_viewport.x() || v0.v_viewport.x() != v2.v_viewport.x())
-	      &&(v0.v_viewport.y() != v1.v_viewport.y() || v0.v_viewport.y() != v2.v_viewport.y())
-	      ;
-}
+	viewport.clear(thread_number);
 
-bool front_face_visible(const mesh_vertex_t & v0, const mesh_vertex_t & v1, const mesh_vertex_t & v2)
-{
-	return cross((v1.v_viewport-v0.v_viewport),(v2.v_viewport-v0.v_viewport)).z() > 0;
-}
+	new_vertex_shader_t::world_to_screen(thread_number ,scene, viewport, viewport.m_pixel_shader->need_face_normals(), viewport.m_pixel_shader->need_vertex_normals());
+	viewport.m_pixel_shader->prepare_for_scene(viewport, scene);
 
-void _render(scene_t & scene, viewport_t & viewport)
-{
-	vertex_shader_t::world_to_camera_or_frustum(scene, viewport);
-	viewport.clear();
-
-	pixel_shader_t & pixel_shader = *viewport.m_pixel_shader;
-	for (auto & node : scene.nodes)
-	{
-		// determine which vertices will be part of visible triangles and need more transformation 
-		for (auto & primitive : node.primitives)
-		{
-			auto & vertices = primitive.vertices;
-			const auto & indices  = primitive.indices ;
-			const bool double_sided = primitive.material_id != -1 && scene.materials[primitive.material_id].double_sided;
-
-			if (double_sided)
-			{
-				// STRIPS
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
-					for (unsigned int i=2 ; i<indices.size() ; i++)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
-						{
-							vertices[indices[i-2]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-				// FANS
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
-					for (unsigned int i=2 ; i<indices.size() ; i++)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (inside_camera_frustum(vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]]))
-						{
-							vertices[indices[0  ]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-				// TRIs
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
-					for (unsigned int i=2 ; i<indices.size() ; i+= 3)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
-						{
-							vertices[indices[i-2]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-			}
-			else
-			{
-				// STRIPS
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
-					for (unsigned int i=2 ; i<indices.size() ; i++)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (   inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1        ]], vertices[indices[i        ]])
-							&& front_face_visible   (vertices[indices[i-2]], vertices[indices[i-1+(i&0x1)]], vertices[indices[i-(i&0x1)]]))
-						{
-							vertices[indices[i-2]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-				// FANS
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
-					for (unsigned int i=2 ; i<indices.size() ; i++)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (   inside_camera_frustum(vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]])
-						    && front_face_visible   (vertices[indices[0]], vertices[indices[i-1]], vertices[indices[i]]))
-						{
-							vertices[indices[0  ]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-				// TRIs
-				if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
-					for (unsigned int i=2 ; i<indices.size() ; i+= 3)
-					{
-						assert(indices[i-2] < vertices.size());
-						assert(indices[i-1] < vertices.size());
-						assert(indices[i-0] < vertices.size());
-						if (   inside_camera_frustum(vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]])
-						    && front_face_visible   (vertices[indices[i-2]], vertices[indices[i-1]], vertices[indices[i]]))
-						{
-							vertices[indices[i-2]].yes = true;
-							vertices[indices[i-1]].yes = true;
-							vertices[indices[i  ]].yes = true;
-						}
-					}
-			}
-		}
-
-		// do the rest of the transformations to the vertices that are part of visible triangles
-		vertex_shader_t::frustum_to_viewport(node, viewport);
-
-		// do the painting
-		for (auto & primitive : node.primitives)
-		{
-			auto & indices = primitive.indices;
-
-			pixel_shader.prepare_for_primitive(primitive, scene, viewport);
-
-			// STRIPS
-			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_STRIP)
-				for (unsigned int i=2 ; i<indices.size() ; i++)
-					fill_triangle(indices[i-2]
-						         ,indices[i-1+(i&0x1)]
-						         ,indices[i  -(i&0x1)]
-						         ,node
-						         ,primitive
-						         ,viewport
-						         ,pixel_shader
-						         );
-			// FANSv
-			if (primitive.mode == primitive_t::index_mode_t::TRIANGLE_FAN)
-				for (unsigned int i=2 ; i<indices.size() ; i++)
-					fill_triangle(indices[0  ]
-					             ,indices[i-1]
-					             ,indices[i  ]
-					             ,node
-					             ,primitive
-					             ,viewport
-					             ,pixel_shader
-					             );
-			// TRIs
-			if (primitive.mode == primitive_t::index_mode_t::TRIANGLES)
-				for (unsigned int i=2 ; i<indices.size() ; i+= 3)
-					fill_triangle(indices[i-2]
-					             ,indices[i-1]
-					             ,indices[i  ]
-					             ,node
-					             ,primitive
-					             ,viewport
-					             ,pixel_shader
-					             );
-		}
-	}
+	for (auto & triangle : scene.triangles)
+		if (triangle.yes)
+			fill_triangle(triangle, scene, viewport);
 
 	viewport.flatten();
 	viewport.m_post_shader->shade(viewport);
 }
 
 
-
-
-void fill_triangle(vertex_idx i0,
-                   vertex_idx i1,
-                   vertex_idx i2,
-                   node_t & node,
-                   primitive_t & primitive,
-                   viewport_t & vp,
-                   pixel_shader_t & pixel_shader)
+void fill_triangle(new_triangle_t & triangle, new_scene_t & scene, viewport_t & vp)
 {
-	if (  !primitive.vertices[i0].yes
-	    ||!primitive.vertices[i1].yes
-	    ||!primitive.vertices[i2].yes )
-	{
-	    return;
-	}
-	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
-	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
-	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
-
-	bool front_face_visible = cross((*v1-*v0),(*v2-*v0)).z() < 0;
-
-	// handle cases where 1 or 2 vertices have screen z values below zero (behind the camera)
-
-	bool inverted_order = false;
-
-	// sort by Z DESC
-	if (v1->z() > v0->z()) {
-		std::swap(v0, v1);
-		std::swap(i0, i1);
-		inverted_order = ! inverted_order;
-	}
-	if (v2->z() > v1->z()) {
-		std::swap(v1, v2);
-		std::swap(i1, i2);
-		inverted_order = ! inverted_order;
-	}
-	if (v1->z() > v0->z()) {
-		std::swap(v0, v1);
-		std::swap(i0, i1);
-		inverted_order = ! inverted_order;
-	}
-
-	if (v2->z() >= 0.001)
-	{
-		// normal case
-		fill_triangle_2(i0, i1, i2, primitive, vp, pixel_shader, front_face_visible);
-	}
-	else if (v1->z() < 0.001)
-	{
-		// only v0 in front of the camera
-		float cut_1 = (v0->z()-0.001f) / (v0->z() - v1->z());
-		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
-		new_vertex_1.v_world    = primitive.vertices[i0].v_world      + (primitive.vertices[i1].v_world     -primitive.vertices[i0].v_world     )*cut_1;
-		new_vertex_1.tex_coords = primitive.vertices[i0].tex_coords   + (primitive.vertices[i1].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_1;
-		if (primitive.vertices[i1].normal == primitive.vertices[i0].normal)
-			new_vertex_1.normal = primitive.vertices[i0].normal;
-		else
-			new_vertex_1.normal = primitive.vertices[i0].normal       + (primitive.vertices[i1].normal      -primitive.vertices[i0].normal      )*cut_1;
-		vertex_shader_t::world_to_viewport(new_vertex_1, node, vp);
-
-		float cut_2 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
-		new_vertex_2.v_world    = primitive.vertices[i0].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i0].v_world     )*cut_2;
-		new_vertex_2.tex_coords = primitive.vertices[i0].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_2;
-		if (primitive.vertices[i2].normal == primitive.vertices[i0].normal)
-			new_vertex_2.normal = primitive.vertices[i0].normal;
-		else
-			new_vertex_2.normal = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_2;
-		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
-
-		front_face_visible = cross((new_vertex_1.v_viewport-*v0),(new_vertex_2.v_viewport-*v0)).z() < 0;
-		if (inverted_order)
-			front_face_visible = ! front_face_visible;
-
-		fill_triangle_2(i0, primitive.vertices.size()-2, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
-		primitive.vertices.pop_back();
-		primitive.vertices.pop_back();
-		return;
-	}
-	else if (v2->z() < 0.001)
-	{
-		// only v2 is in the back of the camera
-		float cut_0 = (v0->z()-0.001f) / (v0->z() - v2->z());
-		mesh_vertex_t & new_vertex_1 = primitive.vertices.emplace_back();
-		new_vertex_1.v_world    = primitive.vertices[i0].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i0].v_world     )*cut_0;
-		new_vertex_1.tex_coords = primitive.vertices[i0].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i0].tex_coords  )*cut_0;
-		if (primitive.vertices[i2].normal == primitive.vertices[i0].normal)
-			new_vertex_1.normal = primitive.vertices[i0].normal;
-		else
-			new_vertex_1.normal = primitive.vertices[i0].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i0].normal      )*cut_0;
-		vertex_shader_t::world_to_viewport(new_vertex_1, node, vp);
-
-		float cut_1 = (v1->z()-0.001f) / (v1->z() - v2->z());
-		mesh_vertex_t & new_vertex_2 = primitive.vertices.emplace_back();
-		new_vertex_2.v_world    = primitive.vertices[i1].v_world      + (primitive.vertices[i2].v_world     -primitive.vertices[i1].v_world     )*cut_1;
-		new_vertex_2.tex_coords = primitive.vertices[i1].tex_coords   + (primitive.vertices[i2].tex_coords  -primitive.vertices[i1].tex_coords  )*cut_1;
-		if (primitive.vertices[i2].normal == primitive.vertices[i1].normal)
-			new_vertex_2.normal = primitive.vertices[i1].normal;
-		else
-			new_vertex_2.normal = primitive.vertices[i1].normal       + (primitive.vertices[i2].normal      -primitive.vertices[i1].normal      )*cut_1;
-		vertex_shader_t::world_to_viewport(new_vertex_2, node, vp);
-
-		front_face_visible = cross((*v1-*v0),(new_vertex_2.v_viewport-*v0)).z() < 0;
-		if (inverted_order)
-			front_face_visible = ! front_face_visible;
-
-		fill_triangle_2(i0, i1, primitive.vertices.size()-1, primitive, vp, pixel_shader, front_face_visible);
-
-		front_face_visible = cross((new_vertex_2.v_viewport-*v0),(new_vertex_1.v_viewport-*v0)).z() < 0;
-		if (inverted_order)
-			front_face_visible = ! front_face_visible;
-
-		fill_triangle_2(i0, primitive.vertices.size()-1, primitive.vertices.size()-2, primitive, vp, pixel_shader, front_face_visible);
-
-		primitive.vertices.pop_back();
-		primitive.vertices.pop_back();
-		return;
-	}
-
-	
-}
-
-void fill_triangle_2([[maybe_unused]] vertex_idx i0,
-                     [[maybe_unused]] vertex_idx i1,
-                     [[maybe_unused]] vertex_idx i2,
-                     [[maybe_unused]] primitive_t & primitive,
-                     [[maybe_unused]] viewport_t & vp,
-                     [[maybe_unused]] pixel_shader_t & pixel_shader, 
-                     bool front_face_visible)
-{
-	const vertex_t * v0 = &primitive.vertices[i0].v_viewport;
-	const vertex_t * v1 = &primitive.vertices[i1].v_viewport;
-	const vertex_t * v2 = &primitive.vertices[i2].v_viewport;
-
-	bool inverted = !front_face_visible;
+	const new_mesh_vertex_t * mv0 = &scene.vertices[triangle.i0];
+	const new_mesh_vertex_t * mv1 = &scene.vertices[triangle.i1];
+	const new_mesh_vertex_t * mv2 = &scene.vertices[triangle.i2];
 
 	// Sort points by screen Y ASC
-	if (v1->y() < v0->y()) {
-		std::swap(v0, v1);
-		std::swap(i0, i1);
-	}
-	if (v2->y() < v1->y()) {
-		std::swap(v1, v2);
-		std::swap(i1, i2);
-	}
-	if (v1->y() < v0->y()) {
-		std::swap(v0, v1);
-		std::swap(i0, i1);
-	}
+	if (mv1->v_viewport.y() < mv0->v_viewport.y())
+		std::swap(mv0, mv1);
+	if (mv2->v_viewport.y() < mv1->v_viewport.y())
+		std::swap(mv1, mv2);
+	if (mv1->v_viewport.y() < mv0->v_viewport.y())
+		std::swap(mv0, mv1);
+
+	const vertex_t * v0 = &mv0->v_viewport;
+	const vertex_t * v1 = &mv1->v_viewport;
+	const vertex_t * v2 = &mv2->v_viewport;
 
 	// get pixel limits
 	int y0 = (int) ceil(v0->y());
@@ -410,7 +98,7 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
 
 	int y, y_end; // scanlines upper and lower bound of whole triangle
 
-	pixel_shader.prepare_for_triangle(i0, i1, i2, inverted);
+	vp.m_pixel_shader->prepare_for_triangle(triangle, mv0, mv1, mv2);
 
 	// upper half of the triangle
 	if (y1 >= vp.m_y) // dont skip: at least some part is in the viewport
@@ -430,9 +118,9 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
 					return {side_long, side_short};
 			}();
 
-		pixel_shader.prepare_for_upper_triangle(long_line_on_right);
+		vp.m_pixel_shader->prepare_for_upper_triangle(long_line_on_right);
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, *vp.m_pixel_shader);
 	}
 
 	// lower half of the triangle
@@ -453,9 +141,9 @@ void fill_triangle_2([[maybe_unused]] vertex_idx i0,
 					return {side_long, side_short};
 			}();
 
-		pixel_shader.prepare_for_lower_triangle(long_line_on_right);
+		vp.m_pixel_shader->prepare_for_lower_triangle(long_line_on_right);
 
-		fill_half_triangle(y, y_end, side_left, side_right, vp, pixel_shader);
+		fill_half_triangle(y, y_end, side_left, side_right, vp, *vp.m_pixel_shader);
 	}
 }
 

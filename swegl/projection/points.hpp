@@ -47,6 +47,21 @@ vertex_t operator/(const vertex_t & left, const T & right)
 	return vertex_t(left.x()/right, left.y()/right, left.z()/right);
 }
 
+inline bool operator==(const vertex_t & left, const vertex_t & right)
+{
+	return left.x() == right.x()
+		&& left.y() == right.y()
+		&& left.z() == right.z()
+		;
+}
+inline bool operator<(const vertex_t & left, const vertex_t & right)
+{
+	return left.x() < right.x()
+		|| (left.x() == right.x() && left.y() < right.y())
+		|| (left.y() == right.y() && left.z() < right.z())
+		;
+}
+
 
 class vector_t
 {
@@ -99,6 +114,13 @@ inline bool operator==(const vector_t & left, const vector_t & right)
 	return left.x() == right.x()
 		&& left.y() == right.y()
 		&& left.z() == right.z()
+		;
+}
+inline bool operator<(const vector_t & left, const vector_t & right)
+{
+	return left.x() < right.x()
+		|| (left.x() == right.x() && left.y() < right.y())
+		|| (left.y() == right.y() && left.z() < right.z())
 		;
 }
 

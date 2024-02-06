@@ -11,80 +11,126 @@
 namespace swegl
 {
 
-struct vertex_shader_t
+struct new_vertex_shader_t
 {
-	static inline void original_to_world(scene_t & scene, node_t & node, const matrix44_t & parent_matrix)
+	static inline void original_to_world(new_scene_t & scene, node_t & node, const matrix44_t & vertex_parent_matrix, const matrix44_t & normal_parent_matrix)
 	{
-		node.original_to_world_matrix = parent_matrix * node.get_local_world_matrix();
-		//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
-		for (auto & primitive : node.primitives)
-		{
-			for (auto & mv : primitive.vertices)
-				mv.v_world = transform(mv.v, node.original_to_world_matrix);
-		}
+		node.vertex_original_to_world_matrix = vertex_parent_matrix * node.get_local_vertex_world_matrix();
+		node.normal_original_to_world_matrix = normal_parent_matrix * node.get_local_normal_world_matrix();
 		for (auto child_idx : node.children_idx)
-			original_to_world(scene, scene.nodes[child_idx], node.original_to_world_matrix);
-		//);
-	}
-	static inline void original_to_world(scene_t & scene)
-	{
-		for (auto node_idx : scene.root_nodes)
-			original_to_world(scene, scene.nodes[node_idx], matrix44_t::Identity);
+			original_to_world(scene, scene.nodes[child_idx], node.vertex_original_to_world_matrix, node.normal_original_to_world_matrix);
 	}
 
-	static inline void world_to_camera_or_frustum(node_t & node, const viewport_t & viewport)	
+	static inline void original_to_world(fraction_t thread_number, new_scene_t & scene)
 	{
-		//__gnu_parallel::for_each(node.mesh.vertices.begin(), node.mesh.vertices.end(), [&](auto & mv)
-		for (auto & primitive : node.primitives)
-			for (auto & mv : primitive.vertices)
-			{
-				mv.yes = false;
-				mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
-				//if (mv.v_viewport.z() >= 0.001)
-					camera_to_frustum(mv, node, viewport);
-			}
-		//);
-	}
-	static inline void world_to_camera_or_frustum(scene_t & scene, const viewport_t & viewport)
-	{
-		for (auto & node : scene.nodes)
-			world_to_camera_or_frustum(node, viewport);
-	}
+		for (int node_idx : scene.root_nodes)
+			original_to_world(scene, scene.nodes[node_idx], matrix44_t::Identity, matrix44_t::Identity);
 
-	static inline void world_to_viewport(mesh_vertex_t & mv, const node_t & node, const viewport_t & viewport)
-	{
-		mv.v_viewport = transform(mv.v_world, viewport.camera().m_viewmatrix);
-		camera_to_frustum(mv, node, viewport);
-		frustum_to_viewport(mv, viewport);
-	}
-
-	static inline void camera_to_frustum(mesh_vertex_t & mv, const node_t & node, const viewport_t & viewport)
-	{
-		mv.normal_world = rotate(mv.normal, scale(node.rotation, node.scale)).normalize();
-
-		mv.v_viewport = transform(mv.v_viewport, viewport.camera().m_projectionmatrix);
-		if (mv.v_viewport.z() != 0)
+		for (auto & v : scene.vertices)
 		{
-			mv.v_viewport.x() /= fabs(mv.v_viewport.z());
-			mv.v_viewport.y() /= fabs(mv.v_viewport.z());
+			// TODO use a flag to mark a node's change is world matrix
+			// if none, we can skip this transformation
+
+			v.v_world = transform(v.v, scene.nodes[v.node_idx].vertex_original_to_world_matrix);
+			v.yes = false;
 		}
 	}
-	static inline void frustum_to_viewport(node_t & node, const viewport_t & viewport)
+
+	static inline void world_to_screen(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, bool face_normals, bool vertex_normals)
 	{
-		//__gnu_parallel::for_each(node.primitives.begin(), node.primitives.end(), [&](auto & primitive) {
-		for (auto & primitive : node.primitives)
-			//__gnu_parallel::for_each(primitive.vertices.begin(), primitive.vertices.end(), [&](auto & mv) {
-				for (auto & mv : primitive.vertices)
+		// world to camera
+		auto & camera_matrix = viewport.camera().m_viewmatrix;
+		for (auto & v : scene.vertices)
+			v.v_viewport = transform(v.v_world, camera_matrix);
+
+		scene.thread_local_extra_vertices [thread_number.numerator].clear();
+		scene.thread_local_extra_triangles[thread_number.numerator].clear();
+
+		for (auto & triangle : scene.triangles)
+		{
+			// is the triangle fully behind the camera?
+			triangle.yes = scene.vertices[triangle.i0].v_viewport.z() > 0.001
+			            || scene.vertices[triangle.i1].v_viewport.z() > 0.001
+			            || scene.vertices[triangle.i2].v_viewport.z() > 0.001;
+			if (triangle.yes)
+			{
+				scene.vertices[triangle.i0].yes = true;
+				scene.vertices[triangle.i1].yes = true;
+				scene.vertices[triangle.i2].yes = true;
+
+				// TODO cut up triangles that have 1 or 2 vertices behind the camera
+			}
+		}
+
+		// camera to frustum
+		for (auto & v : scene.vertices)
+		{
+			if ( ! v.yes)
+				continue;
+			v.yes = false;
+
+			v.v_viewport = transform(v.v_viewport, viewport.camera().m_projectionmatrix);
+			if (v.v_viewport.z() != 0)
+			{
+				v.v_viewport.x() /= fabs(v.v_viewport.z());
+				v.v_viewport.y() /= fabs(v.v_viewport.z());
+			}
+		}
+
+		// flag YES vertices that have triangles in the frustum
+		for (auto & triangle : scene.triangles)
+		{
+			if ( ! triangle.yes)
+				continue;
+
+			// frustum clipping
+			if ( (scene.vertices[triangle.i0].v_viewport.x() < -1 && scene.vertices[triangle.i1].v_viewport.x() < -1 && scene.vertices[triangle.i2].v_viewport.x() < -1)
+			   ||(scene.vertices[triangle.i0].v_viewport.x() >  1 && scene.vertices[triangle.i1].v_viewport.x() >  1 && scene.vertices[triangle.i2].v_viewport.x() >  1)
+			   ||(scene.vertices[triangle.i0].v_viewport.y() < -1 && scene.vertices[triangle.i1].v_viewport.y() < -1 && scene.vertices[triangle.i2].v_viewport.y() < -1)
+			   ||(scene.vertices[triangle.i0].v_viewport.y() >  1 && scene.vertices[triangle.i1].v_viewport.y() >  1 && scene.vertices[triangle.i2].v_viewport.y() >  1)
+			   )
+		    {
+		    	triangle.yes = false;
+		    	continue;
+		    }
+
+		    // backface culling
+			bool front_face_visible = (cross((scene.vertices[triangle.i1].v_viewport-scene.vertices[triangle.i0].v_viewport)
+			                                ,(scene.vertices[triangle.i2].v_viewport-scene.vertices[triangle.i0].v_viewport)).z() > 0);
+			if (front_face_visible)
+			{
+				triangle.backface = false;
+			}
+			else
+			{
+				if (scene.materials[triangle.material_idx].double_sided)
 				{
-					if (mv.yes)
-						viewport.transform(mv);
+					triangle.backface = true;
 				}
-			//});
-		//});
-	}
-	static inline void frustum_to_viewport(mesh_vertex_t & mv, const viewport_t & viewport)
-	{
-		viewport.transform(mv);
+				else
+				{
+			    	triangle.yes = false;
+			    	continue;
+			    }
+			}
+			if (face_normals)
+				triangle.normal_world = scene.nodes[triangle.node_idx].transform(triangle.normal);
+			scene.vertices[triangle.i0].yes = true;
+			scene.vertices[triangle.i1].yes = true;
+			scene.vertices[triangle.i2].yes = true;
+		}
+		// TODO extra triangles, too
+
+		// frustum to screen
+		for (auto & v : scene.vertices)
+		{
+			if (v.yes == false)
+				continue;
+			if (vertex_normals)
+				v.normal_world = scene.nodes[v.node_idx].transform(v.normal);
+			viewport.transform(v);
+		}
+		// TODO extra vertices, too
 	}
 };
 

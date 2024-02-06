@@ -8,13 +8,14 @@
 #include <swegl/projection/matrix44.hpp>
 #include <swegl/projection/camera.hpp>
 #include <swegl/data/model.hpp>
+#include <swegl/misc/fraction.hpp>
 
 namespace swegl
 {
 
-	struct vertex_shader_t;
-	struct  pixel_shader_t;
-	struct   post_shader_t;
+	struct new_vertex_shader_t;
+	struct      pixel_shader_t;
+	struct       post_shader_t;
 
 	struct transparency_layer_t
 	{
@@ -57,8 +58,9 @@ namespace swegl
 		const camera_t & camera() const { return m_camera; }
 
 		void clear();
+		void clear(const fraction_t & f);
 		vertex_t transform(const vertex_t & v) const;
-		void     transform(mesh_vertex_t & v) const;
+		void     transform(new_mesh_vertex_t & v) const;
 	};
 
 }

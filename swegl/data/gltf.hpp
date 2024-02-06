@@ -94,6 +94,6 @@ struct glb_chunk
 	char * data;
 };
 
-swegl::scene_t load_scene(std::string filename);
+swegl::new_scene_t load_scene(std::string filename);
 
 } // mamespace

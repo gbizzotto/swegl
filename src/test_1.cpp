@@ -20,135 +20,196 @@
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/post_shaders.hpp>
 
-swegl::scene_t build_scene_2()
+swegl::new_scene_t build_new_scene()
 {
-	swegl::scene_t s;
+	swegl::new_scene_t s;
 
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, -1, false});
+	s.images.emplace_back(swegl::read_image_file("resources/dice.bmp"));
+
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  0, false});
+
+	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1, false});
 	s.ambient_light_intensity = 0.2f;
 	s.sun_direction = swegl::normal_t{1.0, -1.0, -1.0};
 	s.sun_direction.normalize();
 	s.sun_intensity = 0.7;
 
-	//*
-	auto tri2 = swegl::make_tri(1, 0);
-	tri2.rotation = swegl::matrix44_t::Identity;
-	//tri2.rotation.rotate_x(3.14/4);
-	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
-	s.nodes.emplace_back(std::move(tri2));
-	//*/
+	s.nodes.emplace_back();
 
-	for (auto & node : s.nodes)
-		for (auto & primitive : node.primitives)
-			primitive.vertices.reserve(primitive.vertices.size()+2);
+	s.vertices.push_back(swegl::new_mesh_vertex_t{
+			{0,0,0}, // vertex_t v;
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
+			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0,0}, // vec2f_t tex_coords;
+			{0,0,1}, // normal_t normal;
+			{0,0,0}, // normal_t normal_world;
+			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
+			true // bool yes = false;
+		});
+	s.vertices.push_back(swegl::new_mesh_vertex_t{
+			{1,0,0}, // vertex_t v;
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
+			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0.5,0}, // vec2f_t tex_coords;
+			{0,0,1}, // normal_t normal;
+			{0,0,0}, // normal_t normal_world;
+			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
+			true // bool yes = false;
+		});
+	s.vertices.push_back(swegl::new_mesh_vertex_t{
+			{0,1,0}, // vertex_t v;
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
+			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0,0.333}, // vec2f_t tex_coords;
+			{0,0,1}, // normal_t normal;
+			{0,0,0}, // normal_t normal_world;
+			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
+			true // bool yes = false;
+		});
 
-	for (int i=0 ; i<(int)s.nodes.size() ; i++)
-		s.root_nodes.push_back(i);
-	
-	return s;
-}
-
-swegl::scene_t build_scene()
-{
-	swegl::scene_t s;
-
-	s.images.emplace_back(swegl::read_image_file("resources/dice.bmp"));
-	s.images.emplace_back(swegl::read_image_file("resources/tex.bmp"));
-	s.images.emplace_back(swegl::read_image_file("resources/mercator.bmp"));
-
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  0});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  2});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,255,255}, 1, 1, -1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,100}, 1, 1, -1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,255,128,100}, 1, 1, -1});
-	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,128,100}, 1, 1, -1});
-
-	s.ambient_light_intensity = 0.2f;
-
-	s.sun_direction = swegl::normal_t{1.0, -1.0, -1.0};
-	s.sun_direction.normalize();
-	s.sun_intensity = 0.3;
-
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 0}, 0.6});
-	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 0}, 100});
-
-
-	//*
-	auto tore = swegl::make_tore(100, 1);
-	tore.rotation = swegl::matrix44_t::Identity;
-	tore.rotation.rotate_z(0.5);
-	tore.translation = swegl::vertex_t(0.0f, 0.0f, -2.5f);
-	//tore.SetBumpMap(bumpmap);
-	s.nodes.emplace_back(std::move(tore));
-	//*/
-
-	//*
-	auto cube = swegl::make_cube(1.0f, 0);
-	cube.scale.x() = 2;
-	cube.rotation = swegl::matrix44_t::Identity;
-	cube.translation = swegl::vertex_t(0.0f, 0.0f, -0);
-	//c->SetBumpMap(bumpmap);
-	s.nodes.emplace_back(std::move(cube));
-	//*/
-
-	///*
-	auto sphere = swegl::make_sphere(100, 2.0f, 2);
-	sphere.rotation = swegl::matrix44_t::Identity;
-	sphere.translation = swegl::vertex_t(3.0f, 0.0f, -1.0f);
-	//c->SetBumpMap(bumpmap);
-	s.nodes.emplace_back(std::move(sphere));
-	//*/
-
-	//*
-	auto tri = swegl::make_tri(1, 5);
-	tri.rotation = swegl::matrix44_t::Identity;
-	tri.translation = swegl::vertex_t(1.0f, 0.5f, 2.1f);
-	s.nodes.emplace_back(std::move(tri));
-	//*/
-
-	//*
-	auto cube2 = swegl::make_cube(0.1f, 4);
-	cube2.rotation = swegl::matrix44_t::Identity;
-	cube2.translation = s.point_source_lights[0].position;
-	//c->SetBumpMap(bumpmap);
-	s.nodes.emplace_back(std::move(cube2));
-	//*/
-	
-	//*
-	auto cube3 = swegl::make_cube(0.1f, 4);
-	cube3.rotation = swegl::matrix44_t::Identity;
-	cube3.translation = s.point_source_lights[1].position;
-	//c->SetBumpMap(bumpmap);
-	s.nodes.emplace_back(std::move(cube3));
-	//*/
-
-
-	//*
-	auto tri2 = swegl::make_tri(1, 6);
-	tri2.rotation = swegl::matrix44_t::Identity;
-	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
-	s.nodes.emplace_back(std::move(tri2));
-	//*/
-	//*
-	auto tri3 = swegl::make_tri(1, 7);
-	tri3.rotation = swegl::matrix44_t::Identity;
-	tri3.translation = swegl::vertex_t(1.0f, 0.5f, 2.2f);
-	s.nodes.emplace_back(std::move(tri3));
-	//*/
-
-	for (auto & node : s.nodes)
-		for (auto & primitive : node.primitives)
-			primitive.vertices.reserve(primitive.vertices.size()+2);
-
-	for (int i=0 ; i<(int)s.nodes.size() ; i++)
-		s.root_nodes.push_back(i);
+	s.triangles.push_back(swegl::new_triangle_t{
+			0, 1, 2, // vertex_idx i0, i1, i2; // indices into scene.vertices
+			{0, 0, 1}, // normal_t normal;
+			{0, 0, 1}, // normal_t normal_world;
+			0, // int material_idx;      // index into scene.materials
+			0, // node_idx
+			true, // bool yes = true;
+			false // backface
+		});
 
 	return s;
 }
 
-int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, swegl::scene_t & scene)
+//swegl::scene_t build_scene_2()
+//{
+//	swegl::scene_t s;
+//
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1, -1, false});
+//	s.ambient_light_intensity = 0.2f;
+//	s.sun_direction = swegl::normal_t{1.0, -1.0, -1.0};
+//	s.sun_direction.normalize();
+//	s.sun_intensity = 0.7;
+//
+//	//*
+//	auto tri2 = swegl::make_tri(1, 0);
+//	tri2.rotation = swegl::matrix44_t::Identity;
+//	//tri2.rotation.rotate_x(3.14/4);
+//	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
+//	s.nodes.emplace_back(std::move(tri2));
+//	//*/
+//
+//	for (auto & node : s.nodes)
+//		for (auto & primitive : node.primitives)
+//			primitive.vertices.reserve(primitive.vertices.size()+2);
+//
+//	for (int i=0 ; i<(int)s.nodes.size() ; i++)
+//		s.root_nodes.push_back(i);
+//	
+//	return s;
+//}
+//
+//swegl::scene_t build_scene()
+//{
+//	swegl::scene_t s;
+//
+//	s.images.emplace_back(swegl::read_image_file("resources/dice.bmp"));
+//	s.images.emplace_back(swegl::read_image_file("resources/tex.bmp"));
+//	s.images.emplace_back(swegl::read_image_file("resources/mercator.bmp"));
+//
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  0});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  1});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,128,255}, 1, 1,  2});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,255}, 1, 1, -1});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,255,255}, 1, 1, -1});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,128,255,100}, 1, 1, -1});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{128,255,128,100}, 1, 1, -1});
+//	s.materials.push_back(swegl::material_t{swegl::pixel_colors{255,128,128,100}, 1, 1, -1});
+//
+//	s.ambient_light_intensity = 0.2f;
+//
+//	s.sun_direction = swegl::normal_t{1.0, -1.0, -1.0};
+//	s.sun_direction.normalize();
+//	s.sun_intensity = 0.3;
+//
+//	s.point_source_lights.emplace_back(swegl::point_source_light{{0.0, 3.0, 0}, 0.6});
+//	s.point_source_lights.emplace_back(swegl::point_source_light{{0.5, 2.0, 0}, 100});
+//
+//
+//	//*
+//	auto tore = swegl::make_tore(100, 1);
+//	tore.rotation = swegl::matrix44_t::Identity;
+//	tore.rotation.rotate_z(0.5);
+//	tore.translation = swegl::vertex_t(0.0f, 0.0f, -2.5f);
+//	//tore.SetBumpMap(bumpmap);
+//	s.nodes.emplace_back(std::move(tore));
+//	//*/
+//
+//	//*
+//	auto cube = swegl::make_cube(1.0f, 0);
+//	cube.scale.x() = 2;
+//	cube.rotation = swegl::matrix44_t::Identity;
+//	cube.translation = swegl::vertex_t(0.0f, 0.0f, -0);
+//	//c->SetBumpMap(bumpmap);
+//	s.nodes.emplace_back(std::move(cube));
+//	//*/
+//
+//	///*
+//	auto sphere = swegl::make_sphere(100, 2.0f, 2);
+//	sphere.rotation = swegl::matrix44_t::Identity;
+//	sphere.translation = swegl::vertex_t(3.0f, 0.0f, -1.0f);
+//	//c->SetBumpMap(bumpmap);
+//	s.nodes.emplace_back(std::move(sphere));
+//	//*/
+//
+//	//*
+//	auto tri = swegl::make_tri(1, 5);
+//	tri.rotation = swegl::matrix44_t::Identity;
+//	tri.translation = swegl::vertex_t(1.0f, 0.5f, 2.1f);
+//	s.nodes.emplace_back(std::move(tri));
+//	//*/
+//
+//	//*
+//	auto cube2 = swegl::make_cube(0.1f, 4);
+//	cube2.rotation = swegl::matrix44_t::Identity;
+//	cube2.translation = s.point_source_lights[0].position;
+//	//c->SetBumpMap(bumpmap);
+//	s.nodes.emplace_back(std::move(cube2));
+//	//*/
+//	
+//	//*
+//	auto cube3 = swegl::make_cube(0.1f, 4);
+//	cube3.rotation = swegl::matrix44_t::Identity;
+//	cube3.translation = s.point_source_lights[1].position;
+//	//c->SetBumpMap(bumpmap);
+//	s.nodes.emplace_back(std::move(cube3));
+//	//*/
+//
+//
+//	//*
+//	auto tri2 = swegl::make_tri(1, 6);
+//	tri2.rotation = swegl::matrix44_t::Identity;
+//	tri2.translation = swegl::vertex_t(1.0f, 0.5f, 2.0f);
+//	s.nodes.emplace_back(std::move(tri2));
+//	//*/
+//	//*
+//	auto tri3 = swegl::make_tri(1, 7);
+//	tri3.rotation = swegl::matrix44_t::Identity;
+//	tri3.translation = swegl::vertex_t(1.0f, 0.5f, 2.2f);
+//	s.nodes.emplace_back(std::move(tri3));
+//	//*/
+//
+//	for (auto & node : s.nodes)
+//		for (auto & primitive : node.primitives)
+//			primitive.vertices.reserve(primitive.vertices.size()+2);
+//
+//	for (int i=0 ; i<(int)s.nodes.size() ; i++)
+//		s.root_nodes.push_back(i);
+//
+//	return s;
+//}
+
+template<typename S>
+int handle_keyboard_events(swegl::sdl_t & sdl, swegl::camera_t & camera, S & scene)
 {
 	static int keystick = SDL_GetTicks();
 	static float cameraxrotation;
@@ -325,18 +386,18 @@ int main(int argc, char ** argv)
 {
 	swegl::sdl_t sdl(10, 1600, 800, 600, "test_1");
 
-	swegl::scene_t scene = [&]()
+	swegl::new_scene_t scene = [&]()
 		{
 			if (argc == 1)
-				return build_scene();
+				return build_new_scene();
 			else {
-				swegl::scene_t scene = swegl::load_scene(argv[1]);
+				swegl::new_scene_t scene = swegl::load_scene(argv[1]);
 				scene.ambient_light_intensity = 0.3f;
 				scene.sun_direction = swegl::normal_t(1.0, -2.0, -1.0);
 				scene.sun_intensity = 0.7;
-				for (auto & node : scene.nodes)
-					for (auto & primitive : node.primitives)
-						primitive.vertices.reserve(primitive.vertices.size()+2);
+				//for (auto & node : scene.nodes)
+				//	for (auto & primitive : node.primitives)
+				//		primitive.vertices.reserve(primitive.vertices.size()+2);
 				return scene;
 			}
 		}();
@@ -371,7 +432,8 @@ int main(int argc, char ** argv)
 			//sdl.clear(0, 0, 100, 30);
 
 			//swegl::render(scene, viewport1, viewport2);
-			swegl::render(scene, viewport);
+			//swegl::render(scene, viewport);
+			swegl::render(1, scene, viewport);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 

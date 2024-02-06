@@ -34,7 +34,8 @@ struct post_shader_t
 	{
 		if (vp.m_got_transparency == false)
 			return;
-
+		copy_first_transparency_layer_to_screen(0, vp.m_h, vp);
+		/*
 		std::vector<std::thread> vt;
 		vt.reserve(hardware_concurrency);
 
@@ -44,6 +45,7 @@ struct post_shader_t
 			vt.emplace_back([&vp,i,this](){ copy_first_transparency_layer_to_screen(i*vp.m_h/hardware_concurrency, (i+1)*vp.m_h/hardware_concurrency, vp); });
 		for (auto & t : vt)
 			t.join();
+		*/
 	}
 };
 

@@ -85,6 +85,10 @@ namespace swegl
 		flatten(m_transparency_layers[0]);
 	}
 
+	void viewport_t::clear(const fraction_t & f)
+	{
+		clear();
+	}
 	void viewport_t::clear()
 	{
 		if (m_x == 0 && m_w == m_screen->w)
@@ -120,7 +124,7 @@ namespace swegl
 		                        v.z()          );
 	}
 
-	void viewport_t::transform(mesh_vertex_t & mv) const
+	void viewport_t::transform(new_mesh_vertex_t & mv) const
 	{
 		const auto & m = m_viewportmatrix;
 		mv.v_viewport.x() = m[0][0]*mv.v_viewport.x() + m[0][3];

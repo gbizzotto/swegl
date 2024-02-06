@@ -1,6 +1,8 @@
 
 #include <filesystem>
 #include <cassert>
+#include <set>
+#include <vector>
 
 #include <swegl/data/gltf.hpp>
 #include <json.hpp>
@@ -52,11 +54,11 @@ accessor_t::accessor_t(std::vector<buffer_view_t> & buffer_views, const nlohmann
 }
 
 
-swegl::scene_t load_scene_json(const std::string & filename, char * file_beginning_ptr, nlohmann::json & j, std::vector<view_t<char>> & buffers)
+swegl::new_scene_t load_scene_json(const std::string & filename, char * file_beginning_ptr, nlohmann::json & j, std::vector<view_t<char>> & buffers)
 {
 	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
 
-	swegl::scene_t result;
+	swegl::new_scene_t result;
 
 	std::vector<buffer_view_t> buffer_views;
 	for (const auto & buffer_view : j["bufferViews"])
@@ -150,78 +152,24 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 		}
 	}
 
-	std::vector<node_t> temp_meshes;
-	if (j.contains("meshes"))
+	struct fake_mesh_t
 	{
-		temp_meshes.reserve(j["meshes"].size());
-		auto & meshes = j["meshes"];
-		for (const auto & mesh : meshes)
+		std::map<new_mesh_vertex_t,int> vertices;  // unique vertices of the mesh (duplicates removed) + int will contain the index in the map
+		using temp_idx = std::map<new_mesh_vertex_t,int>::iterator;
+		struct fake_primitive_t
 		{
-			if ( ! mesh.contains("primitives"))
-				continue;
+			std::vector<temp_idx> temp_indices; // conversion table between gltf indices and our vertices
+			std::vector<std::tuple<temp_idx,temp_idx,temp_idx>> triangles; // i0, i1, i2 point into vertices
+			int material_idx;
+		};
+		std::vector<fake_primitive_t> fake_primitives;
+		int node_idx;
+	};
+	std::vector<fake_mesh_t> fake_meshes;
+	if (j.contains("meshes"))
+		fake_meshes.resize(j["meshes"].size());
 
-			node_t & node = temp_meshes.emplace_back();
-			for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
-			{
-				primitive_t & primitive = node.primitives.emplace_back();
 
-				primitive.material_id = mesh["primitives"][i].value("material", -1);
-				primitive.mode = (decltype(primitive.mode)) mesh["primitives"][i].value("mode", 4);
-
-				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<size_t>() < accessors.size());
-				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<int>() >= 0);
-				accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
-
-				primitive.vertices.resize(accessor_vertices.count + 2);
-				primitive.vertices.reserve(accessor_vertices.count + 2);
-				for (int i=0 ; i<accessor_vertices.count ; i++)
-				{
-					auto & vertex = primitive.vertices[i];
-					vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+i*accessor_vertices.stride];
-					vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+i*accessor_vertices.stride];
-					vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+i*accessor_vertices.stride];
-				}
-				if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
-				{
-					assert(mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<size_t>() < accessors.size());
-					assert(mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>() >= 0);
-					accessor_t & accessor_normals = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
-					for (int i=0 ; i<accessor_normals.count ; i++)
-					{
-						auto & vertex = primitive.vertices[i];
-						vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+i*accessor_normals.stride];
-						vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+i*accessor_normals.stride];
-						vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+i*accessor_normals.stride];
-					}
-				}
-				if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
-				{
-					assert(mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<size_t>() < accessors.size());
-					assert(mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>() >= 0);
-					accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
-					for (int i=0 ; i<accessor_texcoords.count ; i++)
-					{
-						auto & vertex = primitive.vertices[i];
-						vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[4+i*accessor_texcoords.stride];
-						vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[0+i*accessor_texcoords.stride];				
-					}
-				}
-
-				if (mesh["primitives"][i].contains("indices"))
-				{
-					assert(mesh["primitives"][i]["indices"].template get<size_t>() < accessors.size());
-					assert(mesh["primitives"][i]["indices"].template get<int>() >= 0);
-					accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
-					primitive.indices.reserve(accessor_indices.count);
-					for (int i=0 ; i<accessor_indices.count ; i++)
-					{
-						assert(i*accessor_indices.buffer_view.byte_stride + 3 < (int)accessor_indices.buffer_view.data.size());
-						primitive.indices.push_back(*(std::uint16_t*)&accessor_indices.buffer_view.data[i*accessor_indices.stride]);
-					}
-				}
-			}
-		}
-	}
 
 	if (j.contains("nodes"))
 	{
@@ -306,7 +254,10 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 				node.rotation = m;
 			}
 			if (jnode.contains("mesh"))
-				node.primitives = std::move(temp_meshes[jnode["mesh"].template get<int>()].primitives);
+			{
+				auto & fake_mesh = fake_meshes[jnode["mesh"].template get<int>()];
+				fake_mesh.node_idx = result.nodes.size() - 1;
+			}
 			if (jnode.contains("children"))
 				for (size_t k=0 ; k<jnode["children"].size() ; k++)
 					node.children_idx.push_back(jnode["children"][k].template get<int>());
@@ -320,6 +271,143 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 			if (result.nodes[i].root)
 				result.root_nodes.emplace_back(i);
 	}
+
+
+	enum index_mode_t
+	{
+		POINTS         = 0,
+		LINES          = 1,
+		LINE_LOOP      = 2,
+		LINE_STRIP     = 3,
+		TRIANGLES      = 4,
+		TRIANGLE_STRIP = 5,
+		TRIANGLE_FAN   = 6,
+	};
+
+	size_t total_vertice_count = 0;
+
+	if (j.contains("meshes"))
+	{
+		auto & jmeshes = j["meshes"];
+		for (size_t jmesh_idx = 0 ; jmesh_idx < jmeshes.size() ; jmesh_idx++)
+		{
+			const auto & mesh = jmeshes[jmesh_idx];
+			if ( ! mesh.contains("primitives"))
+				continue;
+
+			fake_mesh_t & fake_mesh = fake_meshes[jmesh_idx];
+			
+			for (size_t i=0 ; i<mesh["primitives"].size() ; i++)
+			{
+				fake_mesh_t::fake_primitive_t & fake_primitive = fake_mesh.fake_primitives.emplace_back();
+				//primitive_t & primitive = node.primitives.emplace_back();
+
+				fake_primitive.material_idx = mesh["primitives"][i].value("material", -1);
+				index_mode_t mode = (index_mode_t) mesh["primitives"][i].value("mode", 4);
+
+				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<size_t>() < accessors.size());
+				assert(mesh["primitives"][i]["attributes"]["POSITION"].template get<int>() >= 0);
+				accessor_t & accessor_vertices = accessors[mesh["primitives"][i]["attributes"]["POSITION"].template get<int>()];
+
+				for (int vi=0 ; vi<accessor_vertices.count ; vi++)
+				{
+					new_mesh_vertex_t vertex;
+					vertex.node_idx = fake_mesh.node_idx;
+					vertex.v.x() = *(float*)&accessor_vertices.buffer_view.data[0+vi*accessor_vertices.stride];
+					vertex.v.y() = *(float*)&accessor_vertices.buffer_view.data[4+vi*accessor_vertices.stride];
+					vertex.v.z() = *(float*)&accessor_vertices.buffer_view.data[8+vi*accessor_vertices.stride];
+
+					if (mesh["primitives"][i]["attributes"].contains("NORMAL"))
+					{
+						accessor_t & accessor_normals = accessors[mesh["primitives"][i]["attributes"]["NORMAL"  ].template get<int>()];
+						vertex.normal.x() = *(float*)&accessor_normals.buffer_view.data[0+vi*accessor_normals.stride];
+						vertex.normal.y() = *(float*)&accessor_normals.buffer_view.data[4+vi*accessor_normals.stride];
+						vertex.normal.z() = *(float*)&accessor_normals.buffer_view.data[8+vi*accessor_normals.stride];
+					}
+					else
+					{
+						vertex.normal.x() = 0;
+						vertex.normal.y() = 0;
+						vertex.normal.z() = 0;
+					}
+					if (mesh["primitives"][i]["attributes"].contains("TEXCOORD_0"))
+					{
+						accessor_t & accessor_texcoords = accessors[mesh["primitives"][i]["attributes"]["TEXCOORD_0"].template get<int>()];
+						vertex.tex_coords.x() = *(float*)&accessor_texcoords.buffer_view.data[4+vi*accessor_texcoords.stride];
+						vertex.tex_coords.y() = *(float*)&accessor_texcoords.buffer_view.data[0+vi*accessor_texcoords.stride];
+					}
+					else
+					{
+						vertex.tex_coords.x() = 0;
+						vertex.tex_coords.y() = 0;
+					}
+
+					++total_vertice_count;
+					auto it = fake_mesh.vertices.insert(std::make_pair(vertex,0)).first;
+					fake_primitive.temp_indices.push_back(it);
+				}
+
+				if (mesh["primitives"][i].contains("indices"))
+				{
+					assert(mesh["primitives"][i]["indices"].template get<size_t>() < accessors.size());
+					assert(mesh["primitives"][i]["indices"].template get<int>() >= 0);
+					accessor_t & accessor_indices = accessors[mesh["primitives"][i]["indices"].template get<int>()];
+					for (int j=2 ; j<accessor_indices.count ; j++)
+					{
+						fake_primitive.triangles.emplace_back();
+						auto & triangle = fake_primitive.triangles.back();
+						if (mode == index_mode_t::TRIANGLES)
+						{
+							std::get<0>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-2)*accessor_indices.stride]];
+							std::get<1>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-1)*accessor_indices.stride]];
+							std::get<2>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-0)*accessor_indices.stride]];
+							j+=2;
+						}
+						else if (mode == index_mode_t::TRIANGLE_STRIP)
+						{
+							std::get<0>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-2        )*accessor_indices.stride]];
+							std::get<1>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-1+(j&0x1))*accessor_indices.stride]];
+							std::get<2>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j  -(j&0x1))*accessor_indices.stride]];
+						}
+						else if (mode == index_mode_t::TRIANGLE_FAN)
+						{
+							std::get<0>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(  0)*accessor_indices.stride]];
+							std::get<1>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-1)*accessor_indices.stride]];
+							std::get<2>(triangle) = fake_primitive.temp_indices[*(std::uint16_t*)&accessor_indices.buffer_view.data[(j-0)*accessor_indices.stride]];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// let's flatten fake_meshes into scene
+	for (auto & fake_mesh : fake_meshes)
+	{
+		unsigned int base_idx = result.vertices.size();
+		for (int i=0 ; auto & [it,idx] : fake_mesh.vertices)
+			idx = i++;
+		for (auto & fake_vertex : fake_mesh.vertices)
+			result.vertices.push_back(fake_vertex.first);
+		for (auto & fake_primitive : fake_mesh.fake_primitives)
+			for (auto & fake_triangle : fake_primitive.triangles)
+			{
+				result.triangles.push_back(new_triangle_t{
+						base_idx + (unsigned int)std::get<0>(fake_triangle)->second, // i0
+						base_idx + (unsigned int)std::get<1>(fake_triangle)->second, // i1
+						base_idx + (unsigned int)std::get<2>(fake_triangle)->second, // i2
+						{0,0,0}, // normal
+						{0,0,0}, // normal_workd
+						fake_primitive.material_idx,
+						fake_mesh.node_idx,
+						true, // yes
+						false // backface
+					});
+			}
+	}
+
+	std::cout << "Scene's vertex count: " << total_vertice_count << std::endl
+	          << "Our vertex count: " << result.vertices.size() << std::endl;
 
 	struct sampler_t
 	{
@@ -407,7 +495,7 @@ swegl::scene_t load_scene_json(const std::string & filename, char * file_beginni
 	return result;
 }
 
-swegl::scene_t load_scene_glb(const std::string & filename)
+swegl::new_scene_t load_scene_glb(const std::string & filename)
 {
 	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
 
@@ -434,7 +522,7 @@ swegl::scene_t load_scene_glb(const std::string & filename)
 
 	return load_scene_json(filename, glb_data.get(), j, buffers);
 }
-swegl::scene_t load_scene_gltf(const std::string & filename)
+swegl::new_scene_t load_scene_gltf(const std::string & filename)
 {
 	std::filesystem::path root_path = std::filesystem::path(filename).parent_path();
 	auto [gltf_data, file_size] = read_file(filename);
@@ -455,12 +543,12 @@ swegl::scene_t load_scene_gltf(const std::string & filename)
 	return load_scene_json(filename, nullptr, j, buffers);
 }
 
-swegl::scene_t load_scene(std::string filename)
+swegl::new_scene_t load_scene(std::string filename)
 {
 	std::string filename_lower = to_lower(filename);
 	     if (ends_with(filename_lower, "glb" )) return load_scene_glb (filename);
 	else if (ends_with(filename_lower, "gltf")) return load_scene_gltf(filename);
-	else                                        return scene_t();
+	else                                        return new_scene_t();
 }
 
 
