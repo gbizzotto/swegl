@@ -29,7 +29,7 @@ font_t::font_t(const char *filename)
 	dummy = fread(&dummy, 1, 4, fin); // palette size
 	dummy = fread(&dummy, 1, 4, fin); // number of important colors
 
-	std::unique_ptr<unsigned char[]> buffer(new unsigned char[data_size]);
+	auto buffer = std::make_unique<unsigned char[]>(data_size);
 
 	if (data_size != fread(buffer.get(), 1, data_size, fin))
 		return;

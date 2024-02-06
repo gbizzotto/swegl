@@ -1,4 +1,6 @@
 
+#include <cassert>
+
 #include <swegl/render/pixel_shaders.hpp>
 #include <swegl/render/viewport.hpp>
 #include <swegl/render/colors.hpp>
@@ -344,20 +346,30 @@ int pixel_shader_texture_bilinear::shade(float progress)
 	u = floor(u2);
 	v = floor(v2);
 
-	int v1m = ((int)v1+theight) % (int)theight;
-	//if (v1m < 0)
-	//	v1m += theight;
+	int v1m = ((int)v1) % (int)theight;
+	while (v1m < 0)
+		v1m += theight;
 	int v2m = v1m + 1;
-	if (v2m == theight)
+	while (v2m == theight)
 		v2m = 0;
+	int u1m = ((int)u1) % (int)twidth;
+	while (u1m < 0)
+		u1m += twidth;
+	int u2m = u1m + 1;
+	while (u2m == twidth)
+		u2m = 0;
+	
+	assert(u1m >= 0);
+	assert(u1m <  twidth);
+	assert(u2m >= 0);
+	assert(u2m <  twidth);
+	assert(v1m >= 0);
+	assert(v1m <  theight);
+	assert(v2m >= 0);
+	assert(v2m <  theight);
+
 	v1m *= twidth;
 	v2m *= twidth;
-	int u1m = ((int)u1+twidth) % (int)twidth;
-	//if (u1m < 0)
-	//	u1m += twidth;
-	int u2m = u1m + 1;
-	if (u2m == twidth)
-		u2m = 0;
 	
 	return ( (pc[v1m + u1m] * ((u - u1) * (v - v1)))
 	        +(pc[v2m + u1m] * ((u - u1) * (v2 - v)))

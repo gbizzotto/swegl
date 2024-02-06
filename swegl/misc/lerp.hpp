@@ -7,7 +7,7 @@ namespace swegl
 template<typename T>
 T lerp_unclipped(const T & a, const T & b, float x)
 {
-	return a + b*x;
+	return a + (b-a)*x;
 }
 template<typename T>
 float inv_lerp_unclipped(const T & a, const T & b, const T & x)
@@ -26,7 +26,7 @@ T lerp_clipped(const T & a, const T & b, float x)
 {
 	if (x<=0) return a;
 	if (x>=b) return b;
-	return a + b*x;
+	return a + (b-a)*x;
 }
 template<typename T>
 float inv_lerp_clipped(const T & a, const T & b, const T & x)

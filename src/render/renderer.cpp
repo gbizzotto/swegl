@@ -26,7 +26,7 @@ struct line_side
 };
 
 void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
-void fill_triangle(new_triangle_t &, new_scene_t &, viewport_t &);
+void fill_triangle(new_triangle_t &, std::vector<new_mesh_vertex_t> &, viewport_t &);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
                         viewport_t & vp,
@@ -49,18 +49,21 @@ void _render(fraction_t thread_number, new_scene_t & scene, viewport_t & viewpor
 
 	for (auto & triangle : scene.triangles)
 		if (triangle.yes)
-			fill_triangle(triangle, scene, viewport);
+			fill_triangle(triangle, scene.vertices, viewport);
+	for (auto & triangle : scene.thread_local_extra_triangles[thread_number.numerator])
+		if (triangle.yes)
+			fill_triangle(triangle, scene.thread_local_extra_vertices[thread_number.numerator], viewport);
 
 	viewport.flatten();
 	viewport.m_post_shader->shade(viewport);
 }
 
 
-void fill_triangle(new_triangle_t & triangle, new_scene_t & scene, viewport_t & vp)
+void fill_triangle(new_triangle_t & triangle, std::vector<new_mesh_vertex_t> & vertices, viewport_t & vp)
 {
-	const new_mesh_vertex_t * mv0 = &scene.vertices[triangle.i0];
-	const new_mesh_vertex_t * mv1 = &scene.vertices[triangle.i1];
-	const new_mesh_vertex_t * mv2 = &scene.vertices[triangle.i2];
+	const new_mesh_vertex_t * mv0 = &vertices[triangle.i0];
+	const new_mesh_vertex_t * mv1 = &vertices[triangle.i1];
+	const new_mesh_vertex_t * mv2 = &vertices[triangle.i2];
 
 	// Sort points by screen Y ASC
 	if (mv1->v_viewport.y() < mv0->v_viewport.y())
