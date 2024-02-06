@@ -37,7 +37,7 @@ struct new_vertex_shader_t
 		}
 	}
 
-	static inline void cut_triangle_if_needed(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, new_triangle_t & triangle, bool face_normals, bool vertex_normals)
+	static inline void cut_triangle_if_needed(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix)
 	{
 		auto & camera_matrix = viewport.camera().m_viewmatrix;
 
@@ -84,8 +84,8 @@ struct new_vertex_shader_t
 				new_vertex.tex_coords = mv0->tex_coords;
 				if (vertex_normals)
 				{
-					new_vertex.node_idx = mv0->node_idx;
-					new_vertex.normal   = mv0->normal;
+					new_vertex.node_idx     = mv0->node_idx;
+					new_vertex.normal_world = mv0->normal_world;
 				}
 			}
 			// just copy mv1
@@ -96,8 +96,8 @@ struct new_vertex_shader_t
 				new_vertex.tex_coords = mv1->tex_coords;
 				if (vertex_normals)
 				{
-					new_vertex.node_idx = mv1->node_idx;
-					new_vertex.normal   = mv1->normal;
+					new_vertex.node_idx     = mv1->node_idx;
+					new_vertex.normal_world = mv1->normal_world;
 				}
 			}
 			// interpoate mv0-mv2
@@ -110,17 +110,13 @@ struct new_vertex_shader_t
 				{
 					new_vertex.node_idx = mv0->node_idx;
 					if (mv0->normal == mv1->normal)
-						new_vertex.normal = mv0->normal;
+						new_vertex.normal_world = mv0->normal_world;
 					else
-						new_vertex.normal = lerp_unclipped(mv0->normal, mv2->normal, cut);
+						new_vertex.normal_world = lerp_unclipped(mv0->normal_world, mv2->normal_world, cut);
 				}
-				new_vertex.v_viewport = transform(new_vertex.v_world, camera_matrix);
-				new_vertex.v_viewport = transform(new_vertex.v_viewport, viewport.camera().m_projectionmatrix);
-				if (new_vertex.v_viewport.z() != 0)
-				{
-					new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
-					new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
-				}
+				new_vertex.v_viewport = transform(new_vertex.v_world, matrix);
+				new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
+				new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
 			}
 			// interpoate mv1-mv2
 			{
@@ -132,17 +128,13 @@ struct new_vertex_shader_t
 				{
 					new_vertex.node_idx = mv2->node_idx;
 					if (mv1->normal == mv2->normal)
-						new_vertex.normal = mv1->normal;
+						new_vertex.normal_world = mv1->normal_world;
 					else
-						new_vertex.normal = lerp_unclipped(mv1->normal, mv2->normal, cut);
+						new_vertex.normal_world = lerp_unclipped(mv1->normal_world, mv2->normal_world, cut);
 				}
-				new_vertex.v_viewport = transform(new_vertex.v_world, camera_matrix);
-				new_vertex.v_viewport = transform(new_vertex.v_viewport, viewport.camera().m_projectionmatrix);
-				if (new_vertex.v_viewport.z() != 0)
-				{
-					new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
-					new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
-				}
+				new_vertex.v_viewport = transform(new_vertex.v_world, matrix);
+				new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
+				new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
 			}
 			{
 				auto & new_triangle = new_triangles.emplace_back();
@@ -161,8 +153,8 @@ struct new_vertex_shader_t
 				new_triangle.material_idx = triangle.material_idx;
 				if (face_normals)
 				{
-					new_triangle.node_idx = triangle.node_idx;
-					new_triangle.normal   = triangle.normal;
+					new_triangle.node_idx     = triangle.node_idx;
+					new_triangle.normal_world = triangle.normal_world;
 				}
 			}
 			{
@@ -182,8 +174,8 @@ struct new_vertex_shader_t
 				new_triangle.material_idx = triangle.material_idx;
 				if (face_normals)
 				{
-					new_triangle.node_idx = triangle.node_idx;
-					new_triangle.normal   = triangle.normal;
+					new_triangle.node_idx     = triangle.node_idx;
+					new_triangle.normal_world = triangle.normal_world;
 				}
 			}
 		}
@@ -199,8 +191,8 @@ struct new_vertex_shader_t
 				new_vertex.tex_coords = mv0->tex_coords;
 				if (vertex_normals)
 				{
-					new_vertex.node_idx = mv0->node_idx;
-					new_vertex.normal = mv0->normal;
+					new_vertex.node_idx     = mv0->node_idx;
+					new_vertex.normal_world = mv0->normal_world;
 				}
 			}
 			// interpoate mv0-mv1
@@ -213,17 +205,13 @@ struct new_vertex_shader_t
 				{
 					new_vertex.node_idx = mv1->node_idx;
 					if (mv0->normal == mv1->normal)
-						new_vertex.normal = mv0->normal;
+						new_vertex.normal_world = mv0->normal_world;
 					else
-						new_vertex.normal = lerp_unclipped(mv0->normal, mv1->normal, cut);
+						new_vertex.normal_world = lerp_unclipped(mv0->normal_world, mv1->normal_world, cut);
 				}
-				new_vertex.v_viewport = transform(new_vertex.v_world, camera_matrix);
-				new_vertex.v_viewport = transform(new_vertex.v_viewport, viewport.camera().m_projectionmatrix);
-				if (new_vertex.v_viewport.z() != 0)
-				{
-					new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
-					new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
-				}
+				new_vertex.v_viewport = transform(new_vertex.v_world, matrix);
+				new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
+				new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
 			}
 			// interpoate mv0-mv2
 			{
@@ -235,17 +223,13 @@ struct new_vertex_shader_t
 				{
 					new_vertex.node_idx = mv2->node_idx;
 					if (mv0->normal == mv2->normal)
-						new_vertex.normal = mv0->normal;
+						new_vertex.normal_world = mv0->normal_world;
 					else
-						new_vertex.normal = lerp_unclipped(mv0->normal, mv2->normal, cut);
+						new_vertex.normal_world = lerp_unclipped(mv0->normal_world, mv2->normal_world, cut);
 				}
-				new_vertex.v_viewport = transform(new_vertex.v_world, camera_matrix);
-				new_vertex.v_viewport = transform(new_vertex.v_viewport, viewport.camera().m_projectionmatrix);
-				if (new_vertex.v_viewport.z() != 0)
-				{
-					new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
-					new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
-				}
+				new_vertex.v_viewport = transform(new_vertex.v_world, matrix);
+				new_vertex.v_viewport.x() /= fabs(new_vertex.v_viewport.z());
+				new_vertex.v_viewport.y() /= fabs(new_vertex.v_viewport.z());
 			}
 
 			auto & new_triangle = new_triangles.emplace_back();
@@ -264,84 +248,54 @@ struct new_vertex_shader_t
 			new_triangle.material_idx = triangle.material_idx;
 			if (face_normals)
 			{
-				new_triangle.node_idx = triangle.node_idx;
-				new_triangle.normal   = triangle.normal;
+				new_triangle.node_idx     = triangle.node_idx;
+				new_triangle.normal_world = triangle.normal_world;
 			}
 		}
 	}
 
 	static inline void world_to_screen(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, bool face_normals, bool vertex_normals)
 	{
-		// world to camera
-		auto & camera_matrix = viewport.camera().m_viewmatrix;
-		for (auto & v : scene.vertices)
-			v.v_viewport = transform(v.v_world, camera_matrix);
-
 		auto & extra_vertices  = scene.thread_local_extra_vertices [thread_number.numerator];
 		auto & extra_triangles = scene.thread_local_extra_triangles[thread_number.numerator];
-
 		extra_vertices .clear();
 		extra_triangles.clear();
 
-		for (auto & triangle : scene.triangles)
-		{
-			// is the triangle fully behind the camera?
-			triangle.yes = scene.vertices[triangle.i0].v_viewport.z() > 0.001
-			            || scene.vertices[triangle.i1].v_viewport.z() > 0.001
-			            || scene.vertices[triangle.i2].v_viewport.z() > 0.001;
-			if (triangle.yes)
-			{
-				scene.vertices[triangle.i0].yes = true;
-				scene.vertices[triangle.i1].yes = true;
-				scene.vertices[triangle.i2].yes = true;
-			}
-		}
-
-		// camera to frustum
+		// world to camera
+		auto matrix = viewport.m_viewportmatrix * viewport.camera().m_projectionmatrix * viewport.camera().m_viewmatrix;
 		for (auto & v : scene.vertices)
 		{
-			if ( ! v.yes)
-				continue;
-			v.yes = false;
-			v.v_viewport = transform(v.v_viewport, viewport.camera().m_projectionmatrix);
-			if (v.v_viewport.z() != 0)
-			{
-				v.v_viewport.x() /= fabs(v.v_viewport.z());
-				v.v_viewport.y() /= fabs(v.v_viewport.z());
-			}
+			v.v_viewport = transform(v.v_world, matrix);
+			v.v_viewport.x() /= fabs(v.v_viewport.z());
+			v.v_viewport.y() /= fabs(v.v_viewport.z());
+			if (vertex_normals)
+				v.normal_world = scene.nodes[v.node_idx].transform(v.normal);
 		}
 
-		// flag YES vertices that have triangles in the frustum
 		for (auto & triangle : scene.triangles)
 		{
-			if ( ! triangle.yes)
-				continue;
-
-			// frustum x and y clipping
-			if ( (scene.vertices[triangle.i0].v_viewport.x() <    -1 && scene.vertices[triangle.i1].v_viewport.x() < -1    && scene.vertices[triangle.i2].v_viewport.x() <    -1)
-			   ||(scene.vertices[triangle.i0].v_viewport.x() >     1 && scene.vertices[triangle.i1].v_viewport.x() >  1    && scene.vertices[triangle.i2].v_viewport.x() >     1)
-			   ||(scene.vertices[triangle.i0].v_viewport.y() <    -1 && scene.vertices[triangle.i1].v_viewport.y() < -1    && scene.vertices[triangle.i2].v_viewport.y() <    -1)
-			   ||(scene.vertices[triangle.i0].v_viewport.y() >     1 && scene.vertices[triangle.i1].v_viewport.y() >  1    && scene.vertices[triangle.i2].v_viewport.y() >     1)
-			   ||(scene.vertices[triangle.i0].v_viewport.z() < 0.001 && scene.vertices[triangle.i1].v_viewport.z() < 0.001 && scene.vertices[triangle.i2].v_viewport.z() < 0.001)
+			// frustum clipping
+			if ( (scene.vertices[triangle.i0].v_viewport.x() < viewport.m_x              && scene.vertices[triangle.i1].v_viewport.x() < viewport.m_x              && scene.vertices[triangle.i2].v_viewport.x() < viewport.m_x              )
+			   ||(scene.vertices[triangle.i0].v_viewport.x() > viewport.m_x+viewport.m_w && scene.vertices[triangle.i1].v_viewport.x() > viewport.m_x+viewport.m_w && scene.vertices[triangle.i2].v_viewport.x() > viewport.m_x+viewport.m_w )
+			   ||(scene.vertices[triangle.i0].v_viewport.y() < viewport.m_y              && scene.vertices[triangle.i1].v_viewport.y() < viewport.m_y              && scene.vertices[triangle.i2].v_viewport.y() < viewport.m_y              )
+			   ||(scene.vertices[triangle.i0].v_viewport.y() > viewport.m_y+viewport.m_h && scene.vertices[triangle.i1].v_viewport.y() > viewport.m_y+viewport.m_h && scene.vertices[triangle.i2].v_viewport.y() > viewport.m_y+viewport.m_h )
+			   ||(scene.vertices[triangle.i0].v_viewport.z() < 0.001                     && scene.vertices[triangle.i1].v_viewport.z() < 0.001                     && scene.vertices[triangle.i2].v_viewport.z() < 0.001                     )
 			   )
 		    {
 		    	triangle.yes = false;
 		    	continue;
 		    }
 
-		    // frustum znear clipping / cutting
-		    if (   scene.vertices[triangle.i0].v_viewport.z() < 0.001
-		    	|| scene.vertices[triangle.i1].v_viewport.z() < 0.001
-		    	|| scene.vertices[triangle.i2].v_viewport.z() < 0.001)
+		    if (scene.vertices[triangle.i0].v_viewport.z() < 0.001 || scene.vertices[triangle.i1].v_viewport.z() < 0.001 || scene.vertices[triangle.i2].v_viewport.z() < 0.001)
 		    {
-				cut_triangle_if_needed(thread_number, scene, viewport, triangle, face_normals, vertex_normals);
+				cut_triangle_if_needed(thread_number, scene, viewport, triangle, face_normals, vertex_normals, matrix);
 				triangle.yes = false;
 				continue;
 			}
 
 		    // backface culling
 			bool front_face_visible = (cross_2d((scene.vertices[triangle.i1].v_viewport-scene.vertices[triangle.i0].v_viewport)
-			                                   ,(scene.vertices[triangle.i2].v_viewport-scene.vertices[triangle.i0].v_viewport)).z() > 0);
+			                                   ,(scene.vertices[triangle.i2].v_viewport-scene.vertices[triangle.i0].v_viewport)).z() < 0);
 			triangle.yes = front_face_visible | scene.materials[triangle.material_idx].double_sided;
 			if ( ! triangle.yes)
 				continue;
@@ -349,36 +303,14 @@ struct new_vertex_shader_t
 
 			if (face_normals)
 				triangle.normal_world = scene.nodes[triangle.node_idx].transform(triangle.normal);
-			scene.vertices[triangle.i0].yes = true;
-			scene.vertices[triangle.i1].yes = true;
-			scene.vertices[triangle.i2].yes = true;
 		}
-		// check culling for new temp triangles
 		for (auto & triangle : extra_triangles)
 		{
 		    // backface culling
 			bool front_face_visible = (cross_2d((extra_vertices[triangle.i1].v_viewport - extra_vertices[triangle.i0].v_viewport)
-			                                   ,(extra_vertices[triangle.i2].v_viewport - extra_vertices[triangle.i0].v_viewport)).z() > 0);
+			                                   ,(extra_vertices[triangle.i2].v_viewport - extra_vertices[triangle.i0].v_viewport)).z() < 0);
 			triangle.backface = ! front_face_visible;
 			triangle.yes = front_face_visible | scene.materials[triangle.material_idx].double_sided;
-		}
-
-		// frustum to screen
-		for (auto & v : scene.vertices)
-		{
-			if ( ! v.yes)
-				continue;
-			if (vertex_normals)
-				v.normal_world = scene.nodes[v.node_idx].transform(v.normal);
-			viewport.transform(v);
-		}
-		for (auto & v : extra_vertices)
-		{
-			//if ( ! v.yes)
-			//	continue;
-			if (vertex_normals)
-				v.normal_world = scene.nodes[v.node_idx].transform(v.normal);
-			viewport.transform(v);
 		}
 	}
 };
