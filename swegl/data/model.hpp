@@ -60,8 +60,6 @@ struct node_t
 	matrix44_t vertex_original_to_world_matrix = matrix44_t::Identity;
 	matrix44_t normal_original_to_world_matrix = matrix44_t::Identity;
 
-	//std::vector<primitive_t> primitives;
-
 	std::vector<int> children_idx;
 
 	bool root = true;

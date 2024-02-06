@@ -43,6 +43,14 @@ namespace swegl
 		}
 	};
 
+	inline bool operator==(const matrix44_t & left, const matrix44_t & right)
+	{
+		return 0 == memcmp((char*)&left[0][0], (char*)&right[0][0], 16*sizeof(float));
+	}
+	inline bool operator!=(const matrix44_t & left, const matrix44_t & right)
+	{
+		return 0 != memcmp((char*)&left[0][0], (char*)&right[0][0], 16*sizeof(float));
+	}
 	//matrix44_t operator*(const matrix44_t & left, const matrix44_t & up);
 
 	template<typename O>

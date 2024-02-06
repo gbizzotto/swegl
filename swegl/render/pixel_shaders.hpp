@@ -21,7 +21,7 @@ struct pixel_shader_t
 	virtual bool need_face_normals() { return true; }
 	virtual bool need_vertex_normals() { return true; }
 	virtual void prepare_for_scene(viewport_t & viewport, new_scene_t & scene);
-	virtual void prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2) {}
+	virtual void prepare_for_triangle(new_triangle_t & , const new_mesh_vertex_t *, const new_mesh_vertex_t *, const new_mesh_vertex_t *) {}
 	virtual void prepare_for_upper_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_lower_triangle([[maybe_unused]] bool long_line_on_right) {}
 	virtual void prepare_for_scanline([[maybe_unused]] float progress_left, [[maybe_unused]] float progress_right) {}
