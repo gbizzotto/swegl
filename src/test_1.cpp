@@ -429,6 +429,7 @@ int main(int argc, char ** argv)
 		{
 			utttil::measurement m(mp);
 
+			scene.animate(clock.elapsed_seconds());
 			//sdl.clear(0, 0, 100, 30);
 
 			//swegl::render(scene, viewport1, viewport2);
@@ -437,7 +438,6 @@ int main(int argc, char ** argv)
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 
-			scene.animate(clock.elapsed_seconds());
 			if (handle_keyboard_events(sdl, viewport.camera(), scene) < 0)
 				break;
 

@@ -1,6 +1,7 @@
 
 #include <swegl/data/model.hpp>
 #include <swegl/projection/points.hpp>
+#include <swegl/render/vertex_shaders.hpp>
 
 namespace swegl
 {
@@ -82,6 +83,9 @@ void new_scene_t::animate(const float elapsed_seconds)
 				node.scale = vertex_t(frame.x(), frame.y(), frame.z());
 		}
 	}
+
+	for (int node_idx : root_nodes)
+		new_vertex_shader_t::original_to_world(*this, nodes[node_idx], matrix44_t::Identity, matrix44_t::Identity);
 }
 
 
