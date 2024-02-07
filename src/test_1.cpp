@@ -37,34 +37,31 @@ swegl::new_scene_t build_new_scene()
 	s.nodes.emplace_back();
 
 	s.vertices.push_back(swegl::new_mesh_vertex_t{
-			{0,0,0}, // vertex_t v;
-			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0,0}, // vec2f_t tex_coords;
-			{0,0,1}, // normal_t normal;
 			{0,0,0}, // normal_t normal_world;
-			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
-			true // bool yes = false;
+			{0,0,0}, // vertex_t v;
+			{0,0,1}, // normal_t normal;
+			0 // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
 		});
 	s.vertices.push_back(swegl::new_mesh_vertex_t{
-			{1,0,0}, // vertex_t v;
-			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0.5,0}, // vec2f_t tex_coords;
-			{0,0,1}, // normal_t normal;
 			{0,0,0}, // normal_t normal_world;
-			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
-			true // bool yes = false;
+			{1,0,0}, // vertex_t v;
+			{0,0,1}, // normal_t normal;
+			0 // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
 		});
 	s.vertices.push_back(swegl::new_mesh_vertex_t{
-			{0,1,0}, // vertex_t v;
-			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0,0,0}, // vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+			{0,0,0}, // vertex_t v_world;    // after transformations into world coordinates
 			{0,0.333}, // vec2f_t tex_coords;
-			{0,0,1}, // normal_t normal;
 			{0,0,0}, // normal_t normal_world;
-			0, // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
-			true // bool yes = false;
+			{0,1,0}, // vertex_t v;
+			{0,0,1}, // normal_t normal;
+			0 // int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
 		});
 
 	s.triangles.push_back(swegl::new_triangle_t{
@@ -412,7 +409,7 @@ int main(int argc, char ** argv)
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 3);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 1);
 	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
 	swegl::post_shader_t post_shader_null;
 	viewport.set_post_shader(post_shader_null);
@@ -434,7 +431,7 @@ int main(int argc, char ** argv)
 
 			//swegl::render(scene, viewport1, viewport2);
 			//swegl::render(scene, viewport);
-			swegl::render(1, scene, viewport);
+			swegl::render(3, scene, viewport);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 

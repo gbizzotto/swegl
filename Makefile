@@ -1,4 +1,6 @@
 
+
+#CXX  = g++-10
 TYPE = release
 
 OBJDIR_BASE = obj

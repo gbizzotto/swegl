@@ -44,9 +44,9 @@ namespace swegl
 		          ,int transparency_layer_count
 		          );
 
-		void flatten();
-		void flatten(transparency_layer_t & front, transparency_layer_t & back);
-		void flatten(transparency_layer_t & front);
+		void flatten(const fraction_t & f);
+		void flatten(const fraction_t & f, transparency_layer_t & front, transparency_layer_t & back);
+		void flatten(const fraction_t & f, transparency_layer_t & front);
 
 		inline void set_post_shader(post_shader_t & post_shader) { m_post_shader = & post_shader; }
 

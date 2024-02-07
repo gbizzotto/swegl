@@ -8,17 +8,13 @@
 
 #include <swegl/render/colors.hpp>
 #include <swegl/misc/lerp.hpp>
+#include <swegl/misc/fraction.hpp>
 
 namespace swegl
 {
 
 struct post_shader_t
 {
-	int hardware_concurrency;
-	post_shader_t()
-		: hardware_concurrency(std::thread::hardware_concurrency())
-	{}
-
 	void copy_first_transparency_layer_to_screen(int y_begin, int y_end, viewport_t & vp)
 	{
 		int * pixel = (int*)&vp.m_transparency_layers[0].m_colors[y_begin*vp.m_w];
@@ -30,22 +26,13 @@ struct post_shader_t
 		}
 	}
 
-	virtual void shade(viewport_t & vp)
+	virtual void shade(const fraction_t & f, viewport_t & vp)
 	{
 		if (vp.m_got_transparency == false)
 			return;
-		copy_first_transparency_layer_to_screen(0, vp.m_h, vp);
-		/*
-		std::vector<std::thread> vt;
-		vt.reserve(hardware_concurrency);
-
-		// translate z-buffer into blur factor
-		vt.clear();
-		for (int i=0 ; i<hardware_concurrency ; i++)
-			vt.emplace_back([&vp,i,this](){ copy_first_transparency_layer_to_screen(i*vp.m_h/hardware_concurrency, (i+1)*vp.m_h/hardware_concurrency, vp); });
-		for (auto & t : vt)
-			t.join();
-		*/
+		copy_first_transparency_layer_to_screen(vp.m_h* f.numerator   /f.denominator
+		                                       ,vp.m_h*(f.numerator+1)/f.denominator
+		                                       ,vp);
 	}
 };
 
@@ -112,24 +99,13 @@ struct post_shader_depth_box : public post_shader_t
 		}
 	};
 
-	virtual void shade(viewport_t & vp) override
+	virtual void shade(const fraction_t & f, viewport_t & vp) override
 	{
-		std::vector<std::thread> vt;
-		vt.reserve(hardware_concurrency);
-
 		// translate z-buffer into blur factor
-		vt.clear();
-		for (int i=0 ; i<hardware_concurrency ; i++)
-			vt.emplace_back([&vp,i,this](){ translate_z_to_blur_factor(i*vp.m_h/hardware_concurrency, (i+1)*vp.m_h/hardware_concurrency, vp); });
-		for (auto & t : vt)
-			t.join();
+		translate_z_to_blur_factor(vp.m_h*f.numerator/f.denominator, vp.m_h*(f.numerator+1)/f.denominator, vp);
 
 		// render blurred image into temporary buffer
-		vt.clear();
-		for (int i=0 ; i<hardware_concurrency ; i++)
-			vt.emplace_back([&vp,i,this](){ do_blur(i*vp.m_h/hardware_concurrency, (i+1)*vp.m_h/hardware_concurrency, vp); });
-		for (auto & t : vt)
-			t.join();
+		do_blur(vp.m_h*f.numerator/f.denominator, vp.m_h*(f.numerator+1)/f.denominator, vp);
 	}
 };
 

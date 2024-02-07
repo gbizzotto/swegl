@@ -19,7 +19,7 @@ void pixel_shader_t::prepare_for_scene(viewport_t & vp, new_scene_t & s)
 	scene = &s;
 }
 
-void pixel_shader_lights_flat::prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t *, const new_mesh_vertex_t *, const new_mesh_vertex_t *)
+void pixel_shader_lights_flat::prepare_for_triangle(const new_triangle_t & triangle, const new_mesh_vertex_t *, const new_mesh_vertex_t *, const new_mesh_vertex_t *)
 {
 	float face_sun_intensity = [&]()
 		{
@@ -73,7 +73,7 @@ void pixel_shader_lights_flat::prepare_for_triangle(new_triangle_t & triangle, c
 	light *= 65536;
 }
 
-void pixel_shader_lights_phong::prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * _v0, const new_mesh_vertex_t * _v1, const new_mesh_vertex_t * _v2)
+void pixel_shader_lights_phong::prepare_for_triangle(const new_triangle_t & triangle, const new_mesh_vertex_t * _v0, const new_mesh_vertex_t * _v1, const new_mesh_vertex_t * _v2)
 {
 	v0 = _v0->v_world;
 	v1 = _v1->v_world;
@@ -193,7 +193,7 @@ int pixel_shader_lights_phong::shade(float progress)
 }
 
 
-void pixel_shader_texture::prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2)
+void pixel_shader_texture::prepare_for_triangle(const new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2)
 {
 	// TODO: select LOD / mipmap according to distance from camera
 
@@ -270,7 +270,7 @@ int pixel_shader_texture::shade(float progress)
 }
 
 
-void pixel_shader_texture_bilinear::prepare_for_triangle(new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2)
+void pixel_shader_texture_bilinear::prepare_for_triangle(const new_triangle_t & triangle, const new_mesh_vertex_t * v0, const new_mesh_vertex_t * v1, const new_mesh_vertex_t * v2)
 {
 	if (triangle.material_idx == -1)
 	{

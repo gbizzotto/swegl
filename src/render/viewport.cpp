@@ -40,23 +40,29 @@ namespace swegl
 	}
 
 	// merge 2 transparency layers
-	void viewport_t::flatten(transparency_layer_t & front, transparency_layer_t & back)
+	void viewport_t::flatten(const fraction_t & f, transparency_layer_t & front, transparency_layer_t & back)
 	{
-		pixel_colors * pixel_front = &front.m_colors[0];
-		pixel_colors * pixel_back  = &back .m_colors[0];
-		for (int j=0 ; j<m_h ; j++)
+		pixel_colors * pixel_front = &front.m_colors[m_h * f.numerator/f.denominator * m_w];
+		pixel_colors * pixel_back  = &back .m_colors[m_h * f.numerator/f.denominator * m_w];
+		for (int j = m_h* f.numerator   /f.denominator
+		    ;    j < m_h*(f.numerator+1)/f.denominator
+		    ;j++)
+		{
 			for (int i=0 ; i<m_w ; i++, pixel_front++, pixel_back++)
 				if (pixel_front->o.a != 0)
 					*pixel_back = blend(*pixel_back, *pixel_front);
+		}
 	}
 
-	void viewport_t::flatten(transparency_layer_t & front)
+	void viewport_t::flatten(const fraction_t & f, transparency_layer_t & front)
 	{
-		pixel_colors * pixel_front = &front.m_colors[0];
+		pixel_colors * pixel_front = &front.m_colors[m_h * f.numerator/f.denominator * m_w];
 		if (m_got_transparency)
 		{
 			// flatten from screen to 1st transparency layer
-			for (int j=0 ; j<m_h ; j++)
+			for (int j = m_h* f.numerator   /f.denominator
+			    ;    j < m_h*(f.numerator+1)/f.denominator
+			    ;j++)
 			{
 				pixel_colors * pixel_back = &((pixel_colors*)m_screen->pixels)[(int)(j*m_screen->pitch/m_screen->format->BytesPerPixel)];
 				for (int i=0 ; i<m_w ; i++, pixel_front++, pixel_back++)
@@ -69,7 +75,9 @@ namespace swegl
 		else
 		{
 			// just copy from screen to 1st transparency layer
-			for (int j=0 ; j<m_h ; j++)
+			for (int j = m_h* f.numerator   /f.denominator
+			    ;    j < m_h*(f.numerator+1)/f.denominator
+			    ;j++)
 			{
 				pixel_colors * pixel_back = &((pixel_colors*)m_screen->pixels)[(int)(j*m_screen->pitch/m_screen->format->BytesPerPixel)];
 				for (int i=0 ; i<m_w ; i++, pixel_front++, pixel_back++)
@@ -78,16 +86,49 @@ namespace swegl
 		}
 	}
 
-	void viewport_t::flatten()
+	void viewport_t::flatten(const fraction_t & f)
 	{
 		for (size_t i=1 ; i<m_transparency_layers.size() ; i++)
-			flatten(m_transparency_layers[i], m_transparency_layers[0]);
-		flatten(m_transparency_layers[0]);
+			flatten(f, m_transparency_layers[i], m_transparency_layers[0]);
+		flatten(f, m_transparency_layers[0]);
 	}
 
 	void viewport_t::clear(const fraction_t & f)
 	{
-		clear();
+		if (m_x == 0 && m_w == m_screen->w)
+		{
+			// we can sweep a whole area with one memset call
+			unsigned char * line1_ptr = &((unsigned char*)m_screen->pixels)[(int) ((m_y+(m_h* f.numerator   /f.denominator))*m_screen->pitch)];
+			unsigned char * line2_ptr = &((unsigned char*)m_screen->pixels)[(int) ((m_y+(m_h*(f.numerator+1)/f.denominator))*m_screen->pitch)];
+			memset(line1_ptr, 0, line2_ptr-line1_ptr);
+		}
+		else
+		{
+			unsigned char * line_ptr = &((unsigned char*)m_screen->pixels)[(int) (m_y*m_screen->pitch) + m_x*m_screen->format->BytesPerPixel];
+			int clear_width = m_w * m_screen->format->BytesPerPixel;
+			int line_width = m_screen->pitch;
+			for (int j = m_y + m_h *  f.numerator   /f.denominator
+				;    j < m_y + m_h * (f.numerator+1)/f.denominator
+				; j++, line_ptr+=line_width)
+			{
+				memset(line_ptr, 0, clear_width);
+			}
+		}
+
+		//std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
+		char * start_addr_here = (char*)m_zbuffer.get() + 4 * m_w * m_h *  f.numerator   /f.denominator;
+		char * start_addr_next = (char*)m_zbuffer.get() + 4 * m_w * m_h * (f.numerator+1)/f.denominator;
+		memset(start_addr_here ,0x7F ,start_addr_next-start_addr_here);
+		for (auto & transparency_layer : m_transparency_layers)
+		{
+			start_addr_here = (char*)transparency_layer.m_zbuffer.get() + 4 * m_w * m_h *  f.numerator   /f.denominator;
+			start_addr_next = (char*)transparency_layer.m_zbuffer.get() + 4 * m_w * m_h * (f.numerator+1)/f.denominator;
+			memset(start_addr_here, 0x7F, start_addr_next-start_addr_here);
+
+			start_addr_here = (char*)transparency_layer.m_colors.get() + 4 * m_w * m_h *  f.numerator   /f.denominator;
+			start_addr_next = (char*)transparency_layer.m_colors.get() + 4 * m_w * m_h * (f.numerator+1)/f.denominator;
+			memset(start_addr_here,    0, start_addr_next-start_addr_here);
+		}
 	}
 	void viewport_t::clear()
 	{

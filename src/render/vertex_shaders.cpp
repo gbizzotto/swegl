@@ -1,5 +1,6 @@
 
 #include <swegl/render/vertex_shaders.hpp>
+#include <swegl/misc/sync.hpp>
 
 namespace swegl
 {
@@ -12,22 +13,20 @@ namespace swegl
 			original_to_world(scene, scene.nodes[child_idx], node.vertex_original_to_world_matrix, node.normal_original_to_world_matrix);
 	}
 
-	void new_vertex_shader_t::original_to_world(fraction_t thread_number, new_scene_t & scene)
+	void new_vertex_shader_t::original_to_world(const fraction_t & thread_number, new_scene_t & scene)
 	{
-		for (auto & v : scene.vertices)
+		for (size_t i=thread_number.numerator*scene.vertices.size()/thread_number.denominator ; i<(thread_number.numerator+1)*scene.vertices.size()/thread_number.denominator ; i++)
 		{
+			auto & v = scene.vertices[i];
 			v.v_world = transform(v.v, scene.nodes[v.node_idx].vertex_original_to_world_matrix);
-			v.yes = false;
 		}
 	}
 
-	void new_vertex_shader_t::cut_triangle_if_needed(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix)
+	void new_vertex_shader_t::cut_triangle_if_needed(const fraction_t & thread_number, new_scene_t & scene, const viewport_t & viewport, const new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix)
 	{
-		auto & camera_matrix = viewport.camera().m_viewmatrix;
-
-		new_mesh_vertex_t * mv0 = &scene.vertices[triangle.i0];
-		new_mesh_vertex_t * mv1 = &scene.vertices[triangle.i1];
-		new_mesh_vertex_t * mv2 = &scene.vertices[triangle.i2];
+		const new_mesh_vertex_t * mv0 = &scene.vertices[triangle.i0];
+		const new_mesh_vertex_t * mv1 = &scene.vertices[triangle.i1];
+		const new_mesh_vertex_t * mv2 = &scene.vertices[triangle.i2];
 
 		auto & new_vertices  = scene.thread_local_extra_vertices [thread_number.numerator];
 		auto & new_triangles = scene.thread_local_extra_triangles[thread_number.numerator];
@@ -136,10 +135,7 @@ namespace swegl
 				}
 				new_triangle.material_idx = triangle.material_idx;
 				if (face_normals)
-				{
-					new_triangle.node_idx     = triangle.node_idx;
-					new_triangle.normal_world = triangle.normal_world;
-				}
+					new_triangle.node_idx = triangle.node_idx;
 			}
 			{
 				auto & new_triangle = new_triangles.emplace_back();
@@ -157,10 +153,7 @@ namespace swegl
 				}
 				new_triangle.material_idx = triangle.material_idx;
 				if (face_normals)
-				{
-					new_triangle.node_idx     = triangle.node_idx;
-					new_triangle.normal_world = triangle.normal_world;
-				}
+					new_triangle.node_idx = triangle.node_idx;
 			}
 		}
 		else
@@ -231,14 +224,11 @@ namespace swegl
 			}
 			new_triangle.material_idx = triangle.material_idx;
 			if (face_normals)
-			{
-				new_triangle.node_idx     = triangle.node_idx;
-				new_triangle.normal_world = triangle.normal_world;
-			}
+				new_triangle.node_idx = triangle.node_idx;
 		}
 	}
 
-	void new_vertex_shader_t::world_to_screen(fraction_t thread_number, new_scene_t & scene, const viewport_t & viewport, bool face_normals, bool vertex_normals)
+	void new_vertex_shader_t::world_to_screen(const fraction_t & thread_number, new_scene_t & scene, const viewport_t & viewport, bool face_normals, bool vertex_normals)
 	{
 		auto & extra_vertices  = scene.thread_local_extra_vertices [thread_number.numerator];
 		auto & extra_triangles = scene.thread_local_extra_triangles[thread_number.numerator];
@@ -247,8 +237,13 @@ namespace swegl
 
 		// world to camera
 		auto matrix = viewport.m_viewportmatrix * viewport.camera().m_projectionmatrix * viewport.camera().m_viewmatrix;
-		for (auto & v : scene.vertices)
+
+		// transform vertices
+		for (size_t i = scene.vertices.size()* thread_number.numerator   /thread_number.denominator
+			;       i < scene.vertices.size()*(thread_number.numerator+1)/thread_number.denominator
+			;i++)
 		{
+			auto & v = scene.vertices[i];
 			v.v_viewport = transform(v.v_world, matrix);
 			v.v_viewport.x() /= fabs(v.v_viewport.z());
 			v.v_viewport.y() /= fabs(v.v_viewport.z());
@@ -256,8 +251,16 @@ namespace swegl
 				v.normal_world = scene.nodes[v.node_idx].transform(v.normal);
 		}
 
-		for (auto & triangle : scene.triangles)
+		// wait for all threads to finish up transforming vertices
+		static sync_point_t sync_point_1;
+		sync_point_1.sync(thread_number.denominator);
+
+		// check triangle visibility
+		for (size_t i = scene.triangles.size()* thread_number.numerator   /thread_number.denominator
+			;       i < scene.triangles.size()*(thread_number.numerator+1)/thread_number.denominator
+			; i++)
 		{
+			auto & triangle = scene.triangles[i];
 			// frustum clipping
 			if ( (scene.vertices[triangle.i0].v_viewport.x() < viewport.m_x              && scene.vertices[triangle.i1].v_viewport.x() < viewport.m_x              && scene.vertices[triangle.i2].v_viewport.x() < viewport.m_x              )
 			   ||(scene.vertices[triangle.i0].v_viewport.x() > viewport.m_x+viewport.m_w && scene.vertices[triangle.i1].v_viewport.x() > viewport.m_x+viewport.m_w && scene.vertices[triangle.i2].v_viewport.x() > viewport.m_x+viewport.m_w )
@@ -284,7 +287,6 @@ namespace swegl
 			if ( ! triangle.yes)
 				continue;
 			triangle.backface = ! front_face_visible;
-
 			if (face_normals)
 				triangle.normal_world = scene.nodes[triangle.node_idx].transform(triangle.normal);
 		}
@@ -293,8 +295,12 @@ namespace swegl
 		    // backface culling
 			bool front_face_visible = (cross_2d((extra_vertices[triangle.i1].v_viewport - extra_vertices[triangle.i0].v_viewport)
 			                                   ,(extra_vertices[triangle.i2].v_viewport - extra_vertices[triangle.i0].v_viewport)).z() < 0);
-			triangle.backface = ! front_face_visible;
 			triangle.yes = front_face_visible | scene.materials[triangle.material_idx].double_sided;
+			if ( ! triangle.yes)
+				continue;
+			triangle.backface = ! front_face_visible;
+			if (face_normals)
+				triangle.normal_world = scene.nodes[triangle.node_idx].transform(triangle.normal);
 		}
 	}
 

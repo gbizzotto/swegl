@@ -16,14 +16,13 @@ using vertex_idx = std::uint32_t;
 
 struct new_mesh_vertex_t
 {
-	vertex_t v;
-	vertex_t v_world;    // after transformations into world coordinates
 	vertex_t v_viewport; // after transformations into viewport coordinates (pixel x,y + z depth
+	vertex_t v_world;    // after transformations into world coordinates
 	vec2f_t tex_coords;
-	normal_t normal;
 	normal_t normal_world;
+	vertex_t v;
+	normal_t normal;
 	int node_idx;        // index into scene.nodes, which contains the vertex' world matrix
-	bool yes = false;
 };
 bool operator==(const new_mesh_vertex_t & left, const new_mesh_vertex_t & right);
 bool operator<(const new_mesh_vertex_t & left, const new_mesh_vertex_t & right);
@@ -134,6 +133,9 @@ struct new_scene_t
 
 	std::vector<std::vector<new_mesh_vertex_t>> thread_local_extra_vertices;
 	std::vector<std::vector<new_triangle_t   >> thread_local_extra_triangles;
+
+	std::vector<new_mesh_vertex_t> extra_vertices ;
+	std::vector<new_triangle_t   > extra_triangles;
 
 	void animate(const float elapsed_seconds);
 };
