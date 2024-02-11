@@ -22,7 +22,7 @@ namespace swegl
 		}
 	}
 
-	void new_vertex_shader_t::cut_triangle_if_needed(const fraction_t & thread_number, new_scene_t & scene, const viewport_t & viewport, const new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix)
+	void new_vertex_shader_t::cut_triangle_if_needed(const fraction_t & thread_number, new_scene_t & scene, const new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix)
 	{
 		const new_mesh_vertex_t * mv0 = &scene.vertices[triangle.i0];
 		const new_mesh_vertex_t * mv1 = &scene.vertices[triangle.i1];
@@ -275,7 +275,7 @@ namespace swegl
 
 		    if (scene.vertices[triangle.i0].v_viewport.z() < 0.001 || scene.vertices[triangle.i1].v_viewport.z() < 0.001 || scene.vertices[triangle.i2].v_viewport.z() < 0.001)
 		    {
-				cut_triangle_if_needed(thread_number, scene, viewport, triangle, face_normals, vertex_normals, matrix);
+				cut_triangle_if_needed(thread_number, scene, triangle, face_normals, vertex_normals, matrix);
 				triangle.yes = false;
 				continue;
 			}

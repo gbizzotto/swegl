@@ -18,7 +18,7 @@ struct new_vertex_shader_t
 {
 	static void original_to_world(new_scene_t & scene, node_t & node, const matrix44_t & vertex_parent_matrix, const matrix44_t & normal_parent_matrix);
 	static void original_to_world     (const fraction_t & thread_number, new_scene_t & scene);
-	static void cut_triangle_if_needed(const fraction_t & thread_number, new_scene_t & scene, const viewport_t & viewport, const new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix);
+	static void cut_triangle_if_needed(const fraction_t & thread_number, new_scene_t & scene, const new_triangle_t & triangle, bool face_normals, bool vertex_normals, const matrix44_t & matrix);
 	static void world_to_screen       (const fraction_t & thread_number, new_scene_t & scene, const viewport_t & viewport, bool face_normals, bool vertex_normals);
 };
 

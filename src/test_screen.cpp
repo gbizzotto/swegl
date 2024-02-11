@@ -4,19 +4,18 @@
 #include <swegl/misc/sdl.hpp>
 #include <swegl/misc/screen.hpp>
 
-int main(int argc, char *argv[])
+int main()
 {
 	swegl::sdl_t sdl(400, 1600, 800, 600, "test_1");
-	SDL_Surface * surface = sdl.surface;
 
 	swegl::screen_t screen(800, 600);
-	screen.for_each([](float & z, swegl::pixel_colors & c, int x, int y)
+	screen.for_each([]([[maybe_unused]]float & z, swegl::pixel_colors & c, [[maybe_unused]]int x, [[maybe_unused]]int y)
 		{
 			c = swegl::pixel_colors(128,0,0,255);
 		});
 
 	swegl::screen_t screen_2(sdl.surface);
-	screen_2.for_each([](float & z, swegl::pixel_colors & c, int x, int y)
+	screen_2.for_each([]([[maybe_unused]]float & z, swegl::pixel_colors & c, [[maybe_unused]]int x, [[maybe_unused]]int y)
 		{
 			c = swegl::pixel_colors(0,0,128,255);
 		});

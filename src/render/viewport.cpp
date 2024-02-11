@@ -58,8 +58,7 @@ namespace swegl
 		pixel_colors * pixel_front = &front.m_colors[m_h * f.numerator/f.denominator * m_w];
 		int y_start = m_h* f.numerator   /f.denominator;
 		int y_end   = m_h*(f.numerator+1)/f.denominator;
-		auto screen_it     = m_screen.iterator_at_line(y_start);
-		auto screen_it_end = m_screen.iterator_at_line(y_end  );
+		auto screen_it = m_screen.iterator_at_line(y_start);
 		if (m_got_transparency) // flatten from screen to 1st transparency layer
 			for (int j = y_start ; j < y_end ; j++)
 				for (int i=0 ; i<m_w ; i++, pixel_front++, screen_it++)
