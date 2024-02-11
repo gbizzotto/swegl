@@ -9,6 +9,7 @@
 #include <swegl/projection/camera.hpp>
 #include <swegl/data/model.hpp>
 #include <swegl/misc/fraction.hpp>
+#include <swegl/misc/screen.hpp>
 
 namespace swegl
 {
@@ -29,8 +30,9 @@ namespace swegl
 	{
 		int                                     m_x, m_y        ;
 		int                                     m_w, m_h        ;
-		SDL_Surface                            *m_screen        ;
-		std::unique_ptr<float[]>                m_zbuffer       ;
+		//SDL_Surface                            *m_screen        ;
+		//std::unique_ptr<float[]>                m_zbuffer       ;
+		screen_t                                m_screen        ;
 		matrix44_t                              m_viewportmatrix;
 		camera_t                                m_camera        ;
 		std::shared_ptr<swegl::pixel_shader_t>  m_pixel_shader  ;
@@ -51,8 +53,8 @@ namespace swegl
 		inline void set_post_shader(post_shader_t & post_shader) { m_post_shader = & post_shader; }
 
 
-		      float * zbuffer()       { return m_zbuffer.get(); }
-		const float * zbuffer() const { return m_zbuffer.get(); }
+		      float * zbuffer()       { return m_screen.z_buffer(); }
+		const float * zbuffer() const { return m_screen.z_buffer(); }
 
 		      camera_t & camera()       { return m_camera; }
 		const camera_t & camera() const { return m_camera; }

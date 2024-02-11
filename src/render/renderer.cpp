@@ -26,7 +26,6 @@ struct line_side
 	float x;
 };
 
-void crude_line(viewport_t & viewport, int x1, int y1, int x2, int y2);
 void fill_triangle(int y_min, int y_max, const new_triangle_t &, const std::vector<new_mesh_vertex_t> &, viewport_t &, pixel_shader_t &);
 void fill_half_triangle(int y, int y_end,
 	                    line_side & side_left, line_side & side_right,
@@ -192,10 +191,12 @@ void fill_half_triangle(int y, int y_end,
                         viewport_t & vp,
                         pixel_shader_t & pixel_shader)
 {
-	for ( ; y < y_end ; y++)
+	auto it_screen = vp.m_screen.iterator_at_line(y);
+	for ( ; y < y_end ; y++,it_screen.next_line())
 	{
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
 		int x2 = std::min((int)ceil(side_right.x), vp.m_x+vp.m_w);
+
 
 		if (x1 < x2)
 		{
@@ -208,7 +209,7 @@ void fill_half_triangle(int y, int y_end,
 			qpixel.DisplaceStartingPoint(x1 - side_left.x);
 
 			// fill_line
-			pixel_colors *video = &((pixel_colors*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/vp.m_screen->format->BytesPerPixel + x1)];
+			pixel_colors *video = &*it_screen + x1;
 			int zero_based_offset = (int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x));
 			float * zb = &vp.zbuffer()[zero_based_offset];
 			for ( ; x1 < x2 ; x1++,video++,zb++,zero_based_offset++,qpixel.Step() )
@@ -285,22 +286,6 @@ void fill_half_triangle(int y, int y_end,
 		side_right.x += side_right.ratio;
 		side_left .interpolator.Step();
 		side_right.interpolator.Step();
-	}
-}
-
-void crude_line(viewport_t & vp, int x1, int y1, int x2, int y2)
-{
-	if ((x2-x1) == 0)
-		return;
-	if (x2<x1)
-		return crude_line(vp, x2, y2, x1, y1);
-	for (int x=x1 ; x<=x2 ; x++)
-	{
-		int y = y1 + (y2-y1)*(x-x1)/(x2-x1);
-		unsigned int *video = &((unsigned int*)vp.m_screen->pixels)[(int) ( y*vp.m_screen->pitch/4 + x)];
-		if (x<0 || y<0 || x>vp.m_screen->pitch/4 || y>479)
-			continue;
-		*video = 0xFFFF0000;
 	}
 }
 

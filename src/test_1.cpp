@@ -409,7 +409,7 @@ int main(int argc, char ** argv)
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 1);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 2);
 	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
 	swegl::post_shader_t post_shader_null;
 	viewport.set_post_shader(post_shader_null);
@@ -431,7 +431,7 @@ int main(int argc, char ** argv)
 
 			//swegl::render(scene, viewport1, viewport2);
 			//swegl::render(scene, viewport);
-			swegl::render(3, scene, viewport);
+			swegl::render(4, scene, viewport);
 
 			font.Print(std::to_string(mp.status()/1000000).c_str(), 10, 10, sdl.surface);
 

@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 		;it!=end
 		;it++)
 	{
+		*it.z = 123.456;
 		*it = swegl::pixel_colors(0,128,128,255);
 	}
 

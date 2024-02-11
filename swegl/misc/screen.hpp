@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <SDL2/SDL.h>
 #include <swegl/render/colors.hpp>
@@ -47,6 +48,10 @@ public:
 	int w() const { return w_; }
 	int h() const { return h_; }
 	int gap() const { return x_gap; }
+	int bytes_per_pixel() const { return 4; }
+	int pitch() const { return (w_ + x_gap) * bytes_per_pixel(); }
+	      float * z_buffer()       { return zbuffer; }
+	const float * z_buffer() const { return zbuffer; }
 
 	template<typename F>
 	void for_each(F && f)
@@ -66,8 +71,9 @@ public:
 		float * z;
 		int x;
 		int y;
-		int y_end;
-		int x_gap;
+		const int y_end;
+		const int x_gap;
+		const int w;
 		pixel_colors * p;
 		pixel_colors * p_line_end;
 
@@ -77,10 +83,29 @@ public:
 			, y(pixel_idx / s.w())
 			, y_end(s.h())
 			, x_gap(s.x_gap)
+			, w(s.w())
 			, p         ( & s.pixels[(pixel_idx / s.w()    ) * (s.w()+s.gap()) + pixel_idx % s.w()])
 			, p_line_end( & s.pixels[(pixel_idx / s.w() + 1) * (s.w()+s.gap())                    ])
 		{
 			assert(pixel_idx <= s.w() * s.h());
+		}
+
+		inline void next_line()
+		{
+			if (y == y_end)
+				return;
+			z += w;
+			++y;
+			if (y == y_end)
+			{
+				p += w - x;
+				x = 0;
+			}
+			else
+			{
+				p += w;
+			}
+			p_line_end += w;
 		}
 
 		inline iterator() = default;

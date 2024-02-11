@@ -492,6 +492,8 @@ swegl::new_scene_t load_scene_json(const std::string & filename, char * file_beg
 		}
 	}
 
+	std::cout << result.triangles.size() << " triangles" << std::endl;
+
 	return result;
 }
 
