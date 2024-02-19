@@ -228,8 +228,8 @@ void fill_half_triangle(int y, int y_end,
 				}
 				size_t layer_idx = 0;
 				for (layer_idx=0 ; layer_idx<vp.m_transparency_layers.size() ; layer_idx++)
-					if (vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] == max_z.f
-					  ||vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset] < z)
+					if (vp.m_transparency_layers[layer_idx].zbuffer()[zero_based_offset] == max_z.f
+					  ||vp.m_transparency_layers[layer_idx].zbuffer()[zero_based_offset] < z)
 						break;
 				if (new_color.o.a == 255)
 				{
@@ -242,14 +242,14 @@ void fill_half_triangle(int y, int y_end,
 						size_t i,k;
 						for (i=0,k=layer_idx ; k<vp.m_transparency_layers.size() ; i++,k++)
 						{
-							vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = vp.m_transparency_layers[k].m_zbuffer[zero_based_offset];
-							vp.m_transparency_layers[i].m_colors [zero_based_offset] = vp.m_transparency_layers[k].m_colors [zero_based_offset];
+							vp.m_transparency_layers[i].zbuffer()[zero_based_offset] = vp.m_transparency_layers[k].zbuffer()[zero_based_offset];
+							vp.m_transparency_layers[i].pixels ()[zero_based_offset] = vp.m_transparency_layers[k].pixels ()[zero_based_offset];
 						}
 						// zero remaining now-unused upper (fronter) transparency layers
 						for ( ; i<vp.m_transparency_layers.size() ; i++)
 						{
-							vp.m_transparency_layers[i].m_zbuffer[zero_based_offset] = max_z.f;
-							vp.m_transparency_layers[i].m_colors [zero_based_offset] = {0,0,0,0};
+							vp.m_transparency_layers[i].zbuffer()[zero_based_offset] = max_z.f;
+							vp.m_transparency_layers[i].pixels ()[zero_based_offset] = {0,0,0,0};
 						}
 					}
 				}
@@ -258,14 +258,14 @@ void fill_half_triangle(int y, int y_end,
 					// transparency color, let's not user the base layer
 					// let's insert a transparency layer at layer_idx
 
-					bool all_layers_used = vp.m_transparency_layers.back().m_zbuffer[zero_based_offset] != max_z.f;
+					bool all_layers_used = vp.m_transparency_layers.back().zbuffer()[zero_based_offset] != max_z.f;
 					if (all_layers_used)
 					{
 						// shift layers down
 						while(layer_idx-->0)
 						{
-							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],         z);
-							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
+							std::swap(vp.m_transparency_layers[layer_idx].zbuffer()[zero_based_offset],         z);
+							std::swap(vp.m_transparency_layers[layer_idx].pixels ()[zero_based_offset], new_color);
 						}
 					}
 					else
@@ -273,8 +273,8 @@ void fill_half_triangle(int y, int y_end,
 						// shift layers up
 						for ( ; layer_idx < vp.m_transparency_layers.size() ; layer_idx++)
 						{
-							std::swap(vp.m_transparency_layers[layer_idx].m_zbuffer[zero_based_offset],         z);
-							std::swap(vp.m_transparency_layers[layer_idx].m_colors [zero_based_offset], new_color);
+							std::swap(vp.m_transparency_layers[layer_idx].zbuffer()[zero_based_offset],         z);
+							std::swap(vp.m_transparency_layers[layer_idx].pixels ()[zero_based_offset], new_color);
 							if (z == max_z.f)
 								break; // we've reached the last used layer
 						}

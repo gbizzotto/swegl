@@ -6,11 +6,6 @@
 namespace swegl
 {
 
-	transparency_layer_t::transparency_layer_t(int w, int h)
-		: m_colors(std::make_unique<pixel_colors[]>(w*h))
-		, m_zbuffer(std::make_unique<float[]>(w*h))
-	{}
-
 	viewport_t::viewport_t(int x, int y, int w, int h
 	                      ,SDL_Surface *screen
 	                      ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
@@ -39,23 +34,19 @@ namespace swegl
 	}
 
 	// merge 2 transparency layers
-	void viewport_t::flatten(const fraction_t & f, transparency_layer_t & front, transparency_layer_t & back)
+	void viewport_t::flatten(const fraction_t & f, screen_t & front, screen_t & back)
 	{
-		pixel_colors * pixel_front = &front.m_colors[m_h * f.numerator/f.denominator * m_w];
-		pixel_colors * pixel_back  = &back .m_colors[m_h * f.numerator/f.denominator * m_w];
-		for (int j = m_h* f.numerator   /f.denominator
-		    ;    j < m_h*(f.numerator+1)/f.denominator
-		    ;j++)
-		{
+		auto pixel_front = front.pixel_iterator_at_line(m_h * f.numerator/f.denominator);
+		auto pixel_back  = back .pixel_iterator_at_line(m_h * f.numerator/f.denominator);
+		for (auto pixel_front_end = front.pixel_iterator_at_line(m_h*(f.numerator+1)/f.denominator) ; pixel_front != pixel_front_end ; )
 			for (int i=0 ; i<m_w ; i++, pixel_front++, pixel_back++)
 				if (pixel_front->o.a != 0)
 					*pixel_back = blend(*pixel_back, *pixel_front);
-		}
 	}
 
-	void viewport_t::flatten(const fraction_t & f, transparency_layer_t & front)
+	void viewport_t::flatten(const fraction_t & f, screen_t & front)
 	{
-		pixel_colors * pixel_front = &front.m_colors[m_h * f.numerator/f.denominator * m_w];
+		auto pixel_front = front.pixel_iterator_at_line(m_h * f.numerator/f.denominator);
 		int y_start = m_h* f.numerator   /f.denominator;
 		int y_end   = m_h*(f.numerator+1)/f.denominator;
 		auto screen_it = m_screen.iterator_at_line(y_start);
@@ -84,16 +75,19 @@ namespace swegl
 		int y_start = m_h* f.numerator   /f.denominator;
 		int y_end   = m_h*(f.numerator+1)/f.denominator;
 
+		auto it  = m_screen.iterator_at_line(y_start);
+		auto end = m_screen.iterator_at_line(y_end  );
+
 		if (m_x == 0 && m_w == m_screen.w())
 		{
 			// we can sweep a whole area with one memset call
-			unsigned char * line1_ptr = (unsigned char *) &*m_screen.iterator_at_line(y_start);
-			unsigned char * line2_ptr = (unsigned char *) &*m_screen.iterator_at_line(y_end  );
+			unsigned char * line1_ptr = (unsigned char *) &*it ;
+			unsigned char * line2_ptr = (unsigned char *) &*end;
 			memset(line1_ptr, 0, line2_ptr-line1_ptr);
 		}
 		else
 		{
-			unsigned char * line_ptr = (unsigned char *) &*m_screen.iterator_at_line(y_start);
+			unsigned char * line_ptr = (unsigned char *) &*it;
 			int clear_width = m_w * m_screen.bytes_per_pixel();
 			int line_width = m_screen.pitch();
 			for (int j = y_start ; j < y_end ; j++, line_ptr+=line_width)
@@ -101,17 +95,17 @@ namespace swegl
 		}
 
 		//std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
-		char * start_addr_here = (char*)(m_screen.z_buffer() + m_w * m_h *  f.numerator   /f.denominator);
-		char * start_addr_next = (char*)(m_screen.z_buffer() + m_w * m_h * (f.numerator+1)/f.denominator);
+		char * start_addr_here = (char*) it .z;
+		char * start_addr_next = (char*) end.z;
 		memset(start_addr_here ,0x7F ,start_addr_next-start_addr_here);
 		for (auto & transparency_layer : m_transparency_layers)
 		{
-			start_addr_here = (char*)transparency_layer.m_zbuffer.get() + 4 * m_w * m_h *  f.numerator   /f.denominator;
-			start_addr_next = (char*)transparency_layer.m_zbuffer.get() + 4 * m_w * m_h * (f.numerator+1)/f.denominator;
+			start_addr_here = (char*) & transparency_layer.zbuffer()[m_w * m_h *  f.numerator   /f.denominator];
+			start_addr_next = (char*) & transparency_layer.zbuffer()[m_w * m_h * (f.numerator+1)/f.denominator];
 			memset(start_addr_here, 0x7F, start_addr_next-start_addr_here);
 
-			start_addr_here = (char*)transparency_layer.m_colors.get() + 4 * m_w * m_h *  f.numerator   /f.denominator;
-			start_addr_next = (char*)transparency_layer.m_colors.get() + 4 * m_w * m_h * (f.numerator+1)/f.denominator;
+			start_addr_here = (char*) & transparency_layer.pixels()[m_w * m_h *  f.numerator   /f.denominator];
+			start_addr_next = (char*) & transparency_layer.pixels()[m_w * m_h * (f.numerator+1)/f.denominator];
 			memset(start_addr_here,    0, start_addr_next-start_addr_here);
 		}
 	}
@@ -134,11 +128,11 @@ namespace swegl
 		}
 
 		//std::fill(m_zbuffer.get(), &m_zbuffer[m_w*m_h], std::numeric_limits<std::remove_pointer<typename decltype(m_zbuffer)::pointer>::type>::max());
-		memset(m_screen.z_buffer(), 0x7F, 4 * m_w * m_h);
+		memset(m_screen.zbuffer(), 0x7F, 4 * m_w * m_h);
 		for (auto & transparency_layer : m_transparency_layers)
 		{
-			memset(transparency_layer.m_zbuffer.get(), 0x7F, 4 * m_w * m_h);
-			memset(transparency_layer.m_colors .get(), 0, 4 * m_w * m_h);
+			memset(transparency_layer.zbuffer(), 0x7F, 4 * m_w * m_h);
+			memset(transparency_layer.pixels (), 0, 4 * m_w * m_h);
 		}
 	}
 

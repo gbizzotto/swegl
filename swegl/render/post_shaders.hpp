@@ -17,7 +17,7 @@ struct post_shader_t
 {
 	void copy_first_transparency_layer_to_screen(int y_begin, int y_end, viewport_t & vp)
 	{
-		int * pixel = (int*)&vp.m_transparency_layers[0].m_colors[y_begin*vp.m_w];
+		int * pixel = (int*)&vp.m_transparency_layers[0].pixels()[y_begin*vp.m_w];
 		for (auto screen_it = vp.m_screen.iterator_at_line(y_begin), screen_end = vp.m_screen.iterator_at_line(y_end)
 			;screen_it!=screen_end
 			;++screen_it,++pixel)
@@ -51,7 +51,7 @@ struct post_shader_depth_box : public post_shader_t
 
 	void translate_z_to_blur_factor(int y_begin, int y_end, viewport_t & vp)
 	{
-		float * z = &vp.m_transparency_layers[0].m_zbuffer[y_begin*vp.m_w];
+		float * z = &vp.m_transparency_layers[0].zbuffer()[y_begin*vp.m_w];
 		
 		for (int y=y_begin ; y<y_end ; y++)
 			for (int x=0 ; x<vp.m_w ; x++,z++)
@@ -62,8 +62,8 @@ struct post_shader_depth_box : public post_shader_t
 	{
 		// By now zbuffer (actually 1st transparency layer's zbuffer) has been translated from Z coord to blur factor
 
-		pixel_colors * source_colors  = (pixel_colors*) &vp.m_transparency_layers[0].m_colors [0];
-		float        * blur_factor =                    &vp.m_transparency_layers[0].m_zbuffer[0];
+		pixel_colors * source_colors  = (pixel_colors*) &vp.m_transparency_layers[0].pixels ()[0];
+		float        * blur_factor =                    &vp.m_transparency_layers[0].zbuffer()[0];
 		float        * blur_factor_local = &blur_factor[y_begin*vp.m_w];
 		auto screen_it = vp.m_screen.iterator_at_line(y_begin);
 		for (int y=y_begin ; y<y_end ; y++)
