@@ -86,7 +86,7 @@ void _render(const fraction_t & thread_number, new_scene_t & scene, viewport_t &
 			fill_triangle(y_min, y_max, triangle, scene.extra_vertices, viewport, *pixel_shader);
 
 	viewport.flatten(thread_number);
-	viewport.m_post_shader->shade(thread_number, viewport);
+	viewport.do_post_shading(thread_number);
 }
 
 
@@ -191,7 +191,7 @@ void fill_half_triangle(int y, int y_end,
                         viewport_t & vp,
                         pixel_shader_t & pixel_shader)
 {
-	auto it_screen = vp.m_screen.iterator_at_line(y);
+	auto it_screen = vp.intermediate_screen().iterator_at_line(y);
 	for ( ; y < y_end ; y++,it_screen.next_line())
 	{
 		int x1 = std::max((int)ceil(side_left .x), vp.m_x);
@@ -210,8 +210,8 @@ void fill_half_triangle(int y, int y_end,
 
 			// fill_line
 			pixel_colors *video = &*it_screen + x1;
+			float *zb = it_screen.z + x1;
 			int zero_based_offset = (int) ( (y-vp.m_y)*vp.m_w + (x1-vp.m_x));
-			float * zb = &vp.zbuffer()[zero_based_offset];
 			for ( ; x1 < x2 ; x1++,video++,zb++,zero_based_offset++,qpixel.Step() )
 			{
 				float z = qpixel.value(0);
@@ -234,11 +234,9 @@ void fill_half_triangle(int y, int y_end,
 				if (new_color.o.a == 255)
 				{
 					// solid color, use the base (deepest, backest) layer
-					*video = new_color;
-					*zb = z;
 					if (layer_idx != 0)
 					{
-						// eliminat transparency layers that were further away
+						// eliminate transparency layers that were further away
 						size_t i,k;
 						for (i=0,k=layer_idx ; k<vp.m_transparency_layers.size() ; i++,k++)
 						{
@@ -252,6 +250,8 @@ void fill_half_triangle(int y, int y_end,
 							vp.m_transparency_layers[i].pixels ()[zero_based_offset] = {0,0,0,0};
 						}
 					}
+					*video = new_color;
+					*zb = z;
 				}
 				else
 				{

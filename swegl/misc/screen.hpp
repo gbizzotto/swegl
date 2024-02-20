@@ -105,7 +105,7 @@ public:
 			, w(s.w())
 			, p( & s.pixels_[(pixel_idx / s.w()) * (s.w()+s.gap()) + pixel_idx % s.w()])
 		{
-			assert(pixel_idx <= s.w() * s.h());
+			assert((int)pixel_idx <= s.w() * s.h());
 		}
 
 		inline void next_line()
@@ -188,7 +188,7 @@ public:
 			, w(s.w())
 			, p( & s.pixels_[(pixel_idx / s.w()) * (s.w()+s.gap()) + pixel_idx % s.w()])
 		{
-			assert(pixel_idx <= s.w() * s.h());
+			assert((int)pixel_idx <= s.w() * s.h());
 		}
 
 		inline void next_line()
@@ -267,7 +267,7 @@ public:
 			, y_end(s.h())
 			, w(s.w())
 		{
-			assert(pixel_idx <= s.w() * s.h());
+			assert((int)pixel_idx <= s.w() * s.h());
 		}
 
 		inline void next_line()

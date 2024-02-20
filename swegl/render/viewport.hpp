@@ -18,15 +18,17 @@ namespace swegl
 	struct      pixel_shader_t;
 	struct       post_shader_t;
 
-	struct viewport_t
+	class viewport_t
 	{
+		screen_t                                m_screen        ;
+
+	public:
 		int                                     m_x, m_y        ;
 		int                                     m_w, m_h        ;
-		screen_t                                m_screen        ;
 		matrix44_t                              m_viewportmatrix;
 		camera_t                                m_camera        ;
+		post_shader_t                          &m_post_shader   ;
 		std::shared_ptr<swegl::pixel_shader_t>  m_pixel_shader  ;
-		post_shader_t                          *m_post_shader   ;
 		std::vector<screen_t>                   m_transparency_layers;
 		bool                                    m_got_transparency   ;
 
@@ -34,17 +36,18 @@ namespace swegl
 		          ,SDL_Surface *screen
 		          ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
 		          ,int transparency_layer_count
+		          ,post_shader_t & post_shader
 		          );
+
+		screen_t & output_screen();
+		screen_t & intermediate_screen();
 
 		void flatten(const fraction_t & f);
 		void flatten(const fraction_t & f, screen_t & front, screen_t & back);
-		void flatten(const fraction_t & f, screen_t & front);
+		//void flatten(const fraction_t & f, screen_t & front);
 
-		inline void set_post_shader(post_shader_t & post_shader) { m_post_shader = & post_shader; }
+		void do_post_shading(const fraction_t &);
 
-
-		      float * zbuffer()       { return m_screen.zbuffer(); }
-		const float * zbuffer() const { return m_screen.zbuffer(); }
 
 		      camera_t & camera()       { return m_camera; }
 		const camera_t & camera() const { return m_camera; }

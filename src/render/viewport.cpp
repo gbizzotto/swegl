@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <swegl/render/viewport.hpp>
 #include <swegl/projection/points.hpp>
+#include <swegl/render/post_shaders.hpp>
 
 namespace swegl
 {
@@ -10,14 +11,16 @@ namespace swegl
 	                      ,SDL_Surface *screen
 	                      ,std::shared_ptr<swegl:: pixel_shader_t> & pixel_shader
 	                      ,int transparency_layer_count
+	                      ,post_shader_t & post_shader
 	                      )
-		: m_x(x)
+		: m_screen(screen)
+		, m_x(x)
 		, m_y(y)
 		, m_w(w)
 		, m_h(h)
-		, m_screen(screen)
 		, m_viewportmatrix(matrix44_t::Identity)
 		, m_camera(1.0*w/h)
+		, m_post_shader(post_shader)
 		, m_pixel_shader(pixel_shader)
 		, m_got_transparency(transparency_layer_count > 0)
 	{
@@ -28,9 +31,28 @@ namespace swegl
 		this->m_viewportmatrix[2][2] = 1.0f;
 		this->m_viewportmatrix[3][3] = 1.0f;
 
-		m_transparency_layers.reserve(transparency_layer_count);
-		for (int i=0 ; i<std::max(1,transparency_layer_count) ; i++)
+		size_t extra_layers_count = transparency_layer_count + post_shader.does_copy();
+
+		m_transparency_layers.reserve(extra_layers_count);
+		for (size_t i=0 ; i<extra_layers_count ; i++)
 			m_transparency_layers.emplace_back(w, h);
+	}
+
+	void viewport_t::do_post_shading(const fraction_t & f)
+	{
+		m_post_shader.shade(f, m_transparency_layers[0], *this);
+	}
+
+	screen_t & viewport_t::output_screen()
+	{
+		return m_screen;
+	}
+	screen_t & viewport_t::intermediate_screen()
+	{
+		if (m_post_shader.does_copy())
+			return m_transparency_layers[0];
+		else
+			return m_screen;
 	}
 
 	// merge 2 transparency layers
@@ -38,12 +60,12 @@ namespace swegl
 	{
 		auto pixel_front = front.pixel_iterator_at_line(m_h * f.numerator/f.denominator);
 		auto pixel_back  = back .pixel_iterator_at_line(m_h * f.numerator/f.denominator);
-		for (auto pixel_front_end = front.pixel_iterator_at_line(m_h*(f.numerator+1)/f.denominator) ; pixel_front != pixel_front_end ; )
-			for (int i=0 ; i<m_w ; i++, pixel_front++, pixel_back++)
-				if (pixel_front->o.a != 0)
-					*pixel_back = blend(*pixel_back, *pixel_front);
+		for (auto pixel_front_end = front.pixel_iterator_at_line(m_h*(f.numerator+1)/f.denominator) ; pixel_front != pixel_front_end ; pixel_front++, pixel_back++)
+			if (pixel_front->o.a != 0)
+				*pixel_back = blend(*pixel_back, *pixel_front);
 	}
 
+	/*
 	void viewport_t::flatten(const fraction_t & f, screen_t & front)
 	{
 		auto pixel_front = front.pixel_iterator_at_line(m_h * f.numerator/f.denominator);
@@ -62,12 +84,16 @@ namespace swegl
 				for (int i=0 ; i<m_w ; i++, pixel_front++, screen_it++)
 						*pixel_front = *screen_it;
 	}
+	*/
 
 	void viewport_t::flatten(const fraction_t & f)
 	{
-		for (size_t i=1 ; i<m_transparency_layers.size() ; i++)
-			flatten(f, m_transparency_layers[i], m_transparency_layers[0]);
-		flatten(f, m_transparency_layers[0]);
+		if ( ! m_post_shader.does_copy())
+			for (size_t i=0 ; i<m_transparency_layers.size() ; i++)
+				flatten(f, m_transparency_layers[i], m_screen);
+		else
+			for (size_t i=1 ; i<m_transparency_layers.size() ; i++)
+				flatten(f, m_transparency_layers[i], m_transparency_layers[0]);
 	}
 
 	void viewport_t::clear(const fraction_t & f)

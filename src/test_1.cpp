@@ -409,10 +409,9 @@ int main(int argc, char ** argv)
 	//swegl::viewport_t viewport1(200, 000, sdl.w-200, sdl.h- 00, sdl.surface, pixel_shader_full , post_shader_null );
 	//swegl::viewport_t viewport2(  0, 30,        200,       300, sdl.surface, pixel_shader_basic, post_shader_null);
 	
-	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 2);
-	swegl::post_shader_depth_box post_shader_DOF(5, 5, viewport);
+	swegl::post_shader_depth_box post_shader_DOF(5, 5);
 	swegl::post_shader_t post_shader_null;
-	viewport.set_post_shader(post_shader_null);
+	swegl::viewport_t viewport(0, 0, sdl.w, sdl.h, sdl.surface, pixel_shader_full, 10, post_shader_DOF);
 
 	viewport.m_camera.translate(1,2,-5); // -5 = backwards in the camera's local coordinates
 	viewport.m_camera.rotate_y(-0.2);
